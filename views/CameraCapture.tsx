@@ -83,8 +83,27 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
     } else {
       stopCamera();
     }
-    return () => stopCamera();
+    return () => {
+      // Always cleanup camera on unmount or when dependencies change
+      stopCamera();
+    };
   }, [mode, image, result]);
+  
+  // Additional cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+      stopScanner();
+      // Clear any pending timeouts
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      // Abort any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
@@ -96,8 +115,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        // Send for background processing and close camera
+        // Stop camera immediately after capturing
+        stopCamera();
+        // Send for background processing
         console.log('📸 Photo captured, sending for background analysis...');
+        setImage(dataUrl);
         onImageCapture(dataUrl);
       }
     }
@@ -196,12 +218,16 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
         fileType: file.type
       });
       
+      // Stop camera immediately when file is selected
+      stopCamera();
+      
       const reader = new FileReader();
       reader.onload = (ev) => {
         if (ev.target?.result) {
             const dataUrl = ev.target.result as string;
             console.log('✅ Image loaded, sending for background analysis...');
-            // Send for background processing and close camera
+            // Set image state and send for background processing
+            setImage(dataUrl);
             onImageCapture(dataUrl);
         }
       };
@@ -209,6 +235,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
         console.error('❌ File read error:', error);
       };
       reader.readAsDataURL(file);
+      
+      // Reset file input so same file can be selected again
+      e.target.value = '';
     }
   };
 
@@ -438,14 +467,25 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
 
   const handleSaveLog = () => {
       if (!result || result.length === 0) return;
+      
+      // Stop camera before saving
+      stopCamera();
+      
       const newLog: MealLog = {
           id: Date.now().toString(),
           timestamp: Date.now(),
           imageUrl: image || undefined,
           items: result,
           totalMacros: calculateTotal(),
-          type: mealType
+          type: mealType,
+          note: mealNote.trim() || undefined,
       };
+      
+      // Reset state before saving
+      setResult(null);
+      setImage(null);
+      setMealNote('');
+      
       onSave(newLog);
   };
 
@@ -830,7 +870,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
        {/* Top Bar */}
        <div className="absolute top-0 left-0 w-full p-4 pt-[calc(10px+env(safe-area-inset-top))] flex justify-between items-center z-20">
             <button 
-              onClick={onCancel} 
+              onClick={() => {
+                stopCamera();
+                stopScanner();
+                onCancel();
+              }} 
               className="text-white w-10 h-10 flex items-center justify-center rounded-full transition-all duration-300 active:scale-95"
               style={{
                 background: 'rgba(255,255,255,0.1)',
