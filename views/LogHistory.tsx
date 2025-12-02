@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { MealLog } from '../types.ts';
+import PhotoGallery from './PhotoGallery.tsx';
 
 interface LogHistoryProps {
   logs: MealLog[];
@@ -149,6 +150,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [headerVisible, setHeaderVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const sortedLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp);
 
   useEffect(() => {
@@ -271,17 +273,32 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
         <div className={`pt-14 px-6 pb-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-title-1-lg font-bold text-white">History</h1>
-            {logs.length > 0 && (
-              <div 
-                className="px-3 py-1.5 rounded-full"
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                }}
-              >
-                <span className="text-caption font-bold text-gray-300">{filteredLogs.length} meals</span>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              {logs.some(log => log.imageUrl) && (
+                <button
+                  onClick={() => setShowPhotoGallery(true)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                  title="View Photo Gallery"
+                >
+                  <i className="fa-solid fa-images text-white"></i>
+                </button>
+              )}
+              {logs.length > 0 && (
+                <div 
+                  className="px-3 py-1.5 rounded-full"
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <span className="text-caption font-bold text-gray-300">{filteredLogs.length} meals</span>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Search bar */}
@@ -465,6 +482,14 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
           )}
         </div>
       </div>
+
+      {/* Photo Gallery Modal */}
+      {showPhotoGallery && (
+        <PhotoGallery 
+          logs={logs} 
+          onClose={() => setShowPhotoGallery(false)} 
+        />
+      )}
     </div>
   );
 };
@@ -632,6 +657,16 @@ const SwipeableMealCard: React.FC<{
                 </span>
               </div>
             </div>
+            
+            {/* Notes */}
+            {log.note && (
+              <div className="mt-2 pt-2 border-t border-white/10">
+                <p className="text-caption text-gray-400 italic flex items-start">
+                  <i className="fa-solid fa-note-sticky mr-1.5 mt-0.5 text-xs text-purple-400"></i>
+                  <span>{log.note}</span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -33,6 +33,7 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [pendingAnalysis, setPendingAnalysis] = useState<PendingAnalysis | null>(null);
   const [viewTransition, setViewTransition] = useState<'entering' | 'entered' | 'exiting'>('entered');
+  const [savedMealToLoad, setSavedMealToLoad] = useState<savedMealsService.SavedMeal | null>(null);
 
   // Load from local storage on mount
   useEffect(() => {

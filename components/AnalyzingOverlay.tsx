@@ -28,6 +28,7 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
+  const [mealNote, setMealNote] = useState('');
   
   // Set default meal type based on time
   useEffect(() => {
@@ -93,6 +94,7 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
       items: result,
       totalMacros: totals,
       type: mealType,
+      note: mealNote.trim() || undefined,
     };
     
     onComplete(log);
@@ -318,6 +320,21 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                   </div>
                 </div>
               ))}
+              
+              {/* Notes Section */}
+              <div className="mt-4">
+                <label className="text-xs text-gray-500 font-bold uppercase block mb-2">
+                  <i className="fa-solid fa-note-sticky mr-1"></i>
+                  Notes
+                </label>
+                <textarea
+                  value={mealNote}
+                  onChange={(e) => setMealNote(e.target.value)}
+                  placeholder="How did this meal make you feel? Any observations?"
+                  className="w-full px-4 py-3 rounded-xl text-gray-900 bg-white border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none placeholder-gray-400 transition-all"
+                  rows={3}
+                />
+              </div>
             </div>
           )}
         </div>

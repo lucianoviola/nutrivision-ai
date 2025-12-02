@@ -30,6 +30,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
   const [showSaveMealDialog, setShowSaveMealDialog] = useState(false);
   const [savedMealName, setSavedMealName] = useState('');
   const [showSavedMeals, setShowSavedMeals] = useState(false);
+  const [mealNote, setMealNote] = useState('');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -691,6 +692,33 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                       >
                           <i className="fa-solid fa-bookmark"></i>
                       </button>
+                    </div>
+                    
+                    {/* Notes/Journal Section */}
+                    <div className="mt-4">
+                      <label className="text-xs text-gray-400 font-bold uppercase block mb-2 px-1">
+                        <i className="fa-solid fa-note-sticky mr-1"></i>
+                        Notes
+                      </label>
+                      <textarea
+                        value={mealNote}
+                        onChange={(e) => setMealNote(e.target.value)}
+                        placeholder="How did this meal make you feel? Any observations?"
+                        className="w-full px-4 py-3 rounded-xl text-white bg-transparent border border-white/20 focus:border-purple-500/50 outline-none resize-none placeholder-gray-600 transition-colors"
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          minHeight: '80px',
+                        }}
+                        rows={3}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'rgba(255,255,255,0.2)';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
                     </div>
                 </div>
             </div>

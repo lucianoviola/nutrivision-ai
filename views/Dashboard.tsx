@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import * as savedMealsService from '../services/savedMealsService.ts';
+import DeficiencyAlerts from '../components/DeficiencyAlerts.tsx';
 
 interface DashboardProps {
   logs: MealLog[];
@@ -376,6 +377,16 @@ const MealCard: React.FC<{ log: MealLog; index: number }> = ({ log, index }) => 
               F {Math.round(log.totalMacros.fat)}g
             </span>
           </div>
+          
+          {/* Notes */}
+          {log.note && (
+            <div className="mt-2 pt-2 border-t border-white/10">
+              <p className="text-caption text-gray-400 italic flex items-start">
+                <i className="fa-solid fa-note-sticky mr-1.5 mt-0.5 text-xs text-purple-400"></i>
+                <span>{log.note}</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -682,6 +693,9 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal }) => {
           <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
         </div>
         
+        {/* Deficiency Alerts */}
+        <DeficiencyAlerts logs={logs} />
+
         {/* Horizontal Macro Pills */}
         <div className="px-6 mt-4">
           <div className="flex flex-wrap gap-2 justify-center">

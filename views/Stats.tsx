@@ -339,8 +339,11 @@ const StatCard: React.FC<{
   );
 };
 
+type ViewMode = 'chart' | 'calendar';
+
 const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
   const [period, setPeriod] = useState<TimePeriod>('week');
+  const [viewMode, setViewMode] = useState<ViewMode>('chart');
   const [headerVisible, setHeaderVisible] = useState(false);
   
   useEffect(() => {
@@ -505,6 +508,46 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
             </button>
           </div>
         </div>
+
+        {/* View mode toggle */}
+        <div className="px-6 mb-6">
+          <div 
+            className="rounded-xl p-1 flex"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <button
+              onClick={() => setViewMode('chart')}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'chart'
+                  ? 'text-white'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+              style={viewMode === 'chart' ? {
+                background: 'rgba(255,255,255,0.1)',
+              } : {}}
+            >
+              <i className="fa-solid fa-chart-line mr-1.5"></i>
+              Charts
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'calendar'
+                  ? 'text-white'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+              style={viewMode === 'calendar' ? {
+                background: 'rgba(255,255,255,0.1)',
+              } : {}}
+            >
+              <i className="fa-solid fa-calendar-days mr-1.5"></i>
+              Calendar
+            </button>
+          </div>
+        </div>
         
         <div className="px-6 space-y-6">
           {/* Summary cards */}
@@ -545,18 +588,133 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               delay={300}
             />
           </div>
+
+          {/* Calendar View */}
+          {viewMode === 'calendar' && (
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
+                  <span>📅</span>
+                  <span>{period === 'week' ? 'This Week' : 'This Month'}</span>
+                </h3>
+              </div>
+              
+              <div 
+                className="rounded-2xl p-4"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                {period === 'week' ? (
+                  <div className="grid grid-cols-7 gap-2">
+                    {dailyData.map((day, index) => {
+                      const isToday = getDateString(day.date) === getDateString(new Date());
+                      const dayLogs = logs.filter(log => {
+                        const logDate = new Date(log.timestamp);
+                        logDate.setHours(0, 0, 0, 0);
+                        return logDate.toDateString() === day.date.toDateString();
+                      });
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={`rounded-xl p-2 transition-all ${
+                            isToday ? 'ring-2 ring-purple-500/50' : ''
+                          }`}
+                          style={{
+                            background: day.meals > 0 
+                              ? 'rgba(139, 92, 246, 0.15)' 
+                              : 'rgba(255,255,255,0.03)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                          }}
+                        >
+                          <div className="text-[10px] font-bold text-gray-400 mb-1 text-center">
+                            {getDayLabel(day.date, true)}
+                          </div>
+                          <div className="text-xs font-bold text-white text-center mb-1">
+                            {day.date.getDate()}
+                          </div>
+                          {day.meals > 0 && (
+                            <div className="space-y-1">
+                              <div className="text-[10px] font-bold text-white text-center">
+                                {Math.round(day.calories)} kcal
+                              </div>
+                              <div className="flex items-center justify-center space-x-0.5">
+                                {dayLogs.slice(0, 3).map((log, i) => (
+                                  <div
+                                    key={i}
+                                    className="w-1.5 h-1.5 rounded-full"
+                                    style={{
+                                      background: log.type === 'breakfast' ? '#fbbf24' :
+                                                  log.type === 'lunch' ? '#3b82f6' :
+                                                  log.type === 'dinner' ? '#8b5cf6' : '#a78bfa',
+                                    }}
+                                  />
+                                ))}
+                                {dayLogs.length > 3 && (
+                                  <span className="text-[8px] text-gray-400">+{dayLogs.length - 3}</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {dailyData.map((day, index) => {
+                      const isToday = getDateString(day.date) === getDateString(new Date());
+                      const dayLogs = logs.filter(log => {
+                        const logDate = new Date(log.timestamp);
+                        logDate.setHours(0, 0, 0, 0);
+                        return logDate.toDateString() === day.date.toDateString();
+                      });
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={`aspect-square rounded-lg p-1 flex flex-col items-center justify-center transition-all ${
+                            isToday ? 'ring-1 ring-purple-500/50' : ''
+                          }`}
+                          style={{
+                            background: day.meals > 0 
+                              ? `rgba(139, 92, 246, ${0.1 + Math.min(day.meals / 5, 1) * 0.15})` 
+                              : 'rgba(255,255,255,0.02)',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                          }}
+                          title={`${day.date.toLocaleDateString()}: ${day.meals} meal${day.meals !== 1 ? 's' : ''}, ${Math.round(day.calories)} kcal`}
+                        >
+                          <div className="text-[9px] font-bold text-gray-400">
+                            {day.date.getDate()}
+                          </div>
+                          {day.meals > 0 && (
+                            <div className="text-[8px] font-bold text-white mt-0.5">
+                              {day.meals}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* Calorie chart */}
-          <div>
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
-                <span>📊</span>
-                <span>Daily Calories</span>
-              </h3>
-              <span className="text-xs text-gray-500">
-                Goal: {settings.dailyCalorieGoal} kcal
-              </span>
-            </div>
+          {viewMode === 'chart' && (
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
+                  <span>📊</span>
+                  <span>Daily Calories</span>
+                </h3>
+                <span className="text-xs text-gray-500">
+                  Goal: {settings.dailyCalorieGoal} kcal
+                </span>
+              </div>
             
             <div 
               className="rounded-2xl p-4"
@@ -622,9 +780,11 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               )}
             </div>
           </div>
-          
+          )}
+
           {/* Macro trends */}
-          <div>
+          {viewMode === 'chart' && (
+            <div>
             <div className="flex items-center mb-3 px-1">
               <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
                 <span>📈</span>
@@ -656,7 +816,8 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               />
             </div>
           </div>
-          
+          )}
+
           {/* Empty state with personality */}
           {summaryStats.totalMeals === 0 && (
             <div className="text-center py-8">
