@@ -19,7 +19,10 @@ export interface MealLog {
   totalMacros: Macros;
   type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   note?: string;
+  savedMealId?: string; // Reference to saved meal template if this was created from one
 }
+
+export type AIProvider = 'gemini' | 'openai';
 
 export interface UserSettings {
   dailyCalorieGoal: number;
@@ -27,11 +30,13 @@ export interface UserSettings {
   dailyCarbGoal: number;
   dailyFatGoal: number;
   appleHealthConnected: boolean;
+  aiProvider: AIProvider;
 }
 
 export enum AppView {
   DASHBOARD = 'DASHBOARD',
   CAMERA = 'CAMERA',
   HISTORY = 'HISTORY',
+  STATS = 'STATS',
   SETTINGS = 'SETTINGS',
 }

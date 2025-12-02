@@ -5,7 +5,17 @@ import Dashboard from './views/Dashboard.tsx';
 import CameraCapture from './views/CameraCapture.tsx';
 import Settings from './views/Settings.tsx';
 import LogHistory from './views/LogHistory.tsx';
+import Stats from './views/Stats.tsx';
+import AnalyzingOverlay from './components/AnalyzingOverlay.tsx';
 import { healthService } from './services/healthService.ts';
+import * as savedMealsService from './services/savedMealsService.ts';
+
+// Type for pending analysis
+interface PendingAnalysis {
+  id: string;
+  imageData: string;
+  timestamp: number;
+}
 
 // Default Settings
 const DEFAULT_SETTINGS: UserSettings = {
@@ -14,12 +24,15 @@ const DEFAULT_SETTINGS: UserSettings = {
   dailyCarbGoal: 200,
   dailyFatGoal: 65,
   appleHealthConnected: false,
+  aiProvider: 'gemini',
 };
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+  const [pendingAnalysis, setPendingAnalysis] = useState<PendingAnalysis | null>(null);
+  const [viewTransition, setViewTransition] = useState<'entering' | 'entered' | 'exiting'>('entered');
 
   // Load from local storage on mount
   useEffect(() => {
@@ -28,15 +41,16 @@ const App: React.FC = () => {
     if (savedLogs) setLogs(JSON.parse(savedLogs));
     if (savedSettings) setSettings(JSON.parse(savedSettings));
 
-    // Check for API key
-    const apiKey = localStorage.getItem('nutrivision_api_key') || (typeof process !== 'undefined' ? process.env.API_KEY : '');
-    if (!apiKey) {
-        // If no key found, redirect to settings to input it
-        setCurrentView(AppView.SETTINGS);
-        // Delay alert slightly to allow render
-        setTimeout(() => {
-            alert("Welcome! Please enter your Gemini API Key in the settings to start using the AI features.");
-        }, 500);
+    // Check for API key (either Gemini or OpenAI)
+    const geminiKey = localStorage.getItem('nutrivision_api_key');
+    const openaiKey = localStorage.getItem('nutrivision_openai_api_key');
+    const hasEnvKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
+    
+    if (!geminiKey && !openaiKey && !hasEnvKey) {
+      setCurrentView(AppView.SETTINGS);
+      setTimeout(() => {
+        alert("Welcome! Please enter your AI API Key (Gemini or OpenAI) in the settings to start using the AI features.");
+      }, 500);
     }
   }, []);
 
@@ -49,12 +63,40 @@ const App: React.FC = () => {
     localStorage.setItem('nutrivision_settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Handle when user captures an image - starts background analysis
+  const handleImageCapture = (imageData: string) => {
+    const analysis: PendingAnalysis = {
+      id: Date.now().toString(),
+      imageData,
+      timestamp: Date.now(),
+    };
+    setPendingAnalysis(analysis);
+    setCurrentView(AppView.DASHBOARD); // Return to dashboard while analyzing
+  };
+
+  // Handle when analysis is complete and user saves
+  const handleAnalysisComplete = async (log: MealLog) => {
+    setLogs(prev => [log, ...prev]);
+    
+    // Sync to HealthKit if enabled
+    if (settings.appleHealthConnected) {
+      await healthService.saveLog(log);
+    }
+    
+    setPendingAnalysis(null);
+  };
+
+  // Handle dismissing the analysis (cancel)
+  const handleDismissAnalysis = () => {
+    setPendingAnalysis(null);
+  };
+
+  // Legacy save handler for manual entry or search results
   const handleSaveLog = async (log: MealLog) => {
     setLogs(prev => [log, ...prev]);
     
-    // Sync to HealthKit if enabled and available
     if (settings.appleHealthConnected) {
-       await healthService.saveLog(log);
+      await healthService.saveLog(log);
     }
     
     setCurrentView(AppView.DASHBOARD);
@@ -62,16 +104,39 @@ const App: React.FC = () => {
 
   const handleDeleteLog = (id: string) => {
     if (window.confirm("Are you sure you want to delete this log?")) {
-        setLogs(prev => prev.filter(l => l.id !== id));
+      setLogs(prev => prev.filter(l => l.id !== id));
     }
   };
+
+  // Handle view changes with transition
+  const handleViewChange = (view: AppView) => {
+    setViewTransition('exiting');
+    setTimeout(() => {
+      setCurrentView(view);
+      setViewTransition('entering');
+      setTimeout(() => setViewTransition('entered'), 300);
+    }, 150);
+  };
+
+  // Handle loading a saved meal from Dashboard
+  const handleLoadSavedMeal = (meal: savedMealsService.SavedMeal) => {
+    setSavedMealToLoad(meal);
+    setCurrentView(AppView.CAMERA);
+  };
+
+  useEffect(() => {
+    setViewTransition('entering');
+    setTimeout(() => setViewTransition('entered'), 300);
+  }, [currentView]);
 
   const renderView = () => {
     switch (currentView) {
       case AppView.DASHBOARD:
-        return <Dashboard logs={logs} settings={settings} />;
+        return <Dashboard logs={logs} settings={settings} onAddMeal={handleLoadSavedMeal} />;
       case AppView.HISTORY:
         return <LogHistory logs={logs} onDelete={handleDeleteLog} />;
+      case AppView.STATS:
+        return <Stats logs={logs} settings={settings} />;
       case AppView.SETTINGS:
         return <Settings settings={settings} logs={logs} onUpdateSettings={setSettings} />;
       default:
@@ -80,20 +145,44 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-ios-bg">
-      {renderView()}
+    <div className="flex flex-col h-full w-full bg-[#0a0a0f] overflow-hidden">
+      <div 
+        className={`flex-1 transition-all duration-300 overflow-hidden ${
+          viewTransition === 'entering' 
+            ? 'opacity-0 translate-x-4' 
+            : viewTransition === 'exiting'
+            ? 'opacity-0 -translate-x-4'
+            : 'opacity-100 translate-x-0'
+        }`}
+      >
+        {renderView()}
+      </div>
       
-      {/* Camera is a modal overlay, rendered conditionally */}
+      {/* Camera is a modal overlay */}
       {currentView === AppView.CAMERA && (
         <CameraCapture 
-            onSave={handleSaveLog} 
-            onCancel={() => setCurrentView(AppView.DASHBOARD)} 
+          onSave={handleSaveLog}
+          onImageCapture={handleImageCapture}
+          onCancel={() => {
+            setCurrentView(AppView.DASHBOARD);
+            setSavedMealToLoad(null);
+          }}
+          aiProvider={settings.aiProvider}
+          savedMealToLoad={savedMealToLoad}
         />
       )}
 
+      {/* Background analysis overlay */}
+      <AnalyzingOverlay
+        pendingAnalysis={pendingAnalysis}
+        aiProvider={settings.aiProvider}
+        onComplete={handleAnalysisComplete}
+        onDismiss={handleDismissAnalysis}
+      />
+
       {/* Tab bar is hidden if camera is active */}
       {currentView !== AppView.CAMERA && (
-        <TabBar currentView={currentView} onChangeView={setCurrentView} />
+        <TabBar currentView={currentView} onChangeView={handleViewChange} />
       )}
     </div>
   );

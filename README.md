@@ -14,7 +14,32 @@ View your app in AI Studio: https://ai.studio/apps/drive/1lVT7EmWA8m34qmcKvxt7A-
 
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+   ```bash
+   npm install
+   ```
+
+2. Set up environment variables (optional):
+   ```bash
+   cp .env.example .env.local
+   ```
+   Then edit `.env.local` and add your API keys (you can use either or both):
+   ```
+   VITE_GEMINI_API_KEY=your_gemini_key_here
+   VITE_OPENAI_API_KEY=your_openai_key_here
+   ```
+   Get your API keys from:
+   - Gemini: https://aistudio.google.com/apikey
+   - OpenAI: https://platform.openai.com/api-keys
+   
+   **Note:** You can also set API keys and choose your AI provider in the app's Settings UI after launching.
+
 3. Run the app:
-   `npm run dev`
+   ```bash
+   npm run dev
+   ```
+
+4. Open http://localhost:5173 in your browser
+
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions to Vercel, Netlify, Cloudflare Pages, or Firebase.

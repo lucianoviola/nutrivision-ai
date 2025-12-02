@@ -98,10 +98,69 @@ After deployment, users can:
 3. App will work like a native app!
 
 ### Environment Variables
-If you need to hide your Gemini API key:
-- **Vercel**: Project Settings → Environment Variables
-- **Netlify**: Site Settings → Environment Variables
-- Access in code: `import.meta.env.VITE_GEMINI_API_KEY`
+
+#### Setting Up Environment Variables
+
+**Important:** The app supports API keys in two ways:
+1. **User-entered** (via Settings UI) - stored in browser localStorage
+2. **Environment variable** (for default/pre-filled key) - set during deployment
+
+#### For Local Development:
+
+1. Create a `.env.local` file in the project root:
+   ```bash
+   # .env.local
+   VITE_GEMINI_API_KEY=your_api_key_here
+   ```
+
+2. Get your API key from: https://aistudio.google.com/apikey
+
+3. Restart the dev server: `npm run dev`
+
+**Note:** Vite requires the `VITE_` prefix for client-side environment variables.
+
+#### For Vercel Deployment:
+
+1. Go to your project on [vercel.com](https://vercel.com)
+2. Click **Settings** → **Environment Variables**
+3. Add environment variables (you can use one or both):
+   - **Name:** `VITE_GEMINI_API_KEY`
+     - **Value:** Your Gemini API key
+     - **Environment:** Production, Preview, Development (select all)
+   - **Name:** `VITE_OPENAI_API_KEY` (optional)
+     - **Value:** Your OpenAI API key
+     - **Environment:** Production, Preview, Development (select all)
+4. Click **Save**
+5. Redeploy your app (or it will auto-deploy on next push)
+
+**Note:** Users can also set their API keys in the app's Settings UI, or you can set a default provider via environment variables.
+
+#### For Netlify Deployment:
+
+1. Go to your site on [netlify.com](https://netlify.com)
+2. Click **Site Settings** → **Environment Variables**
+3. Click **Add a variable**:
+   - **Key:** `VITE_GEMINI_API_KEY`
+   - **Value:** Your Gemini API key
+   - **Scopes:** All scopes (or specific ones)
+4. Click **Save**
+5. Trigger a new deploy
+
+#### For Cloudflare Pages:
+
+1. Go to your project on [pages.cloudflare.com](https://pages.cloudflare.com)
+2. Click **Settings** → **Environment Variables**
+3. Add variable:
+   - **Variable name:** `VITE_GEMINI_API_KEY`
+   - **Value:** Your Gemini API key
+4. Save and redeploy
+
+#### Security Notes:
+
+- ✅ Environment variables with `VITE_` prefix are exposed to the client (this is expected for API keys used in the browser)
+- ✅ Users can still override by entering their own key in Settings
+- ✅ Never commit `.env.local` to git (already in `.gitignore`)
+- ✅ The app works without env vars - users can enter their key in the Settings UI
 
 ---
 

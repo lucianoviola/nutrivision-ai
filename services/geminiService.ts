@@ -2,14 +2,24 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { FoodItem } from "../types.ts";
 
 // Helper to get key from multiple sources (Env or LocalStorage)
+// Priority: localStorage > Vite env var > process.env (for Node.js compatibility)
 const getApiKey = () => {
+  // 1. Check localStorage (user-set in Settings UI)
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('nutrivision_api_key');
     if (stored) return stored;
   }
-  if (typeof process !== 'undefined' && process.env.API_KEY) {
-    return process.env.API_KEY;
+  
+  // 2. Check Vite environment variable (VITE_ prefix required for client-side access)
+  if (import.meta.env.VITE_GEMINI_API_KEY) {
+    return import.meta.env.VITE_GEMINI_API_KEY;
   }
+  
+  // 3. Fallback to process.env for Node.js/server-side compatibility
+  if (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) {
+    return process.env.GEMINI_API_KEY;
+  }
+  
   return '';
 };
 
@@ -52,9 +62,17 @@ const foodAnalysisSchema = {
 };
 
 export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]> => {
+  console.log('🔑 Getting Gemini API instance...');
   const ai = getAiInstance();
+  // Check if API key exists (without exposing it)
+  const hasKey = typeof window !== 'undefined' 
+    ? !!localStorage.getItem('nutrivision_api_key') || !!import.meta.env.VITE_GEMINI_API_KEY
+    : true;
+  console.log('✅ API instance created', { hasKey });
 
+  const startTime = Date.now();
   try {
+    console.log('📡 Sending request to Gemini API (gemini-3-pro-preview)...');
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview", // Using Gemini 3 Pro for advanced reasoning
       contents: {
@@ -66,44 +84,95 @@ export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]>
             },
           },
           {
-            text: "Analyze this image. If it contains food, identify each item, estimate the portion size, and calculate the nutritional values. If it is a barcode, read the barcode and identify the product associated with it and its nutritional values. Return a JSON object."
+            text: "Analyze this image. If it contains food, identify each item, estimate the portion size, and calculate the nutritional values. If it is a barcode, read the barcode and identify the product associated with it and its nutritional values. Return a JSON object with the structure: { \"items\": [{\"name\": string, \"servingSize\": string, \"macros\": {\"calories\": number, \"protein\": number, \"carbs\": number, \"fat\": number}}] }"
           }
         ],
       },
       config: {
         responseMimeType: "application/json",
         responseSchema: foodAnalysisSchema,
-        thinkingConfig: { thinkingBudget: 1024 } // Utilizing thinking for better accuracy on complex plates
+        thinkingConfig: { thinkingBudget: 1024 }, // Utilizing thinking for better accuracy on complex plates
       },
     });
+    
+    const apiDuration = Date.now() - startTime;
+    console.log(`⏱️ Gemini API responded in ${(apiDuration / 1000).toFixed(2)}s`);
 
     const jsonText = response.text || "{}";
+    console.log('📥 Raw response received:', { 
+      responseLength: jsonText.length,
+      preview: jsonText.substring(0, 200) + (jsonText.length > 200 ? '...' : '')
+    });
+    
     const data = JSON.parse(jsonText);
-    return data.items || [];
-  } catch (error) {
+    console.log('📦 Parsed JSON data:', data);
+    
+    if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+      console.warn('⚠️ No items found in response:', data);
+      throw new Error("No food items detected in image");
+    }
+    
+    console.log(`✅ Successfully extracted ${data.items.length} food item(s)`);
+    return data.items;
+  } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
+    
+    // Handle specific API errors
+    if (error?.status === 503 || error?.code === 503 || error?.message?.includes("overloaded") || error?.error?.message?.includes("overloaded")) {
+      throw new Error("The Gemini model is currently overloaded. Please try again in a few moments.");
+    }
+    if (error?.status === 401 || error?.code === 401) {
+      throw new Error("Invalid API key. Please check your Gemini API key in Settings.");
+    }
+    if (error?.status === 429 || error?.code === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    if (error?.message?.includes("API_KEY_MISSING")) {
+      throw new Error("API_KEY_MISSING");
+    }
+    
+    // Re-throw with more context
+    if (error?.message) {
+      throw new Error(error.message);
+    }
     throw error;
   }
 };
 
 export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => {
+  console.log('🔍 Gemini searchFoodDatabase called with:', query);
+  const startTime = Date.now();
+  
   const ai = getAiInstance();
+  console.log('✅ Gemini instance created');
 
   try {
+    console.log('📡 Sending search request to Gemini (gemini-3-pro-preview)...');
     // Request multiple options to give the user a choice
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `Search for food items matching "${query}". Provide 5 distinct common variations, brands, or serving sizes (e.g. cooked vs raw, different portions). Return them as a list of items.`,
+      contents: `Search for food items matching "${query}". Provide 5 distinct common variations, brands, or serving sizes (e.g. cooked vs raw, different portions). Return a JSON object with the structure: { "items": [{"name": string, "servingSize": string, "macros": {"calories": number, "protein": number, "carbs": number, "fat": number}}] }`,
       config: {
         responseMimeType: "application/json",
         responseSchema: foodAnalysisSchema,
       },
     });
 
+    const duration = Date.now() - startTime;
+    console.log(`⏱️ Gemini search responded in ${(duration / 1000).toFixed(2)}s`);
+
     const jsonText = response.text || "{}";
+    console.log('📥 Search response received:', {
+      responseLength: jsonText.length,
+      preview: jsonText.substring(0, 200)
+    });
+    
     const data = JSON.parse(jsonText);
+    console.log(`✅ Found ${data.items?.length || 0} food items`);
     return data.items || [];
-  } catch (error) {
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    console.error(`❌ Gemini Search Error after ${(duration / 1000).toFixed(2)}s:`, error);
     console.error("Gemini Search Error:", error);
     throw error;
   }
