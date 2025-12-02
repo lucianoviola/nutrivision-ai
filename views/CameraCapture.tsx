@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { FoodItem, MealLog, Macros } from '../types';
 import { analyzeFoodImage, searchFoodDatabase, getNutritionalInfoFromBarcode } from '../services/geminiService';
@@ -285,7 +286,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onCancel }) => {
                 <button onClick={handleSaveLog} className="text-ios-blue font-bold px-2">Save</button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-ios-bg pb-[calc(140px+env(safe-area-inset-bottom))]">
+            <div className="flex-1 overflow-y-auto p-4 bg-ios-bg pb-[calc(180px+env(safe-area-inset-bottom))]">
                  <div className="bg-white rounded-xl p-1.5 flex mb-4 shadow-sm ring-1 ring-gray-100">
                     {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map(t => (
                         <button 

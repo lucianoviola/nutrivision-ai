@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppView, MealLog, UserSettings } from './types';
 import TabBar from './components/TabBar';
@@ -5,6 +6,7 @@ import Dashboard from './views/Dashboard';
 import CameraCapture from './views/CameraCapture';
 import Settings from './views/Settings';
 import LogHistory from './views/LogHistory';
+import { healthService } from './services/healthService';
 
 // Default Settings
 const DEFAULT_SETTINGS: UserSettings = {
@@ -48,8 +50,14 @@ const App: React.FC = () => {
     localStorage.setItem('nutrivision_settings', JSON.stringify(settings));
   }, [settings]);
 
-  const handleSaveLog = (log: MealLog) => {
+  const handleSaveLog = async (log: MealLog) => {
     setLogs(prev => [log, ...prev]);
+    
+    // Sync to HealthKit if enabled and available
+    if (settings.appleHealthConnected) {
+       await healthService.saveLog(log);
+    }
+    
     setCurrentView(AppView.DASHBOARD);
   };
 

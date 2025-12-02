@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { UserSettings, MealLog } from '../types';
+import { healthService } from '../services/healthService';
 
 interface SettingsProps {
   settings: UserSettings;
@@ -11,10 +13,12 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
   const [showToast, setShowToast] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
+  const [isNativeApp, setIsNativeApp] = useState(false);
 
   useEffect(() => {
     const key = localStorage.getItem('nutrivision_api_key') || '';
     setApiKey(key);
+    setIsNativeApp(healthService.isAvailable());
   }, []);
 
   const handleSaveKey = () => {
@@ -50,12 +54,24 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
     document.body.removeChild(link);
   };
 
-  const handleAppleHealth = () => {
-    // Simulate connection
-    onUpdateSettings({ ...settings, appleHealthConnected: !settings.appleHealthConnected });
-    if (!settings.appleHealthConnected) {
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+  const handleAppleHealth = async () => {
+    if (!isNativeApp) {
+        alert("To sync with Apple Health, this app must be installed as a Native iOS App via Xcode/Capacitor. \n\nOn the web version, please use the 'Export CSV' or 'Copy to Clipboard' features.");
+        return;
+    }
+
+    const newStatus = !settings.appleHealthConnected;
+    if (newStatus) {
+        const granted = await healthService.requestPermissions();
+        if (granted) {
+            onUpdateSettings({ ...settings, appleHealthConnected: true });
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        } else {
+            alert("Permission not granted via iOS.");
+        }
+    } else {
+        onUpdateSettings({ ...settings, appleHealthConnected: false });
     }
   };
 
@@ -135,12 +151,15 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                     </div>
                  )}
             </div>
-             <button onClick={handleAppleHealth} className="w-full p-4 flex items-center justify-between active:bg-gray-50">
+             <button onClick={handleAppleHealth} className="w-full p-4 flex items-center justify-between active:bg-gray-50 group">
                 <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white transition-colors ${isNativeApp ? 'bg-red-500' : 'bg-gray-300'}`}>
                         <i className="fa-solid fa-heart"></i>
                     </div>
-                    <span className="font-medium text-gray-900">Apple Health</span>
+                    <div className="text-left">
+                        <span className="font-medium text-gray-900 block">Apple Health</span>
+                        {!isNativeApp && <span className="text-[10px] text-gray-400">Native App Required</span>}
+                    </div>
                 </div>
                 <div className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${settings.appleHealthConnected ? 'bg-green-500' : 'bg-gray-200'}`}>
                     <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${settings.appleHealthConnected ? 'translate-x-5' : 'translate-x-0'}`}></div>

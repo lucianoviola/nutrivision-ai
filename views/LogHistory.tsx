@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { MealLog } from '../types';
 
 interface LogHistoryProps {
@@ -7,10 +8,19 @@ interface LogHistoryProps {
 }
 
 const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const sortedLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp);
 
   const formatDate = (ts: number) => {
     return new Date(ts).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const handleCopy = (log: MealLog) => {
+    const text = `${log.type.toUpperCase()} - ${log.items.map(i => i.name).join(', ')} | ${Math.round(log.totalMacros.calories)} kcal (P:${Math.round(log.totalMacros.protein)} C:${Math.round(log.totalMacros.carbs)} F:${Math.round(log.totalMacros.fat)})`;
+    navigator.clipboard.writeText(text).then(() => {
+        setCopiedId(log.id);
+        setTimeout(() => setCopiedId(null), 2000);
+    });
   };
 
   return (
@@ -29,9 +39,14 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
                     <div key={log.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative group">
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">{formatDate(log.timestamp)} • {log.type}</span>
-                            <button onClick={() => onDelete(log.id)} className="text-gray-300 hover:text-red-500">
-                                <i className="fa-solid fa-trash"></i>
-                            </button>
+                            <div className="flex space-x-2">
+                                <button onClick={() => handleCopy(log)} className={`${copiedId === log.id ? 'text-green-500' : 'text-gray-300 hover:text-ios-blue'}`}>
+                                    <i className={`fa-solid ${copiedId === log.id ? 'fa-check' : 'fa-copy'}`}></i>
+                                </button>
+                                <button onClick={() => onDelete(log.id)} className="text-gray-300 hover:text-red-500">
+                                    <i className="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                         <div className="flex items-center">
                             <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
