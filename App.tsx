@@ -7,6 +7,7 @@ import Settings from './views/Settings.tsx';
 import LogHistory from './views/LogHistory.tsx';
 import Stats from './views/Stats.tsx';
 import AnalyzingOverlay from './components/AnalyzingOverlay.tsx';
+import AuthGate from './components/AuthGate.tsx';
 import { healthService } from './services/healthService.ts';
 import * as savedMealsService from './services/savedMealsService.ts';
 
@@ -145,46 +146,48 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0a0a0f] overflow-hidden">
-      <div 
-        className={`flex-1 transition-all duration-300 overflow-hidden ${
-          viewTransition === 'entering' 
-            ? 'opacity-0 translate-x-4' 
-            : viewTransition === 'exiting'
-            ? 'opacity-0 -translate-x-4'
-            : 'opacity-100 translate-x-0'
-        }`}
-      >
-        {renderView()}
-      </div>
-      
-      {/* Camera is a modal overlay */}
-      {currentView === AppView.CAMERA && (
-        <CameraCapture 
-          onSave={handleSaveLog}
-          onImageCapture={handleImageCapture}
-          onCancel={() => {
-            setCurrentView(AppView.DASHBOARD);
-            setSavedMealToLoad(null);
-          }}
+    <AuthGate>
+      <div className="flex flex-col h-full w-full bg-[#0a0a0f] overflow-hidden">
+        <div 
+          className={`flex-1 transition-all duration-300 overflow-hidden ${
+            viewTransition === 'entering' 
+              ? 'opacity-0 translate-x-4' 
+              : viewTransition === 'exiting'
+              ? 'opacity-0 -translate-x-4'
+              : 'opacity-100 translate-x-0'
+          }`}
+        >
+          {renderView()}
+        </div>
+        
+        {/* Camera is a modal overlay */}
+        {currentView === AppView.CAMERA && (
+          <CameraCapture 
+            onSave={handleSaveLog}
+            onImageCapture={handleImageCapture}
+            onCancel={() => {
+              setCurrentView(AppView.DASHBOARD);
+              setSavedMealToLoad(null);
+            }}
+            aiProvider={settings.aiProvider}
+            savedMealToLoad={savedMealToLoad}
+          />
+        )}
+
+        {/* Background analysis overlay */}
+        <AnalyzingOverlay
+          pendingAnalysis={pendingAnalysis}
           aiProvider={settings.aiProvider}
-          savedMealToLoad={savedMealToLoad}
+          onComplete={handleAnalysisComplete}
+          onDismiss={handleDismissAnalysis}
         />
-      )}
 
-      {/* Background analysis overlay */}
-      <AnalyzingOverlay
-        pendingAnalysis={pendingAnalysis}
-        aiProvider={settings.aiProvider}
-        onComplete={handleAnalysisComplete}
-        onDismiss={handleDismissAnalysis}
-      />
-
-      {/* Tab bar is hidden if camera is active */}
-      {currentView !== AppView.CAMERA && (
-        <TabBar currentView={currentView} onChangeView={handleViewChange} />
-      )}
-    </div>
+        {/* Tab bar is hidden if camera is active */}
+        {currentView !== AppView.CAMERA && (
+          <TabBar currentView={currentView} onChangeView={handleViewChange} />
+        )}
+      </div>
+    </AuthGate>
   );
 };
 
