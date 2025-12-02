@@ -132,7 +132,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.DASHBOARD:
-        return <Dashboard logs={logs} settings={settings} onAddMeal={handleLoadSavedMeal} onDeleteLog={handleDeleteLog} />;
+        return <Dashboard logs={logs} settings={settings} onAddMeal={() => {/* Navigate to camera */}} onDeleteLog={handleDeleteLog} />;
       case AppView.HISTORY:
         return <LogHistory logs={logs} onDelete={handleDeleteLog} />;
       case AppView.STATS:

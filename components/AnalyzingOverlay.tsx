@@ -25,10 +25,14 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
 }) => {
   const [status, setStatus] = useState<AnalysisStatus>('analyzing');
   const [result, setResult] = useState<FoodItem[] | null>(null);
+  const [editableItems, setEditableItems] = useState<FoodItem[]>([]);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
   const [mealNote, setMealNote] = useState('');
+  const [correctionText, setCorrectionText] = useState('');
+  const [isCorrecting, setIsCorrecting] = useState(false);
   
   // Set default meal type based on time
   useEffect(() => {
@@ -43,6 +47,8 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
   useEffect(() => {
     if (!pendingAnalysis) return;
     
+    let isCancelled = false;
+    
     const analyze = async () => {
       setStatus('analyzing');
       setResult(null);
@@ -53,29 +59,44 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
         console.log('🔄 Background analysis started...');
         const items = await aiService.analyzeFoodImage(base64, aiProvider);
         
+        // Check if component was unmounted or analysis was cancelled
+        if (isCancelled) {
+          console.log('⚠️ Analysis cancelled, ignoring results');
+          return;
+        }
+        
         if (!items || items.length === 0) {
           throw new Error('No food items detected');
         }
         
         console.log('✅ Background analysis complete:', items);
         setResult(items);
+        setEditableItems([...items]); // Create editable copy
         setStatus('complete');
         setIsExpanded(true); // Auto-expand when complete
       } catch (e: any) {
-        console.error('❌ Background analysis error:', e);
-        setError(e?.message || 'Failed to analyze');
-        setStatus('error');
+        // Only set error if not cancelled
+        if (!isCancelled) {
+          console.error('❌ Background analysis error:', e);
+          setError(e?.message || 'Failed to analyze');
+          setStatus('error');
+        }
       }
     };
     
     analyze();
+    
+    // Cleanup function to mark as cancelled
+    return () => {
+      isCancelled = true;
+    };
   }, [pendingAnalysis, aiProvider]);
 
   if (!pendingAnalysis) return null;
 
   const calculateTotals = (): Macros => {
-    if (!result) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    return result.reduce((acc, item) => ({
+    if (editableItems.length === 0) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    return editableItems.reduce((acc, item) => ({
       calories: acc.calories + item.macros.calories,
       protein: acc.protein + item.macros.protein,
       carbs: acc.carbs + item.macros.carbs,
@@ -83,15 +104,142 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   };
 
+  const updateItem = (index: number, updates: Partial<FoodItem>) => {
+    const newItems = [...editableItems];
+    newItems[index] = { ...newItems[index], ...updates };
+    setEditableItems(newItems);
+  };
+
+  const updateItemMacro = (index: number, macro: keyof Macros, value: number) => {
+    const newItems = [...editableItems];
+    const item = newItems[index];
+    const oldCalories = item.macros.calories;
+    const newMacros = { ...item.macros, [macro]: Math.max(0, value) };
+    
+    // If calories changed, proportionally adjust macros (unless we're editing calories)
+    if (macro === 'calories' && oldCalories > 0) {
+      const ratio = newMacros.calories / oldCalories;
+      newMacros.protein = newMacros.protein * ratio;
+      newMacros.carbs = newMacros.carbs * ratio;
+      newMacros.fat = newMacros.fat * ratio;
+    }
+    
+    newItems[index] = { ...item, macros: newMacros };
+    setEditableItems(newItems);
+  };
+
+  const deleteItem = (index: number) => {
+    const newItems = editableItems.filter((_, i) => i !== index);
+    setEditableItems(newItems);
+    if (editingItemIndex === index) {
+      setEditingItemIndex(null);
+    }
+  };
+
+  // Parse serving size into quantity and unit
+  const parseServingSize = (servingSize: string): { quantity: number; unit: string } => {
+    // Match patterns like "100g", "1 cup", "6 oz", "2.5 tbsp", etc.
+    const match = servingSize.match(/^([\d.]+)\s*(.*)$/);
+    if (match) {
+      return {
+        quantity: parseFloat(match[1]) || 1,
+        unit: match[2].trim() || 'g'
+      };
+    }
+    // Fallback: try to extract number
+    const numMatch = servingSize.match(/([\d.]+)/);
+    if (numMatch) {
+      return {
+        quantity: parseFloat(numMatch[1]) || 1,
+        unit: servingSize.replace(numMatch[1], '').trim() || 'g'
+      };
+    }
+    return { quantity: 1, unit: 'g' };
+  };
+
+  // Format serving size from quantity and unit
+  const formatServingSize = (quantity: number, unit: string): string => {
+    if (!unit) unit = 'g';
+    return `${quantity}${unit.startsWith('cup') || unit.startsWith('piece') || unit.startsWith('slice') ? ' ' : ''}${unit}`;
+  };
+
+  const addNewItem = () => {
+    const newItem: FoodItem = {
+      name: 'New Food',
+      servingSize: '100g',
+      macros: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    };
+    setEditableItems([...editableItems, newItem]);
+    setEditingItemIndex(editableItems.length); // Edit the newly added item
+  };
+
+  const updateServingSize = (index: number, quantity: number, unit: string) => {
+    const item = editableItems[index];
+    const oldServing = parseServingSize(item.servingSize);
+    const newServingSize = formatServingSize(quantity, unit);
+    
+    // If unit changed, we can't proportionally adjust (different densities)
+    // If only quantity changed, adjust macros proportionally
+    if (oldServing.unit === unit && oldServing.quantity > 0) {
+      const ratio = quantity / oldServing.quantity;
+      const newItems = [...editableItems];
+      newItems[index] = {
+        ...item,
+        servingSize: newServingSize,
+        macros: {
+          calories: item.macros.calories * ratio,
+          protein: item.macros.protein * ratio,
+          carbs: item.macros.carbs * ratio,
+          fat: item.macros.fat * ratio,
+        }
+      };
+      setEditableItems(newItems);
+    } else {
+      // Unit changed - just update the serving size string, don't adjust macros
+      updateItem(index, { servingSize: newServingSize });
+    }
+  };
+
+  const handleCorrect = async () => {
+    if (!correctionText.trim() || !pendingAnalysis) return;
+    
+    setIsCorrecting(true);
+    setError(null);
+    
+    try {
+      const base64 = pendingAnalysis.imageData.split(',')[1];
+      const correctedItems = await aiService.correctFoodAnalysis(
+        base64,
+        editableItems,
+        correctionText.trim(),
+        aiProvider
+      );
+      
+      if (!correctedItems || correctedItems.length === 0) {
+        throw new Error('No food items detected after correction');
+      }
+      
+      setEditableItems(correctedItems);
+      setResult(correctedItems);
+      setCorrectionText('');
+      console.log('✅ Correction complete:', correctedItems);
+    } catch (e: any) {
+      console.error('❌ Correction error:', e);
+      setError(e?.message || 'Failed to correct analysis');
+    } finally {
+      setIsCorrecting(false);
+    }
+  };
+
   const handleSave = () => {
-    if (!result) return;
+    if (editableItems.length === 0) return;
     
     const totals = calculateTotals();
     const log: MealLog = {
       id: pendingAnalysis.id,
       timestamp: pendingAnalysis.timestamp,
       imageUrl: pendingAnalysis.imageData,
-      items: result,
+      items: editableItems,
       totalMacros: totals,
       type: mealType,
       note: mealNote.trim() || undefined,
@@ -117,6 +265,7 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
         }
         
         setResult(items);
+        setEditableItems([...items]); // Create editable copy
         setStatus('complete');
       } catch (e: any) {
         setError(e?.message || 'Failed to analyze');
@@ -224,8 +373,17 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
         >
           <button 
-            onClick={onDismiss}
+            onClick={() => {
+              // Only allow dismissal if analysis is complete or error
+              // If analyzing, just minimize instead
+              if (status === 'analyzing') {
+                setIsExpanded(false);
+              } else {
+                onDismiss();
+              }
+            }}
             className="text-gray-400 hover:text-white transition-colors active:scale-95"
+            title={status === 'analyzing' ? 'Minimize (analysis will continue)' : 'Close'}
           >
             <i className="fa-solid fa-times text-xl"></i>
           </button>
@@ -354,43 +512,240 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
             </div>
           )}
 
-          {status === 'complete' && result && (
+          {status === 'complete' && editableItems.length > 0 && (
             <div className="space-y-3">
-              {result.map((item, index) => (
+              {editableItems.map((item, index) => (
                 <div 
                   key={index} 
-                  className="rounded-xl p-4"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  className="rounded-xl p-4 transition-all"
+                  style={{ 
+                    background: editingItemIndex === index ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)', 
+                    border: editingItemIndex === index ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(255,255,255,0.08)' 
+                  }}
                 >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-bold text-white">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.servingSize}</p>
+                  {editingItemIndex === index ? (
+                    // Edit mode
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => updateItem(index, { name: e.target.value })}
+                          className="flex-1 px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
+                          placeholder="Food name"
+                        />
+                        <button
+                          onClick={() => setEditingItemIndex(null)}
+                          className="ml-2 px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-all active:scale-95"
+                        >
+                          <i className="fa-solid fa-check"></i>
+                        </button>
+                        <button
+                          onClick={() => deleteItem(index)}
+                          className="ml-2 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all active:scale-95"
+                        >
+                          <i className="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
+                          <div className="flex space-x-2">
+                            <input
+                              type="number"
+                              value={parseServingSize(item.servingSize).quantity}
+                              onChange={(e) => {
+                                const qty = parseFloat(e.target.value) || 0;
+                                const unit = parseServingSize(item.servingSize).unit;
+                                updateServingSize(index, qty, unit);
+                              }}
+                              step="0.1"
+                              min="0"
+                              className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                              placeholder="100"
+                            />
+                            <select
+                              value={parseServingSize(item.servingSize).unit}
+                              onChange={(e) => {
+                                const qty = parseServingSize(item.servingSize).quantity;
+                                updateServingSize(index, qty, e.target.value);
+                              }}
+                              className="px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                            >
+                              <option value="g">g</option>
+                              <option value="kg">kg</option>
+                              <option value="oz">oz</option>
+                              <option value="lb">lb</option>
+                              <option value="cup">cup</option>
+                              <option value="cups">cups</option>
+                              <option value="tbsp">tbsp</option>
+                              <option value="tsp">tsp</option>
+                              <option value="ml">ml</option>
+                              <option value="l">l</option>
+                              <option value="piece">piece</option>
+                              <option value="pieces">pieces</option>
+                              <option value="slice">slice</option>
+                              <option value="slices">slices</option>
+                              <option value="serving">serving</option>
+                              <option value="servings">servings</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Calories</label>
+                          <input
+                            type="number"
+                            value={Math.round(item.macros.calories)}
+                            onChange={(e) => updateItemMacro(index, 'calories', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Protein (g)</label>
+                          <input
+                            type="number"
+                            value={Math.round(item.macros.protein * 10) / 10}
+                            onChange={(e) => updateItemMacro(index, 'protein', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 rounded-lg text-green-400 text-sm bg-white/5 border border-green-500/30 focus:border-green-500 focus:outline-none"
+                            placeholder="0"
+                            step="0.1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Carbs (g)</label>
+                          <input
+                            type="number"
+                            value={Math.round(item.macros.carbs * 10) / 10}
+                            onChange={(e) => updateItemMacro(index, 'carbs', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 rounded-lg text-blue-400 text-sm bg-white/5 border border-blue-500/30 focus:border-blue-500 focus:outline-none"
+                            placeholder="0"
+                            step="0.1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">Fat (g)</label>
+                          <input
+                            type="number"
+                            value={Math.round(item.macros.fat * 10) / 10}
+                            onChange={(e) => updateItemMacro(index, 'fat', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-2 rounded-lg text-orange-400 text-sm bg-white/5 border border-orange-500/30 focus:border-orange-500 focus:outline-none"
+                            placeholder="0"
+                            step="0.1"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <span className="font-bold text-white">{Math.round(item.macros.calories)} kcal</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <span 
-                      className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-green-400"
-                      style={{ background: 'rgba(34, 197, 94, 0.15)' }}
-                    >
-                      P {Math.round(item.macros.protein)}g
-                    </span>
-                    <span 
-                      className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-blue-400"
-                      style={{ background: 'rgba(59, 130, 246, 0.15)' }}
-                    >
-                      C {Math.round(item.macros.carbs)}g
-                    </span>
-                    <span 
-                      className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-orange-400"
-                      style={{ background: 'rgba(249, 115, 22, 0.15)' }}
-                    >
-                      F {Math.round(item.macros.fat)}g
-                    </span>
-                  </div>
+                  ) : (
+                    // View mode
+                    <>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <p className="font-bold text-white">{item.name}</p>
+                          <p className="text-xs text-gray-500">{item.servingSize}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-white">{Math.round(item.macros.calories)} kcal</span>
+                          <button
+                            onClick={() => setEditingItemIndex(index)}
+                            className="px-2 py-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                          >
+                            <i className="fa-solid fa-pencil text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <span 
+                          className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-green-400"
+                          style={{ background: 'rgba(34, 197, 94, 0.15)' }}
+                        >
+                          P {Math.round(item.macros.protein)}g
+                        </span>
+                        <span 
+                          className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-blue-400"
+                          style={{ background: 'rgba(59, 130, 246, 0.15)' }}
+                        >
+                          C {Math.round(item.macros.carbs)}g
+                        </span>
+                        <span 
+                          className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-orange-400"
+                          style={{ background: 'rgba(249, 115, 22, 0.15)' }}
+                        >
+                          F {Math.round(item.macros.fat)}g
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
+              
+              {/* Add Item Button */}
+              <button
+                onClick={addNewItem}
+                className="w-full py-3 rounded-xl font-bold text-gray-400 hover:text-white transition-all active:scale-95 border-2 border-dashed border-white/20 hover:border-purple-500/50"
+                style={{ background: 'rgba(255,255,255,0.03)' }}
+              >
+                <i className="fa-solid fa-plus mr-2"></i>
+                Add Food Item
+              </button>
+              
+              {/* AI Correction Section */}
+              <div className="mt-4">
+                <label className="text-xs text-gray-400 font-bold uppercase block mb-2 px-1">
+                  <i className="fa-solid fa-wand-magic-sparkles mr-1 text-purple-400"></i>
+                  Ask AI to Correct
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={correctionText}
+                    onChange={(e) => setCorrectionText(e.target.value)}
+                    placeholder="e.g., 'this is actually rice, not pasta' or 'add butter to the toast'"
+                    className="flex-1 px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all"
+                    style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleCorrect();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleCorrect}
+                    disabled={!correctionText.trim() || isCorrecting}
+                    className="px-4 py-3 rounded-xl font-bold text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: isCorrecting 
+                        ? 'rgba(139, 92, 246, 0.5)' 
+                        : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    }}
+                  >
+                    {isCorrecting ? (
+                      <i className="fa-solid fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className="fa-solid fa-wand-magic-sparkles"></i>
+                    )}
+                  </button>
+                </div>
+                {error && (
+                  <p className="text-xs text-red-400 mt-2 px-1">{error}</p>
+                )}
+              </div>
               
               {/* Notes Section */}
               <div className="mt-4">

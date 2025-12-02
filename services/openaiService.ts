@@ -57,6 +57,67 @@ const foodAnalysisSchema = {
   required: ['items'],
 } as const;
 
+export const correctFoodAnalysis = async (
+  base64Image: string,
+  originalItems: FoodItem[],
+  correctionText: string
+): Promise<FoodItem[]> => {
+  console.log('🔧 Correcting food analysis with user feedback...');
+  const openai = getOpenAiInstance();
+
+  const originalItemsText = originalItems.map(item => 
+    `- ${item.name} (${item.servingSize}): ${item.macros.calories} kcal, P:${item.macros.protein}g C:${item.macros.carbs}g F:${item.macros.fat}g`
+  ).join('\n');
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5-mini-2025-08-07',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `I previously analyzed this food image and got these results:\n\n${originalItemsText}\n\nHowever, the user has provided this correction: "${correctionText}"\n\nPlease re-analyze the image taking into account the user's feedback. Correct any mistakes, add missing items, or adjust portions as needed. Return a JSON object with the corrected structure: { "items": [{"name": string, "servingSize": string, "macros": {"calories": number, "protein": number, "carbs": number, "fat": number}}] }`,
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
+              },
+            },
+          ],
+        },
+      ],
+      response_format: { type: 'json_object' },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No response from OpenAI');
+    }
+
+    const parsed = JSON.parse(content);
+    if (!parsed.items || !Array.isArray(parsed.items)) {
+      throw new Error('Invalid response format from OpenAI');
+    }
+
+    return parsed.items.map((item: any) => ({
+      name: item.name || 'Unknown',
+      servingSize: item.servingSize || 'Unknown',
+      macros: {
+        calories: item.macros?.calories || 0,
+        protein: item.macros?.protein || 0,
+        carbs: item.macros?.carbs || 0,
+        fat: item.macros?.fat || 0,
+      },
+    }));
+  } catch (error: any) {
+    console.error('❌ Error correcting food analysis:', error);
+    throw new Error(error?.message || 'Failed to correct food analysis');
+  }
+};
+
 export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]> => {
   console.log('🔑 Getting OpenAI API instance...');
   const openai = getOpenAiInstance();

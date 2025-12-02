@@ -1,12 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
-import * as savedMealsService from '../services/savedMealsService.ts';
 import MealDetailModal from '../components/MealDetailModal.tsx';
 
 interface DashboardProps {
   logs: MealLog[];
   settings: UserSettings;
-  onAddMeal?: (meal: savedMealsService.SavedMeal) => void; // Callback to load a saved meal
+  onAddMeal?: () => void; // Callback to navigate to camera
   onDeleteLog?: (id: string) => void;
 }
 
@@ -480,42 +479,6 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   }, [today]);
 
-  // Get saved meals for quick add
-  const savedMeals = useMemo(() => {
-    return savedMealsService.getMostUsedMeals(4);
-  }, [logs]); // Re-compute when logs change (meals might be used)
-
-  // Get frequent foods from history (last 30 days)
-  const frequentFoods = useMemo(() => {
-    const foodCounts: { [key: string]: { emoji: string; count: number } } = {};
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    
-    logs
-      .filter(log => log.timestamp > thirtyDaysAgo)
-      .forEach(log => {
-        log.items.forEach(item => {
-          const name = item.name.toLowerCase();
-          if (!foodCounts[name]) {
-            // Simple emoji mapping
-            const emojiMap: { [key: string]: string } = {
-              'egg': '🍳', 'chicken': '🍗', 'rice': '🍚', 'salad': '🥗',
-              'banana': '🍌', 'apple': '🍎', 'coffee': '☕', 'bread': '🍞',
-              'avocado': '🥑', 'yogurt': '🥛', 'oatmeal': '🥣', 'smoothie': '🥤',
-            };
-            const emoji = Object.keys(emojiMap).find(k => name.includes(k)) 
-              ? emojiMap[Object.keys(emojiMap).find(k => name.includes(k))!]
-              : '🍽️';
-            foodCounts[name] = { emoji, count: 0 };
-          }
-          foodCounts[name].count++;
-        });
-      });
-    
-    return Object.entries(foodCounts)
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 4)
-      .map(([name, data]) => ({ name, emoji: data.emoji }));
-  }, [logs]);
 
   useEffect(() => {
     const timer = setTimeout(() => setHeaderVisible(true), 100);

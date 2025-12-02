@@ -42,6 +42,23 @@ export const searchFoodDatabase = async (query: string, provider: AIProvider): P
   }
 };
 
+export const correctFoodAnalysis = async (
+  base64Image: string,
+  originalItems: FoodItem[],
+  correctionText: string,
+  provider: AIProvider
+): Promise<FoodItem[]> => {
+  console.log(`🔧 Correcting food analysis with ${provider === 'openai' ? 'OpenAI' : 'Gemini'}...`);
+  
+  // Currently only OpenAI supports correction
+  if (provider !== 'openai') {
+    throw new Error('Correction feature is only available with OpenAI provider');
+  }
+  
+  const serviceCall = openaiService.correctFoodAnalysis(base64Image, originalItems, correctionText);
+  return withTimeout(serviceCall, 60000, 'Correction timed out. Please try again.');
+};
+
 export const getNutritionalInfoFromBarcode = async (barcode: string, provider: AIProvider): Promise<FoodItem | null> => {
   // OpenFoodFacts is tried first regardless of provider
   // Then falls back to the selected AI provider
