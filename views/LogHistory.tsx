@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MealLog } from '../types.ts';
+import { MealLog, UserSettings } from '../types.ts';
 import PhotoGallery from './PhotoGallery.tsx';
 import MealDetailModal from '../components/MealDetailModal.tsx';
 
@@ -7,6 +7,7 @@ interface LogHistoryProps {
   logs: MealLog[];
   onDelete: (id: string) => void;
   onUpdateLog?: (meal: MealLog) => void;
+  settings?: UserSettings;
 }
 
 // Animated timeline empty state with personality
@@ -148,7 +149,7 @@ const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) =
   );
 };
 
-const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) => {
+const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, settings }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [headerVisible, setHeaderVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,26 +183,29 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) 
     return groups;
   }, [filteredLogs]);
 
-  // Generate heatmap data (last 30 days)
+  // Generate heatmap data (last 30 days) with calorie-based colors
   const heatmapData = useMemo(() => {
-    const data: { date: Date; count: number }[] = [];
+    const data: { date: Date; count: number; calories: number }[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const dailyGoal = settings?.dailyCalorieGoal || 2000;
     
     for (let i = 29; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toDateString();
-      const count = logs.filter(log => {
+      const dayLogs = logs.filter(log => {
         const logDate = new Date(log.timestamp);
         logDate.setHours(0, 0, 0, 0);
         return logDate.toDateString() === dateStr;
-      }).length;
-      data.push({ date, count });
+      });
+      const count = dayLogs.length;
+      const calories = dayLogs.reduce((sum, log) => sum + log.totalMacros.calories, 0);
+      data.push({ date, count, calories });
     }
     
     return data;
-  }, [logs]);
+  }, [logs, settings]);
 
   const formatDateHeader = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -252,8 +256,6 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) 
     }), { calories: 0, meals: 0 });
   }, [filteredLogs]);
 
-  const maxHeatmapCount = Math.max(...heatmapData.map(d => d.count), 1);
-
   return (
     <div className="h-full overflow-y-auto pb-28 relative">
       {/* Animated background */}
@@ -298,7 +300,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) 
                     border: '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  <span className="text-caption font-bold text-gray-300">{filteredLogs.length} meals</span>
+                  <span className="text-caption font-bold text-gray-300">{filteredLogs.length} {filteredLogs.length === 1 ? 'meal' : 'meals'}</span>
                 </div>
               )}
             </div>
@@ -338,39 +340,72 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) 
                 <div className="flex items-center space-x-2">
                   <span className="text-[10px] text-gray-600">Less</span>
                   <div className="flex space-x-1">
-                    {[0, 1, 2, 3, 4].map((level) => (
-                      <div
-                        key={level}
-                        className="w-2.5 h-2.5 rounded"
-                        style={{
-                          background: level === 0 
-                            ? 'rgba(255,255,255,0.05)'
-                            : `rgba(139, 92, 246, ${0.2 + level * 0.2})`,
-                        }}
-                      />
-                    ))}
+                    {[0, 1, 2, 3, 4].map((level) => {
+                      const dailyGoal = settings?.dailyCalorieGoal || 2000;
+                      let bgColor = 'rgba(255,255,255,0.05)'; // Gray for no data
+                      if (level === 0) {
+                        bgColor = 'rgba(255,255,255,0.05)';
+                      } else if (level <= 2) {
+                        // Green shades (under/on target)
+                        const intensity = (level / 2) * 0.4;
+                        bgColor = `rgba(34, 197, 94, ${0.2 + intensity})`;
+                      } else {
+                        // Orange/Red (over target)
+                        const intensity = ((level - 2) / 2) * 0.4;
+                        bgColor = `rgba(239, 68, 68, ${0.3 + intensity})`;
+                      }
+                      return (
+                        <div
+                          key={level}
+                          className="w-2.5 h-2.5 rounded"
+                          style={{ background: bgColor }}
+                        />
+                      );
+                    })}
                   </div>
                   <span className="text-[10px] text-gray-600">More</span>
                 </div>
               </div>
               <div className="flex space-x-1">
                 {heatmapData.map((day, index) => {
-                  const intensity = day.count > 0 ? Math.min(day.count / maxHeatmapCount, 1) : 0;
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
                   const isToday = day.date.toDateString() === today.toDateString();
+                  const dailyGoal = settings?.dailyCalorieGoal || 2000;
+                  
+                  // Color based on calories vs goal
+                  let backgroundColor = 'rgba(255,255,255,0.05)'; // Gray for no data
+                  let borderColor = 'transparent';
+                  
+                  if (day.calories > 0) {
+                    const percentage = (day.calories / dailyGoal) * 100;
+                    if (percentage <= 100) {
+                      // Green shades for on/under target
+                      const intensity = Math.min(percentage / 100, 1);
+                      backgroundColor = `rgba(34, 197, 94, ${0.2 + intensity * 0.4})`;
+                    } else {
+                      // Orange/Red for over target
+                      const overage = Math.min((percentage - 100) / 50, 1); // Cap at 150% for color intensity
+                      backgroundColor = `rgba(239, 68, 68, ${0.3 + overage * 0.4})`;
+                    }
+                  }
+                  
+                  if (isToday) {
+                    borderColor = 'rgba(139, 92, 246, 0.8)';
+                  }
                   
                   return (
                     <div
                       key={index}
                       className="flex-1 h-8 rounded transition-all duration-300 hover:scale-110 cursor-pointer relative group"
                       style={{
-                        background: day.count > 0
-                          ? `rgba(139, 92, 246, ${0.2 + intensity * 0.6})`
-                          : 'rgba(255,255,255,0.05)',
-                        border: isToday ? '1px solid rgba(139, 92, 246, 0.8)' : 'none',
+                        background: backgroundColor,
+                        border: borderColor !== 'transparent' ? `1px solid ${borderColor}` : 'none',
+                        animationDelay: `${index * 20}ms`,
+                        opacity: 0,
+                        animation: 'fadeIn 0.3s ease-out forwards',
                       }}
-                      title={`${day.date.toLocaleDateString()}: ${day.count} meal${day.count !== 1 ? 's' : ''}`}
+                      title={`${day.date.toLocaleDateString()}: ${day.count} ${day.count === 1 ? 'meal' : 'meals'}, ${Math.round(day.calories)} kcal`}
                     >
                       {day.count > 0 && (
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

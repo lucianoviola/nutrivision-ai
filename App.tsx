@@ -147,7 +147,7 @@ const App: React.FC = () => {
       case AppView.DASHBOARD:
         return <Dashboard logs={logs} settings={settings} onAddMeal={() => {/* Navigate to camera */}} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} />;
       case AppView.HISTORY:
-        return <LogHistory logs={logs} onDelete={handleDeleteLog} onUpdateLog={handleUpdateLog} />;
+        return <LogHistory logs={logs} onDelete={handleDeleteLog} onUpdateLog={handleUpdateLog} settings={settings} />;
       case AppView.STATS:
         return <Stats logs={logs} settings={settings} />;
       case AppView.SETTINGS:

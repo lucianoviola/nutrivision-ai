@@ -309,7 +309,7 @@ const StatCard: React.FC<{
   
   return (
     <div 
-      className={`rounded-2xl p-4 flex-1 transition-all duration-700 ${
+      className={`rounded-2xl p-4 flex-1 transition-all duration-700 cursor-pointer active:scale-[0.98] active:opacity-90 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
@@ -569,7 +569,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               gradient="linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.1))"
               label="On Target"
               value={`${summaryStats.goalAchievement}%`}
-              subtitle={`${summaryStats.daysLogged} days logged`}
+              subtitle={`${summaryStats.daysLogged} ${summaryStats.daysLogged === 1 ? 'day' : 'days'} logged`}
               delay={100}
             />
           </div>
