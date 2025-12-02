@@ -281,12 +281,9 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
   // Minimized floating indicator
   if (!isExpanded) {
     return (
-      <button
-        onClick={() => setIsExpanded(true)}
-        className="fixed bottom-28 left-4 right-4 z-50 animate-fade-in"
-      >
+      <div className="fixed bottom-28 left-4 right-4 z-50 animate-fade-in">
         <div 
-          className="flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl"
+          className="flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl relative"
           style={{
             background: status === 'analyzing' 
               ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(139, 92, 246, 0.95))'
@@ -302,6 +299,22 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               : '0 10px 40px rgba(34, 197, 94, 0.4)',
           }}
         >
+          {/* Close button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-all active:scale-95 z-10"
+            title="Dismiss"
+          >
+            <i className="fa-solid fa-times text-white text-xs"></i>
+          </button>
+          
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="flex items-center space-x-3 flex-1"
+          >
           {status === 'analyzing' && (
             <>
               <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/30">
@@ -352,8 +365,9 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               </div>
             </>
           )}
+          </button>
         </div>
-      </button>
+      </div>
     );
   }
 
@@ -372,22 +386,25 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           className="flex items-center justify-between p-4"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
         >
-          <button 
-            onClick={() => {
-              // Only allow dismissal if analysis is complete or error
-              // If analyzing, just minimize instead
-              if (status === 'analyzing') {
-                setIsExpanded(false);
-              } else {
-                onDismiss();
-              }
-            }}
-            className="text-gray-400 hover:text-white transition-colors active:scale-95"
-            title={status === 'analyzing' ? 'Minimize (analysis will continue)' : 'Close'}
-          >
-            <i className="fa-solid fa-times text-xl"></i>
-          </button>
-          <h3 className="font-bold text-white">Review Meal</h3>
+          <div className="flex items-center space-x-2">
+            {status === 'analyzing' && (
+              <button 
+                onClick={() => setIsExpanded(false)}
+                className="text-gray-400 hover:text-white transition-colors active:scale-95 p-1"
+                title="Minimize"
+              >
+                <i className="fa-solid fa-minus text-lg"></i>
+              </button>
+            )}
+            <button 
+              onClick={() => onDismiss()}
+              className="text-gray-400 hover:text-white transition-colors active:scale-95 p-1"
+              title="Close"
+            >
+              <i className="fa-solid fa-times text-xl"></i>
+            </button>
+          </div>
+          <h3 className="font-bold text-white flex-1 text-center">Review Meal</h3>
           <button 
             onClick={handleSave}
             disabled={status !== 'complete'}

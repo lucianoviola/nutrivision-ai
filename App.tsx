@@ -83,7 +83,9 @@ const App: React.FC = () => {
       await healthService.saveLog(log);
     }
     
+    // Clear pending analysis and ensure we're on dashboard
     setPendingAnalysis(null);
+    setCurrentView(AppView.DASHBOARD);
   };
 
   // Handle dismissing the analysis (cancel)
