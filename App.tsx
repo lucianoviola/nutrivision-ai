@@ -109,7 +109,16 @@ const App: React.FC = () => {
   };
 
   const handleUpdateLog = (updatedMeal: MealLog) => {
-    setLogs(prev => prev.map(log => log.id === updatedMeal.id ? updatedMeal : log));
+    setLogs(prev => {
+      const updated = prev.map(log => log.id === updatedMeal.id ? updatedMeal : log);
+      localStorage.setItem('nutrivision_logs', JSON.stringify(updated));
+      return updated;
+    });
+    
+    // Sync to HealthKit if enabled
+    if (settings.appleHealthConnected) {
+      healthService.saveLog(updatedMeal);
+    }
   };
 
   // Handle view changes with transition

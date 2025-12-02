@@ -500,6 +500,8 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) 
         meal={selectedMeal}
         onClose={() => setSelectedMeal(null)}
         onDelete={onDelete}
+        onUpdate={onUpdateLog}
+        aiProvider="openai"
       />
     </div>
   );
