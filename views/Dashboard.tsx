@@ -1,11 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import * as savedMealsService from '../services/savedMealsService.ts';
+import MealDetailModal from '../components/MealDetailModal.tsx';
 
 interface DashboardProps {
   logs: MealLog[];
   settings: UserSettings;
   onAddMeal?: (meal: savedMealsService.SavedMeal) => void; // Callback to load a saved meal
+  onDeleteLog?: (id: string) => void;
 }
 
 // Energized calorie ring with pulsing glow, particles, and rotation
@@ -256,39 +258,8 @@ const MacroPill: React.FC<{
   );
 };
 
-// Quick add button for frequent foods
-const QuickAddButton: React.FC<{ 
-  emoji: string; 
-  label: string; 
-  onClick: () => void;
-  delay: number;
-}> = ({ emoji, label, onClick, delay }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-  
-  return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-xl transition-all duration-300 active:scale-95 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}
-      style={{
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
-      <span className="text-2xl">{emoji}</span>
-      <span className="text-caption text-gray-400">{label}</span>
-    </button>
-  );
-};
-
 // Enhanced meal card with press animation
-const MealCard: React.FC<{ log: MealLog; index: number }> = ({ log, index }) => {
+const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> = ({ log, index, onClick }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   
@@ -325,6 +296,7 @@ const MealCard: React.FC<{ log: MealLog; index: number }> = ({ log, index }) => 
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255,255,255,0.08)',
       }}
+      onClick={onClick}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
@@ -485,8 +457,9 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal }) => {
+const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog }) => {
   const [headerVisible, setHeaderVisible] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealLog | null>(null);
   
   const today = useMemo(() => {
     const now = new Date();
@@ -722,46 +695,6 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal }) => {
           </div>
         </div>
         
-        {/* Quick Add Row - Saved Meals */}
-        {(savedMeals.length > 0 || frequentFoods.length > 0) && (
-          <div className="px-6 mt-6">
-            <p className="text-caption text-gray-500 mb-3 px-1">
-              {savedMeals.length > 0 ? 'Saved Meals' : 'Quick Add'}
-            </p>
-            <div className="flex space-x-2 overflow-x-auto pb-2 -mx-6 px-6">
-              {savedMeals.map((meal, idx) => (
-                <QuickAddButton
-                  key={meal.id}
-                  emoji={meal.emoji || '🍽️'}
-                  label={meal.name.length > 12 ? meal.name.substring(0, 12) + '...' : meal.name}
-                  onClick={() => {
-                    if (onAddMeal) {
-                      savedMealsService.markMealUsed(meal.id);
-                      onAddMeal(meal);
-                    }
-                  }}
-                  delay={350 + idx * 50}
-                />
-              ))}
-              {frequentFoods.length > 0 && savedMeals.length < 4 && frequentFoods.slice(0, 4 - savedMeals.length).map((food, idx) => (
-                <QuickAddButton
-                  key={food.name}
-                  emoji={food.emoji}
-                  label={food.name.split(' ')[0]}
-                  onClick={() => {/* TODO: Navigate to search with this food */}}
-                  delay={350 + savedMeals.length * 50 + idx * 50}
-                />
-              ))}
-              <QuickAddButton
-                emoji="+"
-                label="More"
-                onClick={() => {/* TODO: Navigate to camera/search */}}
-                delay={350 + (savedMeals.length + frequentFoods.length) * 50}
-              />
-            </div>
-          </div>
-        )}
-        
         {/* Today's Meals */}
         <div className="px-6 mt-6">
           <div className="flex items-center justify-between mb-4">
@@ -782,7 +715,12 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal }) => {
           ) : (
             <div className="space-y-3">
               {today.map((log, index) => (
-                <MealCard key={log.id} log={log} index={index} />
+                <MealCard 
+                  key={log.id} 
+                  log={log} 
+                  index={index} 
+                  onClick={() => setSelectedMeal(log)}
+                />
               ))}
             </div>
           )}
@@ -828,6 +766,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal }) => {
           </div>
         )}
       </div>
+
+      {/* Meal Detail Modal */}
+      <MealDetailModal
+        meal={selectedMeal}
+        onClose={() => setSelectedMeal(null)}
+        onDelete={onDeleteLog}
+      />
     </div>
   );
 };

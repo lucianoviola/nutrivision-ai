@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { MealLog } from '../types.ts';
 import PhotoGallery from './PhotoGallery.tsx';
+import MealDetailModal from '../components/MealDetailModal.tsx';
 
 interface LogHistoryProps {
   logs: MealLog[];
@@ -151,6 +152,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
   const [headerVisible, setHeaderVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealLog | null>(null);
   const sortedLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp);
 
   useEffect(() => {
@@ -469,6 +471,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
                           copiedId={copiedId}
                           onCopy={handleCopy}
                           onDelete={onDelete}
+                          onSelect={setSelectedMeal}
                           formatTime={formatTime}
                           getMealEmoji={getMealEmoji}
                           getMealGradient={getMealGradient}
@@ -490,6 +493,13 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
           onClose={() => setShowPhotoGallery(false)} 
         />
       )}
+
+      {/* Meal Detail Modal */}
+      <MealDetailModal
+        meal={selectedMeal}
+        onClose={() => setSelectedMeal(null)}
+        onDelete={onDelete}
+      />
     </div>
   );
 };
@@ -501,10 +511,11 @@ const SwipeableMealCard: React.FC<{
   copiedId: string | null;
   onCopy: (log: MealLog) => void;
   onDelete: (id: string) => void;
+  onSelect: (log: MealLog) => void;
   formatTime: (ts: number) => string;
   getMealEmoji: (type: string) => string;
   getMealGradient: (type: string) => string;
-}> = ({ log, index, copiedId, onCopy, onDelete, formatTime, getMealEmoji, getMealGradient }) => {
+}> = ({ log, index, copiedId, onCopy, onDelete, onSelect, formatTime, getMealEmoji, getMealGradient }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -573,7 +584,7 @@ const SwipeableMealCard: React.FC<{
       {/* Card */}
       <div 
         ref={cardRef}
-        className={`rounded-2xl p-4 transition-all duration-300 relative active:scale-[0.98] ${
+        className={`rounded-2xl p-4 transition-all duration-300 relative active:scale-[0.98] cursor-pointer ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         } ${isSwiping ? '' : 'hover:scale-[1.01]'}`}
         style={{
@@ -582,6 +593,13 @@ const SwipeableMealCard: React.FC<{
           backdropFilter: 'blur(10px)',
           transform: `translateX(${swipeOffset}px)`,
           touchAction: 'pan-y',
+        }}
+        onClick={() => {
+          if (swipeOffset === 0) {
+            onSelect(log);
+          } else {
+            setSwipeOffset(0);
+          }
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
