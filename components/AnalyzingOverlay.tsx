@@ -133,48 +133,73 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
   if (!isExpanded) {
     return (
       <button
-        onClick={() => status === 'complete' && setIsExpanded(true)}
-        className="fixed bottom-24 right-4 z-40 animate-fade-in"
+        onClick={() => setIsExpanded(true)}
+        className="fixed bottom-28 left-4 right-4 z-50 animate-fade-in"
       >
-        <div className={`flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-lg border ${
-          status === 'analyzing' 
-            ? 'bg-white border-gray-200' 
-            : status === 'error'
-            ? 'bg-red-50 border-red-200'
-            : 'bg-green-50 border-green-200'
-        }`}>
+        <div 
+          className="flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl"
+          style={{
+            background: status === 'analyzing' 
+              ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(139, 92, 246, 0.95))'
+              : status === 'error'
+              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95))'
+              : 'linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(16, 185, 129, 0.95))',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            boxShadow: status === 'analyzing'
+              ? '0 10px 40px rgba(99, 102, 241, 0.4)'
+              : status === 'error'
+              ? '0 10px 40px rgba(239, 68, 68, 0.4)'
+              : '0 10px 40px rgba(34, 197, 94, 0.4)',
+          }}
+        >
           {status === 'analyzing' && (
             <>
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/30">
                 <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Analyzing...</span>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span className="text-sm font-bold text-white">Analyzing your meal...</span>
+                </div>
+                <p className="text-xs text-white/70 mt-0.5">AI is identifying foods</p>
+              </div>
+              <div className="text-white/50">
+                <i className="fa-solid fa-chevron-up"></i>
               </div>
             </>
           )}
           
           {status === 'complete' && (
             <>
-              <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-green-500">
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/40">
                 <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
               </div>
-              <div>
-                <p className="text-sm font-bold text-green-700">Ready to save!</p>
-                <p className="text-xs text-green-600">{Math.round(totals.calories)} kcal • Tap to review</p>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white flex items-center">
+                  <i className="fa-solid fa-check-circle mr-1.5"></i>
+                  Ready to save!
+                </p>
+                <p className="text-xs text-white/80">{Math.round(totals.calories)} kcal • Tap to review</p>
+              </div>
+              <div className="text-white/70">
+                <i className="fa-solid fa-chevron-up"></i>
               </div>
             </>
           )}
           
           {status === 'error' && (
             <>
-              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-exclamation-triangle text-red-500"></i>
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-exclamation-triangle text-white text-xl"></i>
               </div>
-              <div>
-                <p className="text-sm font-bold text-red-700">Analysis failed</p>
-                <p className="text-xs text-red-600">Tap to retry</p>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white">Analysis failed</p>
+                <p className="text-xs text-white/80">Tap to retry</p>
+              </div>
+              <div className="text-white/70">
+                <i className="fa-solid fa-chevron-up"></i>
               </div>
             </>
           )}
@@ -185,24 +210,33 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
 
   // Expanded result card
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full max-w-lg rounded-t-3xl shadow-2xl animate-slide-up max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-md animate-fade-in">
+      <div 
+        className="w-full max-w-lg rounded-t-3xl shadow-2xl animate-slide-up max-h-[85vh] flex flex-col"
+        style={{
+          background: 'linear-gradient(180deg, #1a1a1f 0%, #0a0a0f 100%)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div 
+          className="flex items-center justify-between p-4"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+        >
           <button 
             onClick={onDismiss}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-white transition-colors active:scale-95"
           >
             <i className="fa-solid fa-times text-xl"></i>
           </button>
-          <h3 className="font-bold text-gray-900">Review Meal</h3>
+          <h3 className="font-bold text-white">Review Meal</h3>
           <button 
             onClick={handleSave}
             disabled={status !== 'complete'}
-            className={`font-bold transition-colors ${
+            className={`font-bold transition-colors active:scale-95 ${
               status === 'complete' 
-                ? 'text-blue-500 hover:text-blue-600' 
-                : 'text-gray-300'
+                ? 'text-purple-400 hover:text-purple-300' 
+                : 'text-gray-600'
             }`}
           >
             Save
@@ -213,7 +247,10 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
         <div className="flex-1 overflow-y-auto p-4">
           {/* Image preview */}
           <div className="relative mb-4">
-            <div className="w-full h-48 rounded-2xl overflow-hidden bg-gray-100">
+            <div 
+              className="w-full h-48 rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.05)' }}
+            >
               <img 
                 src={pendingAnalysis.imageData} 
                 alt="Meal" 
@@ -222,45 +259,55 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
             </div>
             
             {/* Status badge */}
-            <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5 ${
-              status === 'analyzing' 
-                ? 'bg-white/90 text-gray-700' 
-                : status === 'error'
-                ? 'bg-red-500 text-white'
-                : 'bg-green-500 text-white'
-            }`}>
+            <div 
+              className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-bold flex items-center space-x-1.5"
+              style={{
+                background: status === 'analyzing' 
+                  ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(139, 92, 246, 0.9))'
+                  : status === 'error'
+                  ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9))'
+                  : 'linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(16, 185, 129, 0.9))',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
               {status === 'analyzing' && (
                 <>
-                  <div className="animate-spin w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full"></div>
-                  <span>Analyzing...</span>
+                  <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span className="text-white">Analyzing...</span>
                 </>
               )}
               {status === 'complete' && (
                 <>
-                  <i className="fa-solid fa-check"></i>
-                  <span>Ready</span>
+                  <i className="fa-solid fa-check text-white"></i>
+                  <span className="text-white">Ready</span>
                 </>
               )}
               {status === 'error' && (
                 <>
-                  <i className="fa-solid fa-exclamation-triangle"></i>
-                  <span>Error</span>
+                  <i className="fa-solid fa-exclamation-triangle text-white"></i>
+                  <span className="text-white">Error</span>
                 </>
               )}
             </div>
           </div>
 
           {/* Meal type selector */}
-          <div className="bg-gray-50 rounded-xl p-1.5 flex mb-4">
+          <div 
+            className="rounded-xl p-1.5 flex mb-4"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
             {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map(t => (
               <button 
                 key={t}
                 onClick={() => setMealType(t)}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg capitalize transition-all ${
+                className={`flex-1 py-2 text-xs font-bold rounded-lg capitalize transition-all active:scale-95 ${
                   mealType === t 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-white' 
+                    : 'text-gray-500 hover:text-gray-300'
                 }`}
+                style={mealType === t ? {
+                  background: 'rgba(255,255,255,0.1)',
+                } : {}}
               >
                 {t}
               </button>
@@ -271,9 +318,13 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           {status === 'analyzing' && (
             <div className="space-y-3">
               {[1, 2].map(i => (
-                <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div 
+                  key={i} 
+                  className="rounded-xl p-4 animate-pulse"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                >
+                  <div className="h-4 rounded w-2/3 mb-2" style={{ background: 'rgba(255,255,255,0.1)' }}></div>
+                  <div className="h-3 rounded w-1/2" style={{ background: 'rgba(255,255,255,0.08)' }}></div>
                 </div>
               ))}
             </div>
@@ -281,14 +332,21 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
 
           {status === 'error' && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i className="fa-solid fa-exclamation-circle text-red-500 text-2xl"></i>
+              <div 
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: 'rgba(239, 68, 68, 0.15)' }}
+              >
+                <i className="fa-solid fa-exclamation-circle text-red-400 text-2xl"></i>
               </div>
-              <p className="text-gray-700 font-medium mb-1">Analysis failed</p>
+              <p className="text-white font-medium mb-1">Analysis failed</p>
               <p className="text-gray-400 text-sm mb-4">{error}</p>
               <button
                 onClick={handleRetry}
-                className="px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
+                className="px-4 py-2 text-white rounded-xl text-sm font-bold transition-all active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                  boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+                }}
               >
                 <i className="fa-solid fa-refresh mr-2"></i>
                 Try Again
@@ -299,22 +357,35 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           {status === 'complete' && result && (
             <div className="space-y-3">
               {result.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded-xl p-4">
+                <div 
+                  key={index} 
+                  className="rounded-xl p-4"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-bold text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-400">{item.servingSize}</p>
+                      <p className="font-bold text-white">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.servingSize}</p>
                     </div>
-                    <span className="font-bold text-gray-900">{Math.round(item.macros.calories)} kcal</span>
+                    <span className="font-bold text-white">{Math.round(item.macros.calories)} kcal</span>
                   </div>
                   <div className="flex space-x-2">
-                    <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-lg font-bold">
+                    <span 
+                      className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-green-400"
+                      style={{ background: 'rgba(34, 197, 94, 0.15)' }}
+                    >
                       P {Math.round(item.macros.protein)}g
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-700 rounded-lg font-bold">
+                    <span 
+                      className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-blue-400"
+                      style={{ background: 'rgba(59, 130, 246, 0.15)' }}
+                    >
                       C {Math.round(item.macros.carbs)}g
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 bg-orange-100 text-orange-700 rounded-lg font-bold">
+                    <span 
+                      className="text-[10px] px-2 py-0.5 rounded-lg font-bold text-orange-400"
+                      style={{ background: 'rgba(249, 115, 22, 0.15)' }}
+                    >
                       F {Math.round(item.macros.fat)}g
                     </span>
                   </div>
@@ -323,15 +394,27 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               
               {/* Notes Section */}
               <div className="mt-4">
-                <label className="text-xs text-gray-500 font-bold uppercase block mb-2">
-                  <i className="fa-solid fa-note-sticky mr-1"></i>
+                <label className="text-xs text-gray-400 font-bold uppercase block mb-2 px-1">
+                  <i className="fa-solid fa-note-sticky mr-1 text-purple-400"></i>
                   Notes
                 </label>
                 <textarea
                   value={mealNote}
                   onChange={(e) => setMealNote(e.target.value)}
                   placeholder="How did this meal make you feel? Any observations?"
-                  className="w-full px-4 py-3 rounded-xl text-gray-900 bg-white border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none placeholder-gray-400 transition-all"
+                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none resize-none transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.target.style.boxShadow = 'none';
+                  }}
                   rows={3}
                 />
               </div>
@@ -341,31 +424,41 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
 
         {/* Footer with totals */}
         {status === 'complete' && (
-          <div className="p-4 border-t border-gray-100 bg-gray-50">
+          <div 
+            className="p-4"
+            style={{ 
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.03)',
+            }}
+          >
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-xs text-gray-400 font-medium">Total</p>
-                <p className="text-2xl font-black text-gray-900">{Math.round(totals.calories)} <span className="text-sm font-medium text-gray-400">kcal</span></p>
+                <p className="text-xs text-gray-500 font-medium">Total</p>
+                <p className="text-2xl font-black text-white">{Math.round(totals.calories)} <span className="text-sm font-medium text-gray-500">kcal</span></p>
               </div>
               <div className="flex space-x-4">
                 <div className="text-center">
-                  <p className="text-xs text-gray-400">Protein</p>
-                  <p className="font-bold text-green-600">{Math.round(totals.protein)}g</p>
+                  <p className="text-xs text-gray-500">Protein</p>
+                  <p className="font-bold text-green-400">{Math.round(totals.protein)}g</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-400">Carbs</p>
-                  <p className="font-bold text-blue-600">{Math.round(totals.carbs)}g</p>
+                  <p className="text-xs text-gray-500">Carbs</p>
+                  <p className="font-bold text-blue-400">{Math.round(totals.carbs)}g</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-400">Fat</p>
-                  <p className="font-bold text-orange-600">{Math.round(totals.fat)}g</p>
+                  <p className="text-xs text-gray-500">Fat</p>
+                  <p className="font-bold text-orange-400">{Math.round(totals.fat)}g</p>
                 </div>
               </div>
             </div>
             
             <button
               onClick={handleSave}
-              className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all"
+              className="w-full mt-4 py-3 text-white rounded-xl font-bold transition-all active:scale-[0.98]"
+              style={{
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)',
+              }}
             >
               <i className="fa-solid fa-check mr-2"></i>
               Save to Log
