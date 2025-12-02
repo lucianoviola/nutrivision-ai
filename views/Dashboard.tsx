@@ -11,7 +11,7 @@ interface DashboardProps {
 }
 
 // Energized calorie ring with pulsing glow, particles, and rotation
-const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal }) => {
+const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => void }> = ({ eaten, goal, onTapToBegin }) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const progress = Math.min(eaten / goal, 1);
   const remaining = Math.max(0, goal - eaten);
@@ -163,7 +163,9 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
         </span>
         <div className={`mt-2 px-3 py-1 rounded-full bg-white/8 backdrop-blur-sm border border-white/10 transition-all duration-300 ${
           isEmpty ? 'animate-breathe' : ''
-        }`}>
+        } ${isEmpty && onTapToBegin ? 'cursor-pointer active:scale-95' : ''}`}
+        onClick={isEmpty && onTapToBegin ? onTapToBegin : undefined}
+        >
           {isEmpty ? (
             <span className="text-caption font-bold bg-gradient-to-r from-accent-teal via-accent-violet to-accent-teal bg-clip-text text-transparent bg-[length:200%_100%] animate-shimmer">
               Tap + to begin
@@ -626,7 +628,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         
         {/* Calorie Ring (smaller, denser) */}
         <div className="flex justify-center py-2">
-          <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
+          <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} onTapToBegin={onAddMeal} />
         </div>
         
         {/* Horizontal Macro Pills */}
@@ -675,7 +677,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
           </div>
           
           {today.length === 0 ? (
-            <EmptyState onAddMeal={() => {/* TODO: Navigate to camera */}} />
+            <EmptyState onAddMeal={onAddMeal || (() => {})} />
           ) : (
             <div className="space-y-3">
               {today.map((log, index) => (

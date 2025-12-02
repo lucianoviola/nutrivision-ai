@@ -129,7 +129,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-28 min-h-screen relative">
+    <div className="flex-1 overflow-y-auto pb-28 h-full relative">
       {/* Animated background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-[#0a0a0f]" />
