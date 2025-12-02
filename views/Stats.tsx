@@ -513,36 +513,40 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
         {/* View mode toggle */}
         <div className="px-6 mb-6">
           <div 
-            className="rounded-xl p-1 flex"
+            className="rounded-xl p-1 flex relative"
             style={{
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
+            {/* Animated background indicator */}
+            <div
+              className="absolute top-1 bottom-1 rounded-lg transition-all duration-300 ease-spring"
+              style={{
+                left: viewMode === 'chart' ? '4px' : '50%',
+                width: 'calc(50% - 4px)',
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+              }}
+            />
             <button
               onClick={() => setViewMode('chart')}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-300 relative z-10 active:scale-95 ${
                 viewMode === 'chart'
                   ? 'text-white'
                   : 'text-gray-500 hover:text-gray-300'
               }`}
-              style={viewMode === 'chart' ? {
-                background: 'rgba(255,255,255,0.1)',
-              } : {}}
             >
               <i className="fa-solid fa-chart-line mr-1.5"></i>
               Charts
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-300 relative z-10 active:scale-95 ${
                 viewMode === 'calendar'
                   ? 'text-white'
                   : 'text-gray-500 hover:text-gray-300'
               }`}
-              style={viewMode === 'calendar' ? {
-                background: 'rgba(255,255,255,0.1)',
-              } : {}}
             >
               <i className="fa-solid fa-calendar-days mr-1.5"></i>
               Calendar

@@ -42,8 +42,8 @@ const SettingRow: React.FC<{
           onBlur={() => setIsFocused(false)}
           className="text-right outline-none font-bold w-20 text-white rounded-lg px-3 py-1.5 transition-all duration-300"
           style={{ 
-            background: isFocused ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.1)',
-            border: isFocused ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid transparent',
+            background: isFocused ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
+            border: isFocused ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid rgba(255,255,255,0.05)',
             boxShadow: isFocused ? '0 0 0 3px rgba(139, 92, 246, 0.1)' : 'none',
           }}
         />
@@ -278,8 +278,8 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-gray-600"></div>
-                        <span className="text-caption text-gray-500">No key set</span>
+                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span className="text-caption text-amber-400 font-medium">No key set</span>
                       </div>
                     )}
                   </div>
