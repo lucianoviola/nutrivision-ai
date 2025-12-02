@@ -25,33 +25,50 @@ const RECOMMENDED_DAILY = {
 };
 
 const DeficiencyAlerts: React.FC<DeficiencyAlertsProps> = ({ logs }) => {
-  // Calculate average daily intake over last 7 days
+  // Calculate average daily intake over past 7 days (excluding today)
   const deficiencies = useMemo(() => {
-    const last7Days = logs.filter(log => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    // Filter logs from past 7 days, excluding today
+    const past7Days = logs.filter(log => {
       const logDate = new Date(log.timestamp);
-      const daysAgo = (Date.now() - logDate.getTime()) / (1000 * 60 * 60 * 24);
-      return daysAgo <= 7;
+      const logDay = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate());
+      
+      // Exclude today - only include completed days
+      return logDay < today && logDay >= sevenDaysAgo;
     });
 
-    if (last7Days.length === 0) return [];
+    if (past7Days.length === 0) return [];
 
     // Group by date
-    const dailyTotals: { [key: string]: MealLog[] } = {};
-    last7Days.forEach(log => {
+    const dailyTotals: { [key: string]: { calories: number; protein: number; carbs: number; fat: number } } = {};
+    past7Days.forEach(log => {
       const date = new Date(log.timestamp).toDateString();
-      if (!dailyTotals[date]) dailyTotals[date] = [];
-      dailyTotals[date].push(log);
+      if (!dailyTotals[date]) {
+        dailyTotals[date] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+      }
+      dailyTotals[date].calories += log.totalMacros.calories;
+      dailyTotals[date].protein += log.totalMacros.protein;
+      dailyTotals[date].carbs += log.totalMacros.carbs;
+      dailyTotals[date].fat += log.totalMacros.fat;
     });
 
     const daysCount = Object.keys(dailyTotals).length;
     if (daysCount === 0) return [];
 
-    // Calculate average daily values (simplified - using macros as proxy)
-    // In a real app, you'd get micronutrients from the food database
-    const avgCalories = last7Days.reduce((sum, log) => sum + log.totalMacros.calories, 0) / daysCount;
-    const avgProtein = last7Days.reduce((sum, log) => sum + log.totalMacros.protein, 0) / daysCount;
-    const avgCarbs = last7Days.reduce((sum, log) => sum + log.totalMacros.carbs, 0) / daysCount;
-    const avgFat = last7Days.reduce((sum, log) => sum + log.totalMacros.fat, 0) / daysCount;
+    // Calculate average daily values from completed days only
+    const totalCalories = Object.values(dailyTotals).reduce((sum, day) => sum + day.calories, 0);
+    const totalProtein = Object.values(dailyTotals).reduce((sum, day) => sum + day.protein, 0);
+    const totalCarbs = Object.values(dailyTotals).reduce((sum, day) => sum + day.carbs, 0);
+    const totalFat = Object.values(dailyTotals).reduce((sum, day) => sum + day.fat, 0);
+    
+    const avgCalories = totalCalories / daysCount;
+    const avgProtein = totalProtein / daysCount;
+    const avgCarbs = totalCarbs / daysCount;
+    const avgFat = totalFat / daysCount;
 
     const alerts: Deficiency[] = [];
 
@@ -99,8 +116,9 @@ const DeficiencyAlerts: React.FC<DeficiencyAlertsProps> = ({ logs }) => {
 
   return (
     <div className="px-6 mb-6">
-      <div className="flex items-center space-x-2 mb-3 px-1">
+      <div className="flex items-center justify-between mb-3 px-1">
         <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">⚠️ Nutrition Alerts</span>
+        <span className="text-xs text-gray-600">Past 7 days</span>
       </div>
       
       <div className="space-y-2">

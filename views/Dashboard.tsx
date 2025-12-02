@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import * as savedMealsService from '../services/savedMealsService.ts';
-import DeficiencyAlerts from '../components/DeficiencyAlerts.tsx';
 
 interface DashboardProps {
   logs: MealLog[];
@@ -693,9 +692,6 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal }) => {
           <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
         </div>
         
-        {/* Deficiency Alerts */}
-        <DeficiencyAlerts logs={logs} />
-
         {/* Horizontal Macro Pills */}
         <div className="px-6 mt-4">
           <div className="flex flex-wrap gap-2 justify-center">

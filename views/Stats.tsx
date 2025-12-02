@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import AnimatedNumber from '../components/AnimatedNumber.tsx';
+import DeficiencyAlerts from '../components/DeficiencyAlerts.tsx';
 
 interface StatsProps {
   logs: MealLog[];
@@ -550,6 +551,9 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
         </div>
         
         <div className="px-6 space-y-6">
+          {/* Nutritional Deficiency Alerts */}
+          <DeficiencyAlerts logs={logs} />
+
           {/* Summary cards */}
           <div className="flex space-x-3">
             <StatCard
