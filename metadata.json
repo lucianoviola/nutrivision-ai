@@ -1,0 +1,7 @@
+{
+  "name": "NutriVision AI",
+  "description": "Professional grade calorie and macro tracker powered by Gemini 3 Pro. Features meal recognition, barcode scanning support, and Apple Health export integration.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
