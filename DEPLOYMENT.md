@@ -97,70 +97,64 @@ After deployment, users can:
 2. Tap "Share" → "Add to Home Screen"
 3. App will work like a native app!
 
-### Environment Variables
+### API Keys & Security
 
-#### Setting Up Environment Variables
+#### 🔒 **IMPORTANT: Security Best Practice**
 
-**Important:** The app supports API keys in two ways:
-1. **User-entered** (via Settings UI) - stored in browser localStorage
-2. **Environment variable** (for default/pre-filled key) - set during deployment
+**For production deployment, DO NOT set API keys as environment variables!**
 
-#### For Local Development:
+- ❌ **Don't set** `VITE_OPENAI_API_KEY` in Vercel/Netlify/etc.
+- ✅ **Users enter their own keys** in the Settings UI
+- ✅ Keys are stored locally in their browser (localStorage)
+- ✅ Your API key stays private and secure
+
+**Why?** Environment variables with `VITE_` prefix are exposed in the client-side JavaScript bundle. Anyone can view your API key in the browser's source code!
+
+#### For Local Development Only:
+
+You can use environment variables for convenience during development:
 
 1. Create a `.env.local` file in the project root:
    ```bash
-   # .env.local
-   VITE_GEMINI_API_KEY=your_api_key_here
+   # .env.local (LOCAL DEVELOPMENT ONLY)
+   VITE_OPENAI_API_KEY=your_openai_key_here
+   VITE_SITE_PASSWORD=your_password_here
    ```
 
-2. Get your API key from: https://aistudio.google.com/apikey
+2. Get your API key from: https://platform.openai.com/api-keys
 
 3. Restart the dev server: `npm run dev`
 
-**Note:** Vite requires the `VITE_` prefix for client-side environment variables.
+**Note:** These env vars only work locally. They are NOT used in production builds.
 
-#### For Vercel Deployment:
+#### For Production Deployment:
 
-1. Go to your project on [vercel.com](https://vercel.com)
-2. Click **Settings** → **Environment Variables**
-3. Add environment variables (you can use one or both):
-   - **Name:** `VITE_GEMINI_API_KEY`
-     - **Value:** Your Gemini API key
-     - **Environment:** Production, Preview, Development (select all)
-   - **Name:** `VITE_OPENAI_API_KEY` (optional)
-     - **Value:** Your OpenAI API key
-     - **Environment:** Production, Preview, Development (select all)
-4. Click **Save**
-5. Redeploy your app (or it will auto-deploy on next push)
+**No environment variables needed!** 
 
-**Note:** Users can also set their API keys in the app's Settings UI, or you can set a default provider via environment variables.
+Users will:
+1. Visit your deployed app
+2. Enter password (if you set `VITE_SITE_PASSWORD`)
+3. Go to Settings → Enter their own OpenAI API key
+4. Start using the app
 
-#### For Netlify Deployment:
+**Optional: Set Password Protection**
 
-1. Go to your site on [netlify.com](https://netlify.com)
-2. Click **Site Settings** → **Environment Variables**
-3. Click **Add a variable**:
-   - **Key:** `VITE_GEMINI_API_KEY`
-   - **Value:** Your Gemini API key
-   - **Scopes:** All scopes (or specific ones)
-4. Click **Save**
-5. Trigger a new deploy
+If you want to password-protect your app:
 
-#### For Cloudflare Pages:
-
-1. Go to your project on [pages.cloudflare.com](https://pages.cloudflare.com)
-2. Click **Settings** → **Environment Variables**
-3. Add variable:
-   - **Variable name:** `VITE_GEMINI_API_KEY`
-   - **Value:** Your Gemini API key
-4. Save and redeploy
+1. In Vercel: Go to **Settings** → **Environment Variables**
+2. Add:
+   - **Name:** `VITE_SITE_PASSWORD`
+   - **Value:** Your secure password
+   - **Environment:** Production, Preview, Development
+3. Save and redeploy
 
 #### Security Notes:
 
-- ✅ Environment variables with `VITE_` prefix are exposed to the client (this is expected for API keys used in the browser)
-- ✅ Users can still override by entering their own key in Settings
+- ✅ **User-entered keys** are stored in browser localStorage (private to each user)
+- ✅ **No API keys** in production bundle (more secure)
+- ✅ **Password protection** available via `VITE_SITE_PASSWORD`
 - ✅ Never commit `.env.local` to git (already in `.gitignore`)
-- ✅ The app works without env vars - users can enter their key in the Settings UI
+- ✅ Each user uses their own API key (no shared costs)
 
 ---
 
@@ -168,9 +162,12 @@ After deployment, users can:
 
 - [ ] Test build locally: `npm run build && npm run preview`
 - [ ] Update manifest.json icons (replace placeholder URLs)
+- [ ] Set `VITE_SITE_PASSWORD` in Vercel (optional, for password protection)
+- [ ] **DO NOT** set `VITE_OPENAI_API_KEY` in production (users enter their own)
 - [ ] Test on mobile device
 - [ ] Verify camera access works
 - [ ] Check all routes work correctly
+- [ ] Test password protection (if enabled)
 
 ---
 

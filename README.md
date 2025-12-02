@@ -18,20 +18,21 @@ View your app in AI Studio: https://ai.studio/apps/drive/1lVT7EmWA8m34qmcKvxt7A-
    npm install
    ```
 
-2. Set up environment variables (optional):
+2. Set up environment variables (optional, for local development only):
    ```bash
    cp .env.example .env.local
    ```
-   Then edit `.env.local` and add your API keys (you can use either or both):
+   Then edit `.env.local` and add your keys:
    ```
-   VITE_GEMINI_API_KEY=your_gemini_key_here
    VITE_OPENAI_API_KEY=your_openai_key_here
+   VITE_SITE_PASSWORD=your_password_here
    ```
-   Get your API keys from:
-   - Gemini: https://aistudio.google.com/apikey
-   - OpenAI: https://platform.openai.com/api-keys
+   Get your API key from: https://platform.openai.com/api-keys
    
-   **Note:** You can also set API keys and choose your AI provider in the app's Settings UI after launching.
+   **Note:** 
+   - These env vars only work locally (not in production)
+   - In production, users enter their own API key in Settings
+   - This keeps your API key secure and private
 
 3. Run the app:
    ```bash

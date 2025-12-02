@@ -3,20 +3,17 @@ import { FoodItem } from '../types.ts';
 
 // Helper to get OpenAI API key from multiple sources
 const getOpenAiApiKey = () => {
-  // 1. Check localStorage (user-set in Settings UI)
+  // 1. Check localStorage (user-set in Settings UI) - PRIMARY METHOD
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('nutrivision_openai_api_key');
     if (stored) return stored;
   }
   
-  // 2. Check Vite environment variable
-  if (import.meta.env.VITE_OPENAI_API_KEY) {
+  // 2. Check Vite environment variable (only for local development)
+  // ⚠️ SECURITY: VITE_ prefixed vars are exposed in client bundle!
+  // Only use this for local dev, NOT in production
+  if (import.meta.env.DEV && import.meta.env.VITE_OPENAI_API_KEY) {
     return import.meta.env.VITE_OPENAI_API_KEY;
-  }
-  
-  // 3. Fallback to process.env
-  if (typeof process !== 'undefined' && process.env.OPENAI_API_KEY) {
-    return process.env.OPENAI_API_KEY;
   }
   
   return '';

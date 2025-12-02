@@ -43,14 +43,13 @@ const App: React.FC = () => {
     if (savedLogs) setLogs(JSON.parse(savedLogs));
     if (savedSettings) setSettings(JSON.parse(savedSettings));
 
-    // Check for OpenAI API key
+    // Check for OpenAI API key (only check localStorage - env vars not secure in production)
     const openaiKey = localStorage.getItem('nutrivision_openai_api_key');
-    const hasEnvKey = import.meta.env.VITE_OPENAI_API_KEY;
     
-    if (!openaiKey && !hasEnvKey) {
+    if (!openaiKey) {
       setCurrentView(AppView.SETTINGS);
       setTimeout(() => {
-        alert("Welcome! Please enter your OpenAI API Key in the settings to start using the AI features.");
+        alert("Welcome! Please enter your OpenAI API Key in the Settings to start using AI features.\n\n🔒 Your key is stored locally and never shared.");
       }, 500);
     }
   }, []);
