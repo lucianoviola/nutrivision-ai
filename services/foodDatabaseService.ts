@@ -48,8 +48,11 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
       return await searchOpenFoodFacts(query);
     }
     
-    // Convert USDA format to our FoodItem format
-    const items: FoodItem[] = data.foods
+    // Convert USDA format to our FoodItem format with relevance scoring
+    const queryLower = query.toLowerCase().trim();
+    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 0);
+    
+    const itemsWithScore: Array<{ item: FoodItem; score: number }> = data.foods
       .filter(food => food.foodNutrients && food.foodNutrients.length > 0)
       .map(food => {
         const nutrients = food.foodNutrients!;
@@ -71,19 +74,71 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
           return null;
         }
         
+        const name = food.description;
+        const nameLower = name.toLowerCase();
+        
+        // Calculate relevance score
+        let score = 0;
+        
+        // Exact match (highest priority)
+        if (nameLower === queryLower) {
+          score += 1000;
+        }
+        // Starts with query
+        else if (nameLower.startsWith(queryLower)) {
+          score += 500;
+        }
+        // Contains query as whole phrase
+        else if (nameLower.includes(queryLower)) {
+          score += 300;
+        }
+        // Contains all query words
+        else if (queryWords.every(word => nameLower.includes(word))) {
+          score += 200;
+        }
+        // Contains some query words
+        else {
+          const matchingWords = queryWords.filter(word => nameLower.includes(word)).length;
+          score += matchingWords * 50;
+        }
+        
+        // Boost common foods (shorter names often = more common)
+        if (name.length < 30) {
+          score += 20;
+        }
+        
+        // Penalize very long names (often less relevant)
+        if (name.length > 60) {
+          score -= 30;
+        }
+        
+        // Penalize generic terms
+        const genericTerms = ['raw', 'uncooked', 'prepared', 'cooked', 'without', 'with', 'and'];
+        if (genericTerms.some(term => nameLower.includes(term))) {
+          score -= 10;
+        }
+        
         return {
-          name: food.description,
-          servingSize: '100g', // USDA defaults to 100g
-          macros: {
-            calories: Math.round(calories),
-            protein: Math.round(protein * 10) / 10, // Round to 1 decimal
-            carbs: Math.round(carbs * 10) / 10,
-            fat: Math.round(fat * 10) / 10,
+          item: {
+            name: food.description,
+            servingSize: '100g', // USDA defaults to 100g
+            macros: {
+              calories: Math.round(calories),
+              protein: Math.round(protein * 10) / 10, // Round to 1 decimal
+              carbs: Math.round(carbs * 10) / 10,
+              fat: Math.round(fat * 10) / 10,
+            },
           },
+          score,
         };
       })
-      .filter((item): item is FoodItem => item !== null)
-      .slice(0, 8); // Limit to 8 results
+      .filter((result): result is { item: FoodItem; score: number } => result !== null);
+    
+    // Sort by score (highest first) and take top 8
+    const items = itemsWithScore
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map(result => result.item);
     
     console.log(`✅ Found ${items.length} food items from USDA`);
     return items;
@@ -122,8 +177,11 @@ const searchOpenFoodFacts = async (query: string): Promise<FoodItem[]> => {
       return [];
     }
     
-    // Convert OpenFoodFacts format to our FoodItem format
-    const items: FoodItem[] = data.products
+    // Convert OpenFoodFacts format to our FoodItem format with relevance scoring
+    const queryLower = query.toLowerCase().trim();
+    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 0);
+    
+    const itemsWithScore: Array<{ item: FoodItem; score: number }> = data.products
       .filter((product: any) => product.nutriments)
       .map((product: any) => {
         const n = product.nutriments;
@@ -140,19 +198,70 @@ const searchOpenFoodFacts = async (query: string): Promise<FoodItem[]> => {
           return null;
         }
         
+        const name = product.product_name || product.product_name_en || query;
+        const nameLower = name.toLowerCase();
+        
+        // Calculate relevance score
+        let score = 0;
+        
+        // Exact match (highest priority)
+        if (nameLower === queryLower) {
+          score += 1000;
+        }
+        // Starts with query
+        else if (nameLower.startsWith(queryLower)) {
+          score += 500;
+        }
+        // Contains query as whole phrase
+        else if (nameLower.includes(queryLower)) {
+          score += 300;
+        }
+        // Contains all query words
+        else if (queryWords.every(word => nameLower.includes(word))) {
+          score += 200;
+        }
+        // Contains some query words
+        else {
+          const matchingWords = queryWords.filter(word => nameLower.includes(word)).length;
+          score += matchingWords * 50;
+        }
+        
+        // Boost products with better data quality (has all macros)
+        if (calories > 0 && protein > 0 && carbs > 0 && fat > 0) {
+          score += 30;
+        }
+        
+        // Boost products with popularity score (if available)
+        if (product.popularity_tags && product.popularity_tags.length > 0) {
+          score += 20;
+        }
+        
+        // Penalize very long names
+        if (name.length > 60) {
+          score -= 30;
+        }
+        
         return {
-          name: product.product_name || product.product_name_en || query,
-          servingSize: servingSize,
-          macros: {
-            calories: Math.round(calories),
-            protein: Math.round(protein * 10) / 10,
-            carbs: Math.round(carbs * 10) / 10,
-            fat: Math.round(fat * 10) / 10,
+          item: {
+            name: name,
+            servingSize: servingSize,
+            macros: {
+              calories: Math.round(calories),
+              protein: Math.round(protein * 10) / 10,
+              carbs: Math.round(carbs * 10) / 10,
+              fat: Math.round(fat * 10) / 10,
+            },
           },
+          score,
         };
       })
-      .filter((item): item is FoodItem => item !== null)
-      .slice(0, 8);
+      .filter((result): result is { item: FoodItem; score: number } => result !== null);
+    
+    // Sort by score (highest first) and take top 8
+    const items = itemsWithScore
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map(result => result.item);
     
     console.log(`✅ Found ${items.length} food items from OpenFoodFacts`);
     return items;
