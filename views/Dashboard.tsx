@@ -7,6 +7,7 @@ interface DashboardProps {
   settings: UserSettings;
   onAddMeal?: () => void; // Callback to navigate to camera
   onDeleteLog?: (id: string) => void;
+  onUpdateLog?: (meal: MealLog) => void;
 }
 
 // Energized calorie ring with pulsing glow, particles, and rotation
@@ -456,7 +457,7 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog }) => {
+const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog, onUpdateLog }) => {
   const [headerVisible, setHeaderVisible] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealLog | null>(null);
   
@@ -735,6 +736,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         meal={selectedMeal}
         onClose={() => setSelectedMeal(null)}
         onDelete={onDeleteLog}
+        onUpdate={onUpdateLog}
+        aiProvider={settings.aiProvider}
       />
     </div>
   );

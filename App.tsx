@@ -108,6 +108,10 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateLog = (updatedMeal: MealLog) => {
+    setLogs(prev => prev.map(log => log.id === updatedMeal.id ? updatedMeal : log));
+  };
+
   // Handle view changes with transition
   const handleViewChange = (view: AppView) => {
     setViewTransition('exiting');
@@ -132,9 +136,9 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case AppView.DASHBOARD:
-        return <Dashboard logs={logs} settings={settings} onAddMeal={() => {/* Navigate to camera */}} onDeleteLog={handleDeleteLog} />;
+        return <Dashboard logs={logs} settings={settings} onAddMeal={() => {/* Navigate to camera */}} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} />;
       case AppView.HISTORY:
-        return <LogHistory logs={logs} onDelete={handleDeleteLog} />;
+        return <LogHistory logs={logs} onDelete={handleDeleteLog} onUpdateLog={handleUpdateLog} />;
       case AppView.STATS:
         return <Stats logs={logs} settings={settings} />;
       case AppView.SETTINGS:

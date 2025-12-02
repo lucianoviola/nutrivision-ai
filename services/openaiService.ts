@@ -57,6 +57,21 @@ const foodAnalysisSchema = {
   required: ['items'],
 } as const;
 
+// Check if correction is simple (text-only) vs complex (needs image)
+const isSimpleCorrection = (correctionText: string): boolean => {
+  const lower = correctionText.toLowerCase();
+  // Simple corrections: wrong food name, wrong item identification
+  // Complex corrections: add items, adjust portions, change amounts
+  const simpleKeywords = ['is', 'was', 'not', 'actually', 'wrong', 'incorrect', 'should be'];
+  const complexKeywords = ['add', 'more', 'less', 'bigger', 'smaller', 'increase', 'decrease', 'portion'];
+  
+  const hasSimple = simpleKeywords.some(kw => lower.includes(kw));
+  const hasComplex = complexKeywords.some(kw => lower.includes(kw));
+  
+  // If it's clearly a simple correction and not complex, try text-only
+  return hasSimple && !hasComplex;
+};
+
 export const correctFoodAnalysis = async (
   base64Image: string,
   originalItems: FoodItem[],
@@ -69,9 +84,52 @@ export const correctFoodAnalysis = async (
     `- ${item.name} (${item.servingSize}): ${item.macros.calories} kcal, P:${item.macros.protein}g C:${item.macros.carbs}g F:${item.macros.fat}g`
   ).join('\n');
 
+  const needsImage = !isSimpleCorrection(correctionText);
+  console.log(`📊 Correction type: ${needsImage ? 'Complex (needs image)' : 'Simple (text-only)'}`);
+
   try {
+    // For simple corrections, try text-only first (faster, cheaper)
+    if (!needsImage) {
+      try {
+        console.log('💬 Attempting text-only correction...');
+        const textResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini', // Lighter, faster model for text-only
+          messages: [
+            {
+              role: 'user',
+              content: `I previously analyzed a food image and got these results:\n\n${originalItemsText}\n\nHowever, the user has provided this correction: "${correctionText}"\n\nPlease correct the food items based on the user's feedback. For example, if they say "this is rice not pasta", replace pasta with rice. Keep the same serving sizes and adjust macros if you know the correct values, otherwise keep them similar. Return a JSON object with the corrected structure: { "items": [{"name": string, "servingSize": string, "macros": {"calories": number, "protein": number, "carbs": number, "fat": number}}] }`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+        });
+
+        const textContent = textResponse.choices[0]?.message?.content;
+        if (textContent) {
+          const parsed = JSON.parse(textContent);
+          if (parsed.items && Array.isArray(parsed.items) && parsed.items.length > 0) {
+            console.log('✅ Text-only correction successful');
+            return parsed.items.map((item: any) => ({
+              name: item.name || 'Unknown',
+              servingSize: item.servingSize || 'Unknown',
+              macros: {
+                calories: item.macros?.calories || 0,
+                protein: item.macros?.protein || 0,
+                carbs: item.macros?.carbs || 0,
+                fat: item.macros?.fat || 0,
+              },
+            }));
+          }
+        }
+      } catch (textError) {
+        console.log('⚠️ Text-only correction failed, falling back to image-based correction');
+        // Fall through to image-based correction
+      }
+    }
+
+    // Complex corrections or text-only fallback: use image with lighter model
+    console.log('🖼️ Using image-based correction...');
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini-2025-08-07',
+      model: 'gpt-4o-mini', // Lighter model for corrections (faster than gpt-5-mini)
       messages: [
         {
           role: 'user',

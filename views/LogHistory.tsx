@@ -6,6 +6,7 @@ import MealDetailModal from '../components/MealDetailModal.tsx';
 interface LogHistoryProps {
   logs: MealLog[];
   onDelete: (id: string) => void;
+  onUpdateLog?: (meal: MealLog) => void;
 }
 
 // Animated timeline empty state with personality
@@ -147,7 +148,7 @@ const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) =
   );
 };
 
-const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete }) => {
+const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [headerVisible, setHeaderVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
