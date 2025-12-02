@@ -24,7 +24,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   dailyCarbGoal: 200,
   dailyFatGoal: 65,
   appleHealthConnected: false,
-  aiProvider: 'gemini',
+  aiProvider: 'openai',
 };
 
 const App: React.FC = () => {
@@ -42,15 +42,14 @@ const App: React.FC = () => {
     if (savedLogs) setLogs(JSON.parse(savedLogs));
     if (savedSettings) setSettings(JSON.parse(savedSettings));
 
-    // Check for API key (either Gemini or OpenAI)
-    const geminiKey = localStorage.getItem('nutrivision_api_key');
+    // Check for OpenAI API key
     const openaiKey = localStorage.getItem('nutrivision_openai_api_key');
-    const hasEnvKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_OPENAI_API_KEY;
+    const hasEnvKey = import.meta.env.VITE_OPENAI_API_KEY;
     
-    if (!geminiKey && !openaiKey && !hasEnvKey) {
+    if (!openaiKey && !hasEnvKey) {
       setCurrentView(AppView.SETTINGS);
       setTimeout(() => {
-        alert("Welcome! Please enter your AI API Key (Gemini or OpenAI) in the settings to start using the AI features.");
+        alert("Welcome! Please enter your OpenAI API Key in the settings to start using the AI features.");
       }, 500);
     }
   }, []);

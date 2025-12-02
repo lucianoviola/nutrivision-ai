@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserSettings, MealLog, AIProvider } from '../types.ts';
+import { UserSettings, MealLog } from '../types.ts';
 import { healthService } from '../services/healthService.ts';
 
 interface SettingsProps {
@@ -56,16 +56,13 @@ const SettingRow: React.FC<{
 const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings }) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [isNativeApp, setIsNativeApp] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(false);
 
   useEffect(() => {
-    const geminiKey = localStorage.getItem('nutrivision_api_key') || '';
     const openaiKey = localStorage.getItem('nutrivision_openai_api_key') || '';
-    setGeminiApiKey(geminiKey);
     setOpenaiApiKey(openaiKey);
     setIsNativeApp(healthService.isAvailable());
     const timer = setTimeout(() => setHeaderVisible(true), 100);
@@ -79,29 +76,9 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
   };
 
   const handleSaveKey = () => {
-    if (settings.aiProvider === 'gemini') {
-      localStorage.setItem('nutrivision_api_key', geminiApiKey);
-    } else {
-      localStorage.setItem('nutrivision_openai_api_key', openaiApiKey);
-    }
+    localStorage.setItem('nutrivision_openai_api_key', openaiApiKey);
     showToastNotification('API Key saved successfully');
     setShowKeyInput(false);
-  };
-
-  const handleProviderChange = (provider: AIProvider) => {
-    onUpdateSettings({ ...settings, aiProvider: provider });
-  };
-
-  const getCurrentApiKey = () => {
-    return settings.aiProvider === 'gemini' ? geminiApiKey : openaiApiKey;
-  };
-
-  const setCurrentApiKey = (key: string) => {
-    if (settings.aiProvider === 'gemini') {
-      setGeminiApiKey(key);
-    } else {
-      setOpenaiApiKey(key);
-    }
   };
 
   const handleExport = () => {
@@ -231,18 +208,18 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
             </div>
           </div>
 
-          {/* AI Configuration */}
+          {/* OpenAI API Configuration */}
           <div>
             <div className="flex items-center space-x-3 mb-4 px-1">
               <div 
                 className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.1))',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(14, 184, 170, 0.1))',
                 }}
               >
-                🤖
+                ⚡
               </div>
-              <h3 className="text-body font-bold text-gray-400 uppercase tracking-wider">AI Configuration</h3>
+              <h3 className="text-body font-bold text-gray-400 uppercase tracking-wider">OpenAI API</h3>
             </div>
             <div 
               className="rounded-2xl overflow-hidden"
@@ -251,55 +228,12 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                 border: '1px solid rgba(255,255,255,0.06)',
               }}
             >
-              {/* Provider Selection */}
-              <div className="p-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <span className="text-sm font-medium text-gray-400 mb-3 block">AI Provider</span>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleProviderChange('gemini')}
-                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 active:scale-95 ${
-                      settings.aiProvider === 'gemini'
-                        ? 'text-white shadow-lg'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                    style={settings.aiProvider === 'gemini' ? {
-                      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                      boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
-                    } : {
-                      background: 'rgba(255,255,255,0.05)',
-                    }}
-                  >
-                    <span>💎</span>
-                    <span>Gemini</span>
-                  </button>
-                  <button
-                    onClick={() => handleProviderChange('openai')}
-                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center space-x-2 active:scale-95 ${
-                      settings.aiProvider === 'openai'
-                        ? 'text-white shadow-lg'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                    style={settings.aiProvider === 'openai' ? {
-                      background: 'linear-gradient(135deg, #10b981, #14b8a6)',
-                      boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
-                    } : {
-                      background: 'rgba(255,255,255,0.05)',
-                    }}
-                  >
-                    <span>⚡</span>
-                    <span>OpenAI</span>
-                  </button>
-                </div>
-              </div>
-
               {/* API Key */}
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center space-x-2">
                     <span>🔑</span>
-                    <span className="text-sm font-medium text-gray-300">
-                      {settings.aiProvider === 'gemini' ? 'Gemini' : 'OpenAI'} API Key
-                    </span>
+                    <span className="text-sm font-medium text-gray-300">OpenAI API Key</span>
                   </div>
                   <button 
                     onClick={() => setShowKeyInput(!showKeyInput)} 
@@ -316,7 +250,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                 
                 {!showKeyInput && (
                   <div className="flex items-center space-x-2">
-                    {getCurrentApiKey() ? (
+                    {openaiApiKey ? (
                       <div className="flex items-center space-x-2">
                         <div className="relative">
                           <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -355,9 +289,9 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                   <div className="mt-3 space-y-3">
                     <input 
                       type="password"
-                      value={getCurrentApiKey()}
-                      onChange={(e) => setCurrentApiKey(e.target.value)}
-                      placeholder={`Paste your ${settings.aiProvider === 'gemini' ? 'Gemini' : 'OpenAI'} API key`}
+                      value={openaiApiKey}
+                      onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      placeholder="Paste your OpenAI API key"
                       className="w-full rounded-xl px-4 py-3 text-body outline-none text-white placeholder-gray-500 transition-all duration-300"
                       style={{
                         background: 'rgba(255,255,255,0.08)',
@@ -397,15 +331,13 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                     <p className="text-[11px] text-gray-500 leading-relaxed">
                       🔒 Key is stored locally on your device. Get your key from{' '}
                       <a 
-                        href={settings.aiProvider === 'gemini' 
-                          ? 'https://aistudio.google.com/apikey' 
-                          : 'https://platform.openai.com/api-keys'}
+                        href="https://platform.openai.com/api-keys"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline"
                         style={{ color: '#818cf8' }}
                       >
-                        {settings.aiProvider === 'gemini' ? 'Google AI Studio' : 'OpenAI Platform'}
+                        OpenAI Platform
                       </a>
                     </p>
                   </div>
