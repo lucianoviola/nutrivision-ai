@@ -225,8 +225,8 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
   const handleCopy = (log: MealLog) => {
     const text = `${log.type.toUpperCase()} - ${log.items.map(i => i.name).join(', ')} | ${Math.round(log.totalMacros.calories)} kcal (P:${Math.round(log.totalMacros.protein)} C:${Math.round(log.totalMacros.carbs)} F:${Math.round(log.totalMacros.fat)})`;
     navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(log.id);
-      setTimeout(() => setCopiedId(null), 2000);
+        setCopiedId(log.id);
+        setTimeout(() => setCopiedId(null), 2000);
     });
   };
 
@@ -241,10 +241,10 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
 
   const getMealGradient = (type: string) => {
     switch (type) {
-      case 'breakfast': return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-      case 'lunch': return 'linear-gradient(135deg, #34d399, #10b981)';
-      case 'dinner': return 'linear-gradient(135deg, #818cf8, #6366f1)';
-      default: return 'linear-gradient(135deg, #f472b6, #ec4899)';
+      case 'breakfast': return 'linear-gradient(135deg, #FBBF24, #F59E0B)';
+      case 'lunch': return 'linear-gradient(135deg, #10B981, #14B8A6)';
+      case 'dinner': return 'linear-gradient(135deg, #8B5CF6, #EC4899)';
+      default: return 'linear-gradient(135deg, #A855F7, #EC4899)';
     }
   };
 
@@ -258,15 +258,15 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
 
   return (
     <div className="h-full overflow-y-auto pb-28 relative">
-      {/* Animated background */}
+      {/* Opal-style background */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[#0a0a0f]" />
+        <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
         <div 
-          className="absolute inset-0 opacity-50"
+          className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse at 30% 20%, rgba(251, 191, 36, 0.15) 0%, transparent 50%),
-              radial-gradient(ellipse at 70% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)
+              radial-gradient(ellipse at 30% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%)
             `,
           }}
         />
@@ -284,27 +284,27 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
                   onClick={() => setShowPhotoGallery(true)}
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
                   style={{
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
                   }}
                   title="View Photo Gallery"
                 >
-                  <i className="fa-solid fa-images text-white"></i>
+                  <span className="text-white">🖼️</span>
                 </button>
               )}
               {logs.length > 0 && (
                 <div 
                   className="px-3 py-1.5 rounded-full"
                   style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(139, 92, 246, 0.15)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
                   }}
                 >
-                  <span className="text-caption font-bold text-gray-300">{filteredLogs.length} {filteredLogs.length === 1 ? 'meal' : 'meals'}</span>
+                  <span className="text-xs font-bold text-white/70">{filteredLogs.length} {filteredLogs.length === 1 ? 'meal' : 'meals'}</span>
                 </div>
               )}
             </div>
-          </div>
+             </div>
           
           {/* Search bar */}
           {logs.length > 0 && (
@@ -314,20 +314,20 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
                 placeholder="Search meals..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl text-body text-white placeholder-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                className="w-full px-4 py-3 rounded-xl text-base text-white placeholder-white/30 transition-all duration-300 focus:outline-none"
                 style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  border: '1px solid rgba(139, 92, 246, 0.2)',
                 }}
               />
-              <i className="fa-solid fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30">🔍</span>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                  className="absolute right-12 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
                 >
-                  <i className="fa-solid fa-times"></i>
-                </button>
+                  ✕
+                                </button>
               )}
             </div>
           )}
@@ -365,7 +365,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
                   </div>
                   <span className="text-[10px] text-gray-600">More</span>
                 </div>
-              </div>
+                            </div>
               <div className="flex space-x-1">
                 {heatmapData.map((day, index) => {
                   const today = new Date();
@@ -411,8 +411,8 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="text-[8px] font-bold text-white">{day.count}</span>
                         </div>
-                      )}
-                    </div>
+                                )}
+                            </div>
                   );
                 })}
               </div>
@@ -425,46 +425,36 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
               <div 
                 className="flex-1 rounded-2xl p-4"
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(26, 22, 51, 0.6)',
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
                 <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                    style={{ background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.1))' }}
-                  >
-                    🔥
-                  </div>
+                  <span className="text-2xl">🔥</span>
                   <div>
-                    <p className="text-caption text-gray-400 font-medium">Total Calories</p>
-                    <p className="text-title-2 font-bold text-white">{Math.round(totalStats.calories).toLocaleString()}</p>
+                    <p className="text-xs text-white/40 font-medium">Total Calories</p>
+                    <p className="text-lg font-bold text-white">{Math.round(totalStats.calories).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
               <div 
                 className="flex-1 rounded-2xl p-4"
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(26, 22, 51, 0.6)',
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
                 <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                    style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1))' }}
-                  >
-                    🍽️
-                  </div>
+                  <span className="text-2xl">🍽️</span>
                   <div>
-                    <p className="text-caption text-gray-400 font-medium">Total Meals</p>
-                    <p className="text-title-2 font-bold text-white">{totalStats.meals}</p>
+                    <p className="text-xs text-white/40 font-medium">Total Meals</p>
+                    <p className="text-lg font-bold text-white">{totalStats.meals}</p>
                   </div>
-                </div>
-              </div>
-            </div>
+                                </div>
+                                </div>
+                            </div>
           )}
         </div>
 
@@ -513,12 +503,12 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
                           getMealGradient={getMealGradient}
                         />
                       ))}
+                        </div>
                     </div>
-                  </div>
                 ))}
               </div>
             </div>
-          )}
+         )}
         </div>
       </div>
 
@@ -626,8 +616,8 @@ const SwipeableMealCard: React.FC<{
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         } ${isSwiping ? '' : 'hover:scale-[1.01]'}`}
         style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'rgba(26, 22, 51, 0.6)',
+          border: '1px solid rgba(139, 92, 246, 0.15)',
           backdropFilter: 'blur(10px)',
           transform: `translateX(${swipeOffset}px)`,
           touchAction: 'pan-y',
@@ -702,13 +692,13 @@ const SwipeableMealCard: React.FC<{
                 {Math.round(log.totalMacros.calories)} kcal
               </span>
               <div className="flex space-x-2">
-                <span className="text-caption px-2 py-0.5 rounded font-bold text-emerald-400" style={{ background: 'rgba(52, 211, 153, 0.15)' }}>
+                <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
                   P {Math.round(log.totalMacros.protein)}g
                 </span>
-                <span className="text-caption px-2 py-0.5 rounded font-bold text-cyan-400" style={{ background: 'rgba(34, 211, 238, 0.15)' }}>
+                <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#A855F7' }}>
                   C {Math.round(log.totalMacros.carbs)}g
                 </span>
-                <span className="text-caption px-2 py-0.5 rounded font-bold text-orange-400" style={{ background: 'rgba(251, 146, 60, 0.15)' }}>
+                <span className="text-xs px-2 py-0.5 rounded font-bold" style={{ background: 'rgba(251, 146, 60, 0.15)', color: '#FB923C' }}>
                   F {Math.round(log.totalMacros.fat)}g
                 </span>
               </div>
@@ -716,9 +706,9 @@ const SwipeableMealCard: React.FC<{
             
             {/* Notes */}
             {log.note && (
-              <div className="mt-2 pt-2 border-t border-white/10">
-                <p className="text-caption text-gray-400 italic flex items-start">
-                  <i className="fa-solid fa-note-sticky mr-1.5 mt-0.5 text-xs text-purple-400"></i>
+              <div className="mt-2 pt-2 border-t border-white/5">
+                <p className="text-xs text-white/40 italic flex items-start">
+                  <span className="mr-1.5">📝</span>
                   <span>{log.note}</span>
                 </p>
               </div>

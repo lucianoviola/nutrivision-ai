@@ -39,35 +39,51 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (isChecking) {
     return (
-      <div className="fixed inset-0 bg-[#0a0a0f] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#0D0B1C' }}>
+        <div 
+          className="w-12 h-12 rounded-full animate-spin"
+          style={{
+            border: '3px solid rgba(139, 92, 246, 0.2)',
+            borderTopColor: '#8B5CF6',
+          }}
+        ></div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 bg-[#0a0a0f] flex items-center justify-center p-6">
+      <div 
+        className="fixed inset-0 flex items-center justify-center p-6"
+        style={{ 
+          background: `
+            radial-gradient(ellipse at 30% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+            #0D0B1C
+          ` 
+        }}
+      >
         <div 
           className="w-full max-w-md rounded-3xl p-8"
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            background: 'rgba(26, 22, 51, 0.8)',
+            backdropFilter: 'blur(24px)',
+            border: '1px solid rgba(139, 92, 246, 0.2)',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(139, 92, 246, 0.1)',
           }}
         >
           <div className="text-center mb-8">
             <div 
               className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl"
               style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(99, 102, 241, 0.2))',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2))',
+                boxShadow: '0 0 40px rgba(139, 92, 246, 0.3)',
               }}
             >
               🔒
             </div>
-            <h1 className="text-title-1-lg font-bold text-white mb-2">Private Access</h1>
-            <p className="text-body text-gray-400">
+            <h1 className="text-2xl font-bold text-white mb-2">Private Access</h1>
+            <p className="text-base text-white/50">
               Enter password to access NutriVision AI
             </p>
           </div>
@@ -82,30 +98,30 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   setError(false);
                 }}
                 placeholder="Password"
-                className={`w-full px-4 py-4 rounded-xl text-body text-white placeholder-gray-500 transition-all duration-300 outline-none ${
+                className={`w-full px-4 py-4 rounded-xl text-base text-white placeholder-white/30 transition-all duration-300 outline-none ${
                   error ? 'shake' : ''
                 }`}
                 style={{
                   background: error 
                     ? 'rgba(239, 68, 68, 0.15)' 
-                    : 'rgba(255,255,255,0.08)',
+                    : 'rgba(139, 92, 246, 0.1)',
                   border: error
                     ? '1px solid rgba(239, 68, 68, 0.5)'
-                    : '1px solid rgba(255,255,255,0.1)',
+                    : '1px solid rgba(139, 92, 246, 0.2)',
                 }}
                 autoFocus
                 onFocus={(e) => {
                   if (!error) {
                     e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
-                    e.target.style.background = 'rgba(255,255,255,0.12)';
+                    e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2)';
+                    e.target.style.background = 'rgba(139, 92, 246, 0.15)';
                   }
                 }}
                 onBlur={(e) => {
                   if (!error) {
-                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.target.style.borderColor = 'rgba(139, 92, 246, 0.2)';
                     e.target.style.boxShadow = 'none';
-                    e.target.style.background = 'rgba(255,255,255,0.08)';
+                    e.target.style.background = 'rgba(139, 92, 246, 0.1)';
                   }
                 }}
               />
@@ -120,15 +136,15 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               type="submit"
               className="w-full py-4 rounded-xl font-bold text-white transition-all active:scale-95"
               style={{
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
+                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                boxShadow: '0 4px 20px rgba(139, 92, 246, 0.4)',
               }}
             >
               Access App
             </button>
           </form>
 
-          <p className="text-xs text-gray-500 text-center mt-6">
+          <p className="text-xs text-white/30 text-center mt-6">
             This app is password protected for private use
           </p>
         </div>

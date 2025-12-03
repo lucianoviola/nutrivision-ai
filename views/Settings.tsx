@@ -8,46 +8,40 @@ interface SettingsProps {
   onUpdateSettings: (s: UserSettings) => void;
 }
 
-// Setting row component with focus animation
+// Opal-style setting row
 const SettingRow: React.FC<{
   icon: string;
-  gradient: string;
   label: string;
   value: number;
   onChange: (value: number) => void;
   suffix?: string;
-}> = ({ icon, gradient, label, value, onChange, suffix = '' }) => {
+}> = ({ icon, label, value, onChange, suffix = '' }) => {
   const [isFocused, setIsFocused] = useState(false);
   
   return (
     <div 
       className="flex items-center justify-between p-4 transition-all duration-300"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.1)' }}
     >
       <div className="flex items-center space-x-3">
-        <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-transform duration-300 hover:scale-110"
-          style={{ background: gradient }}
-        >
-          {icon}
-        </div>
-        <span className="text-body font-medium text-white">{label}</span>
+        <span className="text-xl">{icon}</span>
+        <span className="text-base font-medium text-white">{label}</span>
       </div>
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-2">
         <input 
           type="number" 
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="text-right outline-none font-bold w-20 text-white rounded-lg px-3 py-1.5 transition-all duration-300"
+          className="text-right outline-none font-bold w-20 text-white rounded-xl px-3 py-2 transition-all duration-300"
           style={{ 
-            background: isFocused ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
-            border: isFocused ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid rgba(255,255,255,0.05)',
-            boxShadow: isFocused ? '0 0 0 3px rgba(139, 92, 246, 0.1)' : 'none',
+            background: isFocused ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
+            border: isFocused ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid rgba(139, 92, 246, 0.2)',
+            boxShadow: isFocused ? '0 0 20px rgba(139, 92, 246, 0.2)' : 'none',
           }}
         />
-        {suffix && <span className="text-gray-500 text-caption">{suffix}</span>}
+        {suffix && <span className="text-white/40 text-sm">{suffix}</span>}
       </div>
     </div>
   );
@@ -130,15 +124,15 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
 
   return (
     <div className="flex-1 overflow-y-auto pb-28 h-full relative">
-      {/* Animated background */}
+      {/* Opal-style background */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[#0a0a0f]" />
+        <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
         <div 
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-              radial-gradient(ellipse at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)
+              radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 20% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%)
             `,
           }}
         />
@@ -148,34 +142,27 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
       <div className="relative z-10">
         {/* Header */}
         <div className={`pt-14 px-6 pb-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-          <h1 className="text-title-1-lg font-bold text-white">Settings</h1>
-          <p className="text-body text-gray-400 mt-1">Make it yours</p>
+          <h1 className="text-3xl font-bold text-white">Settings</h1>
+          <p className="text-base text-white/40 mt-1">Make it yours</p>
         </div>
 
         <div className="px-6 space-y-6">
           {/* Daily Goals */}
           <div>
             <div className="flex items-center space-x-3 mb-4 px-1">
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.1))',
-                }}
-              >
-                🎯
-              </div>
-              <h3 className="text-body font-bold text-gray-400 uppercase tracking-wider">Daily Goals</h3>
+              <span className="text-xl">🎯</span>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider">Daily Goals</h3>
             </div>
             <div 
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(26, 22, 51, 0.6)',
+                border: '1px solid rgba(139, 92, 246, 0.15)',
+                backdropFilter: 'blur(20px)',
               }}
             >
               <SettingRow
                 icon="🔥"
-                gradient="linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(245, 158, 11, 0.1))"
                 label="Calories"
                 value={settings.dailyCalorieGoal}
                 onChange={(v) => onUpdateSettings({...settings, dailyCalorieGoal: v})}
@@ -183,7 +170,6 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               />
               <SettingRow
                 icon="🥩"
-                gradient="linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.1))"
                 label="Protein"
                 value={settings.dailyProteinGoal}
                 onChange={(v) => onUpdateSettings({...settings, dailyProteinGoal: v})}
@@ -191,7 +177,6 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               />
               <SettingRow
                 icon="🍞"
-                gradient="linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(6, 182, 212, 0.1))"
                 label="Carbs"
                 value={settings.dailyCarbGoal}
                 onChange={(v) => onUpdateSettings({...settings, dailyCarbGoal: v})}
@@ -199,7 +184,6 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               />
               <SettingRow
                 icon="🥑"
-                gradient="linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(249, 115, 22, 0.1))"
                 label="Fat"
                 value={settings.dailyFatGoal}
                 onChange={(v) => onUpdateSettings({...settings, dailyFatGoal: v})}
@@ -211,35 +195,28 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
           {/* OpenAI API Configuration */}
           <div>
             <div className="flex items-center space-x-3 mb-4 px-1">
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(14, 184, 170, 0.1))',
-                }}
-              >
-                ⚡
-              </div>
-              <h3 className="text-body font-bold text-gray-400 uppercase tracking-wider">OpenAI API</h3>
+              <span className="text-xl">⚡</span>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider">OpenAI API</h3>
             </div>
             <div 
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(26, 22, 51, 0.6)',
+                border: '1px solid rgba(139, 92, 246, 0.15)',
+                backdropFilter: 'blur(20px)',
               }}
             >
-              {/* API Key */}
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center space-x-2">
                     <span>🔑</span>
-                    <span className="text-sm font-medium text-gray-300">OpenAI API Key</span>
+                    <span className="text-sm font-medium text-white/70">API Key</span>
                   </div>
                   <button 
                     onClick={() => setShowKeyInput(!showKeyInput)} 
-                    className="text-sm font-semibold transition-all active:scale-95"
+                    className="text-sm font-bold transition-all active:scale-95"
                     style={{
-                      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                      background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                     }}
@@ -252,34 +229,17 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                   <div className="flex items-center space-x-2">
                     {openaiApiKey ? (
                       <div className="flex items-center space-x-2">
-                        <div className="relative">
-                          <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <svg 
-                              className="w-3 h-3 text-green-400 animate-checkmark"
-                              fill="none" 
-                              stroke="currentColor" 
-                              viewBox="0 0 24 24"
-                            >
-                              <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth="3" 
-                                d="M5 13l4 4L19 7"
-                                strokeDasharray="20"
-                                strokeDashoffset="20"
-                                style={{
-                                  animation: 'checkmark 0.6s ease-out forwards',
-                                }}
-                              />
-                            </svg>
-                          </div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.2)' }}>
+                          <svg className="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
                         </div>
-                        <span className="text-caption text-green-400 font-medium">Key configured</span>
+                        <span className="text-xs text-green-400 font-medium">Key configured</span>
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="text-caption text-amber-400 font-medium">No key set</span>
+                        <span className="text-xs text-amber-400 font-medium">No key set</span>
                       </div>
                     )}
                   </div>
@@ -292,50 +252,38 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                       value={openaiApiKey}
                       onChange={(e) => setOpenaiApiKey(e.target.value)}
                       placeholder="Paste your OpenAI API key"
-                      className="w-full rounded-xl px-4 py-3 text-body outline-none text-white placeholder-gray-500 transition-all duration-300"
+                      className="w-full rounded-xl px-4 py-3 text-base outline-none text-white placeholder-white/30 transition-all duration-300"
                       style={{
-                        background: 'rgba(255,255,255,0.08)',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        border: '1px solid rgba(139, 92, 246, 0.2)',
                       }}
                       onFocus={(e) => {
                         e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
-                        e.target.style.background = 'rgba(255,255,255,0.12)';
+                        e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2)';
                       }}
                       onBlur={(e) => {
-                        e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.2)';
                         e.target.style.boxShadow = 'none';
-                        e.target.style.background = 'rgba(255,255,255,0.08)';
                       }}
                     />
                     <button 
                       onClick={handleSaveKey} 
-                      className="w-full text-white text-body font-bold py-3 rounded-xl transition-all duration-300 active:scale-95 relative overflow-hidden group"
+                      className="w-full text-white text-base font-bold py-3 rounded-xl transition-all duration-300 active:scale-95"
                       style={{
-                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                        boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
+                        background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                        boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
                       }}
                     >
-                      <span className="relative z-10 flex items-center justify-center space-x-2">
-                        <span>Save Key</span>
-                        <svg 
-                          className="w-4 h-4 transition-transform duration-300 group-hover:scale-110"
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </span>
+                      Save Key
                     </button>
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                    <p className="text-xs text-white/30 leading-relaxed">
                       🔒 Key is stored locally on your device. Get your key from{' '}
                       <a 
                         href="https://platform.openai.com/api-keys"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline"
-                        style={{ color: '#818cf8' }}
+                        style={{ color: '#A855F7' }}
                       >
                         OpenAI Platform
                       </a>
@@ -349,58 +297,42 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
           {/* Integrations */}
           <div>
             <div className="flex items-center space-x-3 mb-4 px-1">
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.1))',
-                }}
-              >
-                🔌
-              </div>
-              <h3 className="text-body font-bold text-gray-400 uppercase tracking-wider">Integrations</h3>
+              <span className="text-xl">🔌</span>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider">Integrations</h3>
             </div>
             <div 
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(26, 22, 51, 0.6)',
+                border: '1px solid rgba(139, 92, 246, 0.15)',
+                backdropFilter: 'blur(20px)',
               }}
             >
               <button 
                 onClick={handleAppleHealth} 
                 className="w-full p-4 flex items-center justify-between transition-all active:scale-[0.98]"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.1)' }}
               >
                 <div className="flex items-center space-x-3">
-                  <div 
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${isNativeApp ? '' : 'opacity-50'}`}
-                    style={{ 
-                      background: isNativeApp 
-                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(236, 72, 153, 0.2))' 
-                        : 'rgba(255,255,255,0.05)' 
-                    }}
-                  >
-                    ❤️
-                  </div>
+                  <span className={`text-xl ${isNativeApp ? '' : 'opacity-50'}`}>❤️</span>
                   <div className="text-left">
                     <span className="font-medium text-white block">Apple Health</span>
-                    {!isNativeApp && <span className="text-[11px] text-gray-500">Native app required</span>}
+                    {!isNativeApp && <span className="text-xs text-white/30">Native app required</span>}
                   </div>
                 </div>
                 <div 
                   className="w-12 h-7 rounded-full p-1 transition-all duration-300 relative"
                   style={{ 
                     background: settings.appleHealthConnected 
-                      ? 'linear-gradient(135deg, #10b981, #14b8a6)' 
-                      : 'rgba(255,255,255,0.1)',
-                    boxShadow: settings.appleHealthConnected ? '0 0 12px rgba(16, 185, 129, 0.4)' : 'none',
+                      ? 'linear-gradient(135deg, #8B5CF6, #EC4899)' 
+                      : 'rgba(139, 92, 246, 0.2)',
+                    boxShadow: settings.appleHealthConnected ? '0 0 12px rgba(139, 92, 246, 0.4)' : 'none',
                   }}
                 >
                   <div 
-                    className="w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-300 ease-spring"
+                    className="w-5 h-5 bg-white rounded-full shadow-lg transform transition-all duration-300"
                     style={{ 
                       transform: settings.appleHealthConnected ? 'translateX(20px)' : 'translateX(0)',
-                      boxShadow: settings.appleHealthConnected ? '0 2px 8px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.1)',
                     }}
                   ></div>
                 </div>
@@ -411,18 +343,13 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                 className="w-full p-4 flex items-center justify-between text-white transition-all active:scale-[0.98] hover:bg-white/5"
               >
                 <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-                    style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.1))' }}
-                  >
-                    📤
-                  </div>
+                  <span className="text-xl">📤</span>
                   <div className="text-left">
                     <span className="font-medium text-white block">Export Data</span>
-                    <span className="text-[11px] text-gray-500">Download as CSV file</span>
+                    <span className="text-xs text-white/30">Download as CSV file</span>
                   </div>
                 </div>
-                <i className="fa-solid fa-chevron-right text-gray-600"></i>
+                <span className="text-white/30">→</span>
               </button>
             </div>
           </div>
@@ -430,83 +357,59 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
           {/* About */}
           <div>
             <div className="flex items-center space-x-3 mb-4 px-1">
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-base"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.1))',
-                }}
-              >
-                ℹ️
-              </div>
-              <h3 className="text-body font-bold text-gray-400 uppercase tracking-wider">About</h3>
+              <span className="text-xl">ℹ️</span>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider">About</h3>
             </div>
             <div 
               className="rounded-2xl p-5"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(26, 22, 51, 0.6)',
+                border: '1px solid rgba(139, 92, 246, 0.15)',
+                backdropFilter: 'blur(20px)',
               }}
             >
               <div className="flex items-center space-x-4">
                 <div 
                   className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
+                    background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
                   }}
                 >
                   🍽️
                 </div>
                 <div>
                   <h4 className="font-bold text-white">NutriVision AI</h4>
-                  <p className="text-sm text-gray-400">Version 1.0.0</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-sm text-white/40">Version 1.0.0</p>
+                  <p className="text-xs text-white/30 mt-1">
                     Powered by {settings.aiProvider === 'gemini' ? 'Google Gemini' : 'OpenAI GPT-5'}
                   </p>
                 </div>
               </div>
             </div>
           </div>
-
+        
           {/* Storage info */}
-          <div className="text-center text-xs text-gray-600 py-4">
+          <div className="text-center text-xs text-white/30 py-4">
             💾 Data stored locally on this device
           </div>
         </div>
       </div>
 
-      {/* Toast notification with animation */}
+      {/* Toast notification */}
       {showToast && (
         <div 
-          className="fixed top-6 left-1/2 transform -translate-x-1/2 px-5 py-3 rounded-2xl shadow-xl z-50 flex items-center space-x-2 animate-spring-up"
+          className="fixed top-6 left-1/2 transform -translate-x-1/2 px-5 py-3 rounded-2xl shadow-xl z-50 flex items-center space-x-2"
           style={{
-            background: 'rgba(16, 185, 129, 0.95)',
+            background: 'linear-gradient(135deg, #10B981, #14B8A6)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.2)',
             boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
           }}
         >
-          <div className="relative">
-            <svg 
-              className="w-5 h-5 text-white animate-checkmark"
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth="3" 
-                d="M5 13l4 4L19 7"
-                strokeDasharray="20"
-                strokeDashoffset="20"
-                style={{
-                  animation: 'checkmark 0.6s ease-out forwards',
-                }}
-              />
-            </svg>
-          </div>
-          <span className="text-body font-medium text-white">{toastMessage}</span>
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+          </svg>
+          <span className="text-base font-medium text-white">{toastMessage}</span>
         </div>
       )}
     </div>

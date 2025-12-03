@@ -10,12 +10,10 @@ interface StatsProps {
 
 type TimePeriod = 'week' | 'month';
 
-// Helper to get date string
 const getDateString = (date: Date) => {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 };
 
-// Helper to get day label
 const getDayLabel = (date: Date, short = false) => {
   const days = short 
     ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -23,7 +21,7 @@ const getDayLabel = (date: Date, short = false) => {
   return days[date.getDay()];
 };
 
-// Interactive calorie bar component with touch feedback
+// Opal-style calorie bar
 const CalorieBar: React.FC<{
   value: number;
   goal: number;
@@ -35,7 +33,6 @@ const CalorieBar: React.FC<{
 }> = ({ value, goal, label, isToday, maxValue, delay, date }) => {
   const [animatedHeight, setAnimatedHeight] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const percentage = Math.min((value / maxValue) * 100, 100);
   const isOverGoal = value > goal;
   
@@ -53,78 +50,59 @@ const CalorieBar: React.FC<{
       className="flex flex-col items-center flex-1 relative group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
     >
-      {/* Tooltip on hover/touch */}
+      {/* Tooltip */}
       {isHovered && value > 0 && (
         <div 
-          className="absolute -top-16 z-20 px-3 py-2 rounded-lg text-white text-xs font-bold whitespace-nowrap transition-all duration-200 animate-spring-up"
+          className="absolute -top-16 z-20 px-3 py-2 rounded-xl text-white text-xs font-bold whitespace-nowrap"
           style={{
-            background: 'rgba(0,0,0,0.9)',
+            background: 'rgba(13, 11, 28, 0.95)',
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.2)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
           }}
         >
           <div className="text-center">
-            <div className="text-[10px] text-gray-400 mb-0.5">{formatDate(date)}</div>
+            <div className="text-[10px] text-white/40 mb-0.5">{formatDate(date)}</div>
             <div className="text-sm">{Math.round(value)} kcal</div>
-            <div className="text-[10px] text-gray-500 mt-0.5">
+            <div className="text-[10px] text-white/40 mt-0.5">
               {Math.round((value / goal) * 100)}% of goal
             </div>
           </div>
-          {/* Arrow */}
-          <div 
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent"
-            style={{ borderTopColor: 'rgba(0,0,0,0.9)' }}
-          />
         </div>
       )}
       
       <div className="relative h-28 w-full flex flex-col justify-end items-center">
-        {/* Bar container */}
         <div 
-          className={`w-6 rounded-lg transition-all duration-300 relative overflow-hidden ${
-            isPressed ? 'scale-95' : isHovered ? 'scale-105' : 'scale-100'
+          className={`w-6 rounded-lg transition-all duration-500 relative overflow-hidden ${
+            isHovered ? 'scale-110' : 'scale-100'
           }`}
           style={{ 
             height: `${animatedHeight}%`, 
             minHeight: value > 0 ? '4px' : '0',
           }}
         >
-          {/* Gradient fill */}
           <div 
             className="absolute inset-0 transition-all duration-300"
             style={{ 
               background: isOverGoal 
-                ? 'linear-gradient(180deg, #f87171, #dc2626)' 
+                ? 'linear-gradient(180deg, #F43F5E, #EF4444)' 
                 : isToday 
-                  ? 'linear-gradient(180deg, #22d3ee, #6366f1)'
-                  : 'linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))',
-              boxShadow: isHovered ? `0 0 12px ${isOverGoal ? '#f87171' : isToday ? '#22d3ee' : 'rgba(255,255,255,0.3)'}` : 'none',
+                  ? 'linear-gradient(180deg, #8B5CF6, #EC4899)'
+                  : 'linear-gradient(180deg, rgba(139, 92, 246, 0.6), rgba(139, 92, 246, 0.3))',
+              boxShadow: isHovered 
+                ? `0 0 16px ${isOverGoal ? 'rgba(239, 68, 68, 0.5)' : isToday ? 'rgba(139, 92, 246, 0.5)' : 'rgba(139, 92, 246, 0.3)'}` 
+                : 'none',
             }}
           />
-          
-          {/* Shimmer effect for today */}
-          {isToday && (
-            <div 
-              className="absolute inset-0 opacity-50 animate-shimmer"
-              style={{
-                background: 'linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(255,255,255,0.2) 100%)',
-                backgroundSize: '100% 200%',
-              }}
-            />
-          )}
         </div>
         
-        {/* Value label */}
         {value > 0 && animatedHeight > 0 && (
           <span 
             className="absolute text-[10px] font-bold transition-all duration-300"
             style={{ 
               bottom: `calc(${animatedHeight}% + 4px)`,
-              color: isOverGoal ? '#f87171' : isToday ? '#22d3ee' : 'rgba(255,255,255,0.6)',
+              color: isOverGoal ? '#F43F5E' : isToday ? '#A855F7' : 'rgba(255,255,255,0.5)',
               transform: isHovered ? 'scale(1.2)' : 'scale(1)',
             }}
           >
@@ -134,7 +112,7 @@ const CalorieBar: React.FC<{
       </div>
       
       <span className={`text-[10px] mt-2 font-semibold transition-all duration-300 ${
-        isToday ? 'text-cyan-400 scale-110' : 'text-gray-500'
+        isToday ? 'text-purple-400 scale-110' : 'text-white/40'
       } ${isHovered ? 'scale-110' : ''}`}>
         {label}
       </span>
@@ -142,7 +120,7 @@ const CalorieBar: React.FC<{
   );
 };
 
-// Macro trend line with animation and trend indicator
+// Opal-style macro trend line
 const MacroTrendLine: React.FC<{
   data: number[];
   color: string;
@@ -155,7 +133,6 @@ const MacroTrendLine: React.FC<{
   const validData = data.filter(d => d > 0);
   const average = validData.length > 0 ? validData.reduce((a, b) => a + b, 0) / validData.length : 0;
   
-  // Calculate trend (comparing first half vs second half)
   const firstHalf = data.slice(0, Math.floor(data.length / 2)).filter(d => d > 0);
   const secondHalf = data.slice(Math.floor(data.length / 2)).filter(d => d > 0);
   const firstAvg = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : 0;
@@ -168,7 +145,6 @@ const MacroTrendLine: React.FC<{
     return () => clearTimeout(timer);
   }, []);
   
-  // Create SVG path
   const width = 280;
   const height = 60;
   const points = data.map((value, index) => ({
@@ -188,8 +164,9 @@ const MacroTrendLine: React.FC<{
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(26, 22, 51, 0.6)',
+        border: '1px solid rgba(139, 92, 246, 0.15)',
+        backdropFilter: 'blur(20px)',
       }}
     >
       <div className="flex items-center justify-between mb-3">
@@ -198,10 +175,9 @@ const MacroTrendLine: React.FC<{
           <span className="text-sm font-bold text-white">{label}</span>
         </div>
         <div className="flex items-center space-x-2">
-          {/* Trend indicator */}
           {Math.abs(trendPercent) > 5 && (
             <div className="flex items-center space-x-1 px-2 py-0.5 rounded-full" style={{
-              background: isTrendingUp ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              background: isTrendingUp ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
             }}>
               <span className={`text-xs ${isTrendingUp ? 'text-green-400' : 'text-red-400'}`}>
                 {isTrendingUp ? '↑' : '↓'}
@@ -213,36 +189,30 @@ const MacroTrendLine: React.FC<{
           )}
           <div className="text-right">
             <span className="text-lg font-black" style={{ color }}>
-              <AnimatedNumber 
-                value={Math.round(average)} 
-                duration={800}
-              />
+              <AnimatedNumber value={Math.round(average)} duration={800} />
             </span>
-            <span className="text-xs text-gray-500 ml-1">g avg</span>
+            <span className="text-xs text-white/40 ml-1">g avg</span>
           </div>
         </div>
       </div>
       
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-        {/* Goal line */}
         <line 
           x1="0" 
           y1={height - (goal / maxValue) * height} 
           x2={width} 
           y2={height - (goal / maxValue) * height}
-          stroke="rgba(255,255,255,0.25)"
+          stroke="rgba(139, 92, 246, 0.3)"
           strokeWidth="2"
           strokeDasharray="4 4"
         />
         
-        {/* Area fill */}
         <path
           d={areaD}
-          fill={`${color}20`}
+          fill={`${color}15`}
           className={`transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
         />
         
-        {/* Line */}
         <path
           d={pathD}
           fill="none"
@@ -256,7 +226,6 @@ const MacroTrendLine: React.FC<{
           }}
         />
         
-        {/* Data points */}
         {isVisible && points.map((point, i) => (
           data[i] > 0 && (
             <circle
@@ -264,7 +233,7 @@ const MacroTrendLine: React.FC<{
               cx={point.x}
               cy={point.y}
               r="3"
-              fill="#0a0a0f"
+              fill="#0D0B1C"
               stroke={color}
               strokeWidth="2"
               className="transition-all duration-500"
@@ -275,11 +244,8 @@ const MacroTrendLine: React.FC<{
       </svg>
       
       <div className="flex justify-between mt-2">
-        <span className="text-[10px] text-gray-500">Goal: {goal}g</span>
-        <span 
-          className="text-[10px] font-bold"
-          style={{ color }}
-        >
+        <span className="text-[10px] text-white/40">Goal: {goal}g</span>
+        <span className="text-[10px] font-bold" style={{ color }}>
           <AnimatedNumber value={Math.round((average / goal) * 100)} duration={800} />
           % of goal
         </span>
@@ -288,16 +254,46 @@ const MacroTrendLine: React.FC<{
   );
 };
 
-// Stat card component with animated counter
+// SVG icons for stat cards (monoline style)
+const StatIcons = {
+  fire: (
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-2.05.78-3.91 2.04-5.33C7.27 8.87 9.46 12 12 12c2.54 0 4.73-3.13 5.96-5.33C19.22 8.09 20 9.95 20 12c0 4.41-3.59 8-8 8z" fill="currentColor" opacity="0.3"/>
+      <path d="M12 5.5c-1.5 0-2.91 1.06-3.55 2.67C7.66 10.04 8.95 12 12 12c3.05 0 4.34-1.96 3.55-3.83C14.91 6.56 13.5 5.5 12 5.5z" fill="currentColor"/>
+    </svg>
+  ),
+  target: (
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" opacity="0.3"/>
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+    </svg>
+  ),
+  bolt: (
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" fillOpacity="0.2"/>
+    </svg>
+  ),
+  plate: (
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" opacity="0.3"/>
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
+      <path d="M12 9v6M9 12h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+    </svg>
+  ),
+};
+
+// Opal-style stat card with SVG icons
 const StatCard: React.FC<{
-  icon: string;
-  gradient: string;
+  iconType: 'fire' | 'target' | 'bolt' | 'plate';
+  iconColor: string;
   label: string;
   value: string | number;
   subtitle?: string;
   delay: number;
   animate?: boolean;
-}> = ({ icon, gradient, label, value, subtitle, delay, animate = true }) => {
+  isHero?: boolean;
+}> = ({ iconType, iconColor, label, value, subtitle, delay, animate = true, isHero = false }) => {
   const [isVisible, setIsVisible] = useState(false);
   
   useEffect(() => {
@@ -309,33 +305,37 @@ const StatCard: React.FC<{
   
   return (
     <div 
-      className={`rounded-2xl p-4 flex-1 transition-all duration-700 cursor-pointer active:scale-[0.98] active:opacity-90 ${
+      className={`rounded-2xl p-4 flex-1 transition-all duration-700 cursor-pointer active:scale-[0.98] ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: isHero 
+          ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))'
+          : 'rgba(26, 22, 51, 0.6)',
+        border: isHero 
+          ? '1px solid rgba(139, 92, 246, 0.3)'
+          : '1px solid rgba(139, 92, 246, 0.15)',
+        backdropFilter: 'blur(20px)',
       }}
     >
       <div 
-        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3 transition-transform duration-300 hover:scale-110"
-        style={{ background: gradient }}
+        className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+        style={{ 
+          background: `${iconColor}20`,
+          color: iconColor,
+        }}
       >
-        {icon}
+        {StatIcons[iconType]}
       </div>
-      <p 
-        className={`text-2xl font-black text-white ${
-          isNumeric && value === 0 ? 'animate-pulse' : ''
-        }`}
-      >
+      <p className={`${isHero ? 'text-3xl' : 'text-2xl'} font-black text-white`}>
         {isNumeric && animate ? (
           <AnimatedNumber value={value} duration={1000} />
         ) : (
           value
         )}
       </p>
-      <p className="text-xs text-gray-400 font-medium">{label}</p>
-      {subtitle && <p className="text-[10px] text-gray-600 mt-0.5">{subtitle}</p>}
+      <p className="text-xs text-white/50 font-medium mt-0.5">{label}</p>
+      {subtitle && <p className="text-[11px] text-white/35 mt-0.5">{subtitle}</p>}
     </div>
   );
 };
@@ -352,7 +352,6 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
     return () => clearTimeout(timer);
   }, []);
   
-  // Calculate date range
   const dateRange = useMemo(() => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
@@ -370,7 +369,6 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
     return dates;
   }, [period]);
   
-  // Group logs by date
   const dailyData = useMemo(() => {
     const data: Map<string, { calories: number; protein: number; carbs: number; fat: number; meals: number }> = new Map();
     
@@ -400,7 +398,6 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
     }));
   }, [logs, dateRange]);
   
-  // Calculate summary stats
   const summaryStats = useMemo(() => {
     const daysWithLogs = dailyData.filter(d => d.meals > 0);
     const totalCalories = daysWithLogs.reduce((sum, d) => sum + d.calories, 0);
@@ -415,7 +412,6 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
       ? Math.round((daysOnTarget / daysWithLogs.length) * 100) 
       : 0;
     
-    // Calculate streak
     let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -439,26 +435,24 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
     };
   }, [dailyData, settings]);
   
-  // Max calorie value for scaling
   const maxCalories = Math.max(
     ...dailyData.map(d => d.calories),
     settings.dailyCalorieGoal * 1.2
   );
   
-  // Today's date for highlighting
   const todayStr = getDateString(new Date());
   
   return (
     <div className="h-full overflow-y-auto pb-28 relative">
-      {/* Animated background */}
+      {/* Opal-style background */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[#0a0a0f]" />
+        <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
         <div 
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse at 50% 0%, rgba(34, 211, 238, 0.15) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)
+              radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%)
             `,
           }}
         />
@@ -469,41 +463,40 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
         {/* Header */}
         <div className={`pt-14 px-6 pb-4 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <h1 className="text-3xl font-bold text-white">Statistics</h1>
-          <p className="text-gray-400 text-sm mt-1">Track your nutrition trends</p>
+          <p className="text-white/40 text-sm mt-1">Track your nutrition trends</p>
         </div>
         
         {/* Period selector */}
         <div className="px-6 mb-6">
           <div 
-            className="rounded-xl p-1 flex"
+            className="rounded-2xl p-1 flex relative"
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(26, 22, 51, 0.6)',
+              border: '1px solid rgba(139, 92, 246, 0.15)',
             }}
           >
+            <div
+              className="absolute top-1 bottom-1 rounded-xl transition-all duration-300"
+              style={{
+                left: period === 'week' ? '4px' : '50%',
+                width: 'calc(50% - 4px)',
+                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                boxShadow: '0 2px 12px rgba(139, 92, 246, 0.3)',
+              }}
+            />
             <button
               onClick={() => setPeriod('week')}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                period === 'week'
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-300'
+              className={`flex-1 py-2.5 rounded-xl text-sm transition-all relative z-10 ${
+                period === 'week' ? 'text-white font-bold' : 'text-white/50 font-medium'
               }`}
-              style={period === 'week' ? {
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              } : {}}
             >
               This Week
             </button>
             <button
               onClick={() => setPeriod('month')}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                period === 'month'
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-300'
+              className={`flex-1 py-2.5 rounded-xl text-sm transition-all relative z-10 ${
+                period === 'month' ? 'text-white font-bold' : 'text-white/50 font-medium'
               }`}
-              style={period === 'month' ? {
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              } : {}}
             >
               This Month
             </button>
@@ -513,42 +506,35 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
         {/* View mode toggle */}
         <div className="px-6 mb-6">
           <div 
-            className="rounded-xl p-1 flex relative"
+            className="rounded-2xl p-1 flex relative"
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(26, 22, 51, 0.6)',
+              border: '1px solid rgba(139, 92, 246, 0.15)',
             }}
           >
-            {/* Animated background indicator */}
             <div
-              className="absolute top-1 bottom-1 rounded-lg transition-all duration-300 ease-spring"
+              className="absolute top-1 bottom-1 rounded-xl transition-all duration-300"
               style={{
                 left: viewMode === 'chart' ? '4px' : '50%',
                 width: 'calc(50% - 4px)',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                boxShadow: '0 2px 12px rgba(139, 92, 246, 0.3)',
               }}
             />
             <button
               onClick={() => setViewMode('chart')}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-300 relative z-10 active:scale-95 ${
-                viewMode === 'chart'
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-300'
+              className={`flex-1 py-2 rounded-xl text-sm transition-all relative z-10 active:scale-95 ${
+                viewMode === 'chart' ? 'text-white font-bold' : 'text-white/50 font-medium'
               }`}
             >
-              <i className="fa-solid fa-chart-line mr-1.5"></i>
               Charts
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all duration-300 relative z-10 active:scale-95 ${
-                viewMode === 'calendar'
-                  ? 'text-white'
-                  : 'text-gray-500 hover:text-gray-300'
+              className={`flex-1 py-2 rounded-xl text-sm transition-all relative z-10 active:scale-95 ${
+                viewMode === 'calendar' ? 'text-white font-bold' : 'text-white/50 font-medium'
               }`}
             >
-              <i className="fa-solid fa-calendar-days mr-1.5"></i>
               Calendar
             </button>
           </div>
@@ -561,16 +547,17 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
           {/* Summary cards */}
           <div className="flex space-x-3">
             <StatCard
-              icon="🔥"
-              gradient="linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(245, 158, 11, 0.1))"
+              iconType="fire"
+              iconColor="#F97316"
               label="Avg Calories"
               value={summaryStats.avgCalories || 0}
               subtitle={`Goal: ${settings.dailyCalorieGoal}`}
               delay={0}
+              isHero={true}
             />
             <StatCard
-              icon="🎯"
-              gradient="linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.1))"
+              iconType="target"
+              iconColor="#10B981"
               label="On Target"
               value={`${summaryStats.goalAchievement}%`}
               subtitle={`${summaryStats.daysLogged} ${summaryStats.daysLogged === 1 ? 'day' : 'days'} logged`}
@@ -580,16 +567,16 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
           
           <div className="flex space-x-3">
             <StatCard
-              icon="⚡"
-              gradient="linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.1))"
+              iconType="bolt"
+              iconColor="#FBBF24"
               label="Day Streak"
               value={summaryStats.streak}
               subtitle="Keep it up!"
               delay={200}
             />
             <StatCard
-              icon="🍽️"
-              gradient="linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.1))"
+              iconType="plate"
+              iconColor="#A855F7"
               label="Total Meals"
               value={summaryStats.totalMeals}
               subtitle={`${period === 'week' ? 'This week' : 'This month'}`}
@@ -601,7 +588,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
           {viewMode === 'calendar' && (
             <div>
               <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider flex items-center space-x-2">
                   <span>📅</span>
                   <span>{period === 'week' ? 'This Week' : 'This Month'}</span>
                 </h3>
@@ -610,8 +597,9 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               <div 
                 className="rounded-2xl p-4"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: 'rgba(26, 22, 51, 0.6)',
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  backdropFilter: 'blur(20px)',
                 }}
               >
                 {period === 'week' ? (
@@ -632,12 +620,12 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                           }`}
                           style={{
                             background: day.meals > 0 
-                              ? 'rgba(139, 92, 246, 0.15)' 
-                              : 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.08)',
+                              ? 'rgba(139, 92, 246, 0.2)' 
+                              : 'rgba(139, 92, 246, 0.05)',
+                            border: '1px solid rgba(139, 92, 246, 0.15)',
                           }}
                         >
-                          <div className="text-[10px] font-bold text-gray-400 mb-1 text-center">
+                          <div className="text-[10px] font-bold text-white/40 mb-1 text-center">
                             {getDayLabel(day.date, true)}
                           </div>
                           <div className="text-xs font-bold text-white text-center mb-1">
@@ -654,15 +642,12 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                                     key={i}
                                     className="w-1.5 h-1.5 rounded-full"
                                     style={{
-                                      background: log.type === 'breakfast' ? '#fbbf24' :
-                                                  log.type === 'lunch' ? '#3b82f6' :
-                                                  log.type === 'dinner' ? '#8b5cf6' : '#a78bfa',
+                                      background: log.type === 'breakfast' ? '#FBBF24' :
+                                                  log.type === 'lunch' ? '#3B82F6' :
+                                                  log.type === 'dinner' ? '#8B5CF6' : '#A78BFA',
                                     }}
                                   />
                                 ))}
-                                {dayLogs.length > 3 && (
-                                  <span className="text-[8px] text-gray-400">+{dayLogs.length - 3}</span>
-                                )}
                               </div>
                             </div>
                           )}
@@ -674,11 +659,6 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                   <div className="grid grid-cols-7 gap-1.5">
                     {dailyData.map((day, index) => {
                       const isToday = getDateString(day.date) === getDateString(new Date());
-                      const dayLogs = logs.filter(log => {
-                        const logDate = new Date(log.timestamp);
-                        logDate.setHours(0, 0, 0, 0);
-                        return logDate.toDateString() === day.date.toDateString();
-                      });
                       
                       return (
                         <div
@@ -688,13 +668,13 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                           }`}
                           style={{
                             background: day.meals > 0 
-                              ? `rgba(139, 92, 246, ${0.1 + Math.min(day.meals / 5, 1) * 0.15})` 
-                              : 'rgba(255,255,255,0.02)',
-                            border: '1px solid rgba(255,255,255,0.05)',
+                              ? `rgba(139, 92, 246, ${0.15 + Math.min(day.meals / 5, 1) * 0.2})` 
+                              : 'rgba(139, 92, 246, 0.05)',
+                            border: '1px solid rgba(139, 92, 246, 0.1)',
                           }}
                           title={`${day.date.toLocaleDateString()}: ${day.meals} meal${day.meals !== 1 ? 's' : ''}, ${Math.round(day.calories)} kcal`}
                         >
-                          <div className="text-[9px] font-bold text-gray-400">
+                          <div className="text-[9px] font-bold text-white/40">
                             {day.date.getDate()}
                           </div>
                           {day.meals > 0 && (
@@ -715,59 +695,30 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
           {viewMode === 'chart' && (
             <div>
               <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider flex items-center space-x-2">
                   <span>📊</span>
                   <span>Daily Calories</span>
                 </h3>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-white/30">
                   Goal: {settings.dailyCalorieGoal} kcal
                 </span>
               </div>
             
-            <div 
-              className="rounded-2xl p-4"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              {/* Goal line indicator */}
-              <div className="flex items-center justify-end mb-2">
-                <div className="flex items-center space-x-1">
-                  <div className="w-4 h-[2px] border-t border-dashed border-white/30"></div>
-                  <span className="text-[10px] text-gray-400">goal</span>
+              <div 
+                className="rounded-2xl p-4"
+                style={{
+                  background: 'rgba(26, 22, 51, 0.6)',
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  backdropFilter: 'blur(20px)',
+                }}
+              >
+                <div className="flex items-center justify-end mb-2">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-4 h-[2px] border-t border-dashed" style={{ borderColor: 'rgba(139, 92, 246, 0.4)' }}></div>
+                    <span className="text-[10px] text-white/30">goal</span>
+                  </div>
                 </div>
-              </div>
-              
-              {summaryStats.totalMeals === 0 ? (
-                /* Ghost chart visualization */
-                <div className="flex space-x-1">
-                  {(period === 'week' ? dailyData : dailyData.filter((_, i) => i % 3 === 0 || i === dailyData.length - 1)).map((day, index) => {
-                    // Generate ghost values (random but consistent)
-                    const ghostValue = (settings.dailyCalorieGoal * 0.6) + (Math.sin(index) * settings.dailyCalorieGoal * 0.2);
-                    return (
-                      <div key={index} className="flex flex-col items-center flex-1 opacity-50">
-                        <div className="relative h-28 w-full flex flex-col justify-end items-center">
-                          <div 
-                            className="w-6 rounded-lg transition-all duration-700 ease-out relative overflow-hidden"
-                            style={{ 
-                              height: `${(ghostValue / maxCalories) * 100}%`, 
-                              minHeight: '4px',
-                              background: 'linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.12))',
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] mt-2 font-semibold text-gray-600">
-                          {period === 'week' 
-                            ? getDayLabel(day.date, true) 
-                            : `${day.date.getMonth() + 1}/${day.date.getDate()}`
-                          }
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
+                
                 <div className="flex space-x-1">
                   {(period === 'week' ? dailyData : dailyData.filter((_, i) => i % 3 === 0 || i === dailyData.length - 1)).map((day, index) => (
                     <CalorieBar
@@ -785,81 +736,76 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                     />
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
           )}
 
           {/* Macro trends */}
           {viewMode === 'chart' && (
             <div>
-            <div className="flex items-center mb-3 px-1">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center space-x-2">
-                <span>📈</span>
-                <span>Macro Trends</span>
-              </h3>
-            </div>
+              <div className="flex items-center mb-3 px-1">
+                <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider flex items-center space-x-2">
+                  <span>📈</span>
+                  <span>Macro Trends</span>
+                </h3>
+              </div>
             
-            <div className="space-y-3">
-              <MacroTrendLine
-                data={dailyData.map(d => d.protein)}
-                color="#34d399"
-                label="Protein"
-                goal={settings.dailyProteinGoal}
-                icon="🥩"
-              />
-              <MacroTrendLine
-                data={dailyData.map(d => d.carbs)}
-                color="#22d3ee"
-                label="Carbohydrates"
-                goal={settings.dailyCarbGoal}
-                icon="🍞"
-              />
-              <MacroTrendLine
-                data={dailyData.map(d => d.fat)}
-                color="#fb923c"
-                label="Fat"
-                goal={settings.dailyFatGoal}
-                icon="🥑"
-              />
+              <div className="space-y-3">
+                <MacroTrendLine
+                  data={dailyData.map(d => d.protein)}
+                  color="#10B981"
+                  label="Protein"
+                  goal={settings.dailyProteinGoal}
+                  icon="🥩"
+                />
+                <MacroTrendLine
+                  data={dailyData.map(d => d.carbs)}
+                  color="#A855F7"
+                  label="Carbohydrates"
+                  goal={settings.dailyCarbGoal}
+                  icon="🍞"
+                />
+                <MacroTrendLine
+                  data={dailyData.map(d => d.fat)}
+                  color="#FB923C"
+                  label="Fat"
+                  goal={settings.dailyFatGoal}
+                  icon="🥑"
+                />
+              </div>
             </div>
-          </div>
           )}
 
-          {/* Empty state with personality */}
+          {/* Empty state */}
           {summaryStats.totalMeals === 0 && (
             <div className="text-center py-8">
               <div className="relative w-24 h-24 mx-auto mb-6">
-                {/* Animated chart icon */}
                 <div 
-                  className="absolute inset-0 rounded-2xl animate-breathe"
+                  className="absolute inset-0 rounded-2xl"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(99, 102, 241, 0.2))',
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2))',
                   }}
                 />
                 <div 
                   className="absolute inset-1 rounded-xl flex items-center justify-center text-4xl"
                   style={{
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'rgba(26, 22, 51, 0.8)',
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   📊
                 </div>
               </div>
-              <h3 className="text-title-1 font-bold text-white mb-2">Log meals to see your trends emerge</h3>
-              <p className="text-body text-gray-400 mb-6 max-w-xs mx-auto">
+              <h3 className="text-xl font-bold text-white mb-2">Log meals to see your trends</h3>
+              <p className="text-base text-white/40 mb-6 max-w-xs mx-auto">
                 Your insights are waiting to be discovered
               </p>
-              <div className="flex items-center justify-center space-x-2 text-caption text-gray-500">
-                <span>📈</span>
-                <span>Trends</span>
+              <div className="flex items-center justify-center space-x-2 text-xs text-white/30">
+                <span>📈 Trends</span>
                 <span>•</span>
-                <span>📉</span>
-                <span>Patterns</span>
+                <span>📉 Patterns</span>
                 <span>•</span>
-                <span>🎯</span>
-                <span>Goals</span>
+                <span>🎯 Goals</span>
               </div>
             </div>
           )}

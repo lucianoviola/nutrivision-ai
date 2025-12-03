@@ -161,7 +161,7 @@ const App: React.FC = () => {
 
   return (
     <AuthGate>
-      <div className="flex flex-col h-full w-full bg-[#0a0a0f] overflow-hidden">
+      <div className="flex flex-col h-full w-full bg-[#F8F6F4] overflow-hidden">
         <div 
           className={`flex-1 transition-all duration-300 overflow-hidden ${
             viewTransition === 'entering' 

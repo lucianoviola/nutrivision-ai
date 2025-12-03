@@ -5,13 +5,13 @@ import MealDetailModal from '../components/MealDetailModal.tsx';
 interface DashboardProps {
   logs: MealLog[];
   settings: UserSettings;
-  onAddMeal?: () => void; // Callback to navigate to camera
+  onAddMeal?: () => void;
   onDeleteLog?: (id: string) => void;
   onUpdateLog?: (meal: MealLog) => void;
 }
 
-// Energized calorie ring with pulsing glow, particles, and rotation
-const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => void }> = ({ eaten, goal, onTapToBegin }) => {
+// Opal-style calorie ring with purple/pink gradients
+const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal }) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const progress = Math.min(eaten / goal, 1);
   const remaining = Math.max(0, goal - eaten);
@@ -22,7 +22,7 @@ const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => 
     return () => clearTimeout(timer);
   }, [progress]);
   
-  const circumference = 2 * Math.PI * 70; // Smaller radius for 160px ring
+  const circumference = 2 * Math.PI * 70;
   const strokeDashoffset = circumference - (animatedProgress * circumference);
   
   const getGradientId = () => {
@@ -31,57 +31,55 @@ const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => 
     return 'ringGradientNormal';
   };
   
-  // Generate particles for empty state
-  const particles = Array.from({ length: 4 }, (_, i) => ({
+  // Floating particles for empty state
+  const particles = Array.from({ length: 6 }, (_, i) => ({
     id: i,
-    angle: (i * 90) * (Math.PI / 180),
-    delay: i * 0.3,
+    angle: (i * 60) * (Math.PI / 180),
+    delay: i * 0.2,
   }));
   
   return (
     <div className="relative flex items-center justify-center">
-      <svg width="160" height="160" className="transform -rotate-90">
+      <svg width="180" height="180" className="transform -rotate-90">
         <defs>
-          {/* Rotating gradient for empty state */}
-          <linearGradient id="ringGradientRotating" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#14b8a6">
-              {isEmpty && <animate attributeName="stop-color" values="#14b8a6;#22d3ee;#8b5cf6;#14b8a6" dur="4s" repeatCount="indefinite" />}
-            </stop>
-            <stop offset="50%" stopColor="#22d3ee">
-              {isEmpty && <animate attributeName="stop-color" values="#22d3ee;#8b5cf6;#14b8a6;#22d3ee" dur="4s" repeatCount="indefinite" />}
-            </stop>
-            <stop offset="100%" stopColor="#8b5cf6">
-              {isEmpty && <animate attributeName="stop-color" values="#8b5cf6;#14b8a6;#22d3ee;#8b5cf6" dur="4s" repeatCount="indefinite" />}
-            </stop>
-          </linearGradient>
-          
+          {/* Opal purple-pink gradient */}
           <linearGradient id="ringGradientNormal" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#14b8a6" />
-            <stop offset="50%" stopColor="#22d3ee" />
-            <stop offset="100%" stopColor="#8b5cf6" />
+            <stop offset="0%" stopColor="#8B5CF6" />
+            <stop offset="50%" stopColor="#A855F7" />
+            <stop offset="100%" stopColor="#EC4899" />
           </linearGradient>
           <linearGradient id="ringGradientHigh" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#f59e0b" />
+            <stop offset="0%" stopColor="#F472B6" />
+            <stop offset="100%" stopColor="#FBBF24" />
           </linearGradient>
           <linearGradient id="ringGradientOver" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#f43f5e" />
-            <stop offset="100%" stopColor="#dc2626" />
+            <stop offset="0%" stopColor="#F43F5E" />
+            <stop offset="100%" stopColor="#EF4444" />
           </linearGradient>
           
-          {/* Enhanced glow filter */}
+          {/* Animated gradient for empty state */}
+          <linearGradient id="ringGradientEmpty" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8B5CF6">
+              {isEmpty && <animate attributeName="stop-color" values="#8B5CF6;#EC4899;#F472B6;#8B5CF6" dur="4s" repeatCount="indefinite" />}
+            </stop>
+            <stop offset="100%" stopColor="#EC4899">
+              {isEmpty && <animate attributeName="stop-color" values="#EC4899;#F472B6;#8B5CF6;#EC4899" dur="4s" repeatCount="indefinite" />}
+            </stop>
+          </linearGradient>
+          
+          {/* Glow filter */}
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation={isEmpty ? "5" : "3"} result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
           
-          {/* Pulsing glow filter for empty state */}
+          {/* Pulse glow for empty state */}
           <filter id="pulseGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="8" result="coloredBlur">
-              {isEmpty && <animate attributeName="stdDeviation" values="6;10;6" dur="2s" repeatCount="indefinite" />}
+            <feGaussianBlur stdDeviation="6" result="coloredBlur">
+              {isEmpty && <animate attributeName="stdDeviation" values="4;8;4" dur="2s" repeatCount="indefinite" />}
             </feGaussianBlur>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
@@ -90,27 +88,28 @@ const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => 
           </filter>
         </defs>
         
-        {/* Background ring with rotation when empty */}
+        {/* Background ring */}
         <circle
-          cx="80"
-          cy="80"
+          cx="90"
+          cy="90"
           r="70"
           fill="none"
-          stroke={isEmpty ? "url(#ringGradientRotating)" : "rgba(255,255,255,0.08)"}
-          strokeWidth="10"
-          className={isEmpty ? "animate-pulse" : ""}
+          stroke={isEmpty ? "url(#ringGradientEmpty)" : "rgba(139, 92, 246, 0.15)"}
+          strokeWidth="12"
+          className={isEmpty ? "" : ""}
           filter={isEmpty ? "url(#pulseGlow)" : "none"}
+          opacity={isEmpty ? 0.4 : 1}
         />
         
-        {/* Main progress ring */}
+        {/* Progress ring */}
         {progress > 0 && (
           <circle
-            cx="80"
-            cy="80"
+            cx="90"
+            cy="90"
             r="70"
             fill="none"
             stroke={`url(#${getGradientId()})`}
-            strokeWidth="10"
+            strokeWidth="12"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
@@ -119,32 +118,32 @@ const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => 
           />
         )}
         
-        {/* Floating particles when empty */}
+        {/* Floating particles for empty state */}
         {isEmpty && particles.map((particle) => {
-          const radius = 75;
-          const x = 80 + radius * Math.cos(particle.angle);
-          const y = 80 + radius * Math.sin(particle.angle);
+          const radius = 78;
+          const x = 90 + radius * Math.cos(particle.angle);
+          const y = 90 + radius * Math.sin(particle.angle);
           return (
             <circle
               key={particle.id}
               cx={x}
               cy={y}
-              r="3"
-              fill="#22d3ee"
-              opacity="0.8"
+              r="2"
+              fill="#A855F7"
+              opacity="0.6"
               filter="url(#glow)"
             >
               <animateTransform
                 attributeName="transform"
                 type="rotate"
-                values={`0 80 80;360 80 80`}
-                dur="8s"
+                values={`0 90 90;360 90 90`}
+                dur="10s"
                 repeatCount="indefinite"
                 begin={`${particle.delay}s`}
               />
               <animate
                 attributeName="opacity"
-                values="0.3;0.9;0.3"
+                values="0.2;0.8;0.2"
                 dur="2s"
                 repeatCount="indefinite"
                 begin={`${particle.delay}s`}
@@ -155,41 +154,41 @@ const CalorieRing: React.FC<{ eaten: number; goal: number; onTapToBegin?: () => 
       </svg>
       
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-display font-black bg-gradient-to-br from-white via-white to-gray-300 bg-clip-text text-transparent tracking-tight">
+        <span className="text-6xl font-black text-white tracking-tight" style={{
+          textShadow: '0 4px 30px rgba(139, 92, 246, 0.4)',
+        }}>
           {Math.round(eaten)}
         </span>
-        <span className="text-caption text-gray-400 font-medium mt-0.5">
+        <span className="text-sm text-white/50 font-medium mt-1.5">
           of {goal} kcal
         </span>
-        <div className={`mt-2 px-3 py-1 rounded-full bg-white/8 backdrop-blur-sm border border-white/10 transition-all duration-300 ${
-          isEmpty ? 'animate-breathe' : ''
-        } ${isEmpty && onTapToBegin ? 'cursor-pointer active:scale-95' : ''}`}
-        onClick={isEmpty && onTapToBegin ? onTapToBegin : undefined}
-        >
-          {isEmpty ? (
-            <span className="text-caption font-bold bg-gradient-to-r from-accent-teal via-accent-violet to-accent-teal bg-clip-text text-transparent bg-[length:200%_100%] animate-shimmer">
-              Tap + to begin
+        {/* Only show remaining badge when there's progress */}
+        {!isEmpty && (
+          <div 
+            className="mt-3 px-4 py-1.5 rounded-full"
+            style={{
+              background: 'rgba(139, 92, 246, 0.2)',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+            }}
+          >
+            <span className="text-sm font-semibold text-white/80">
+              {remaining > 0 ? `${Math.round(remaining)} left` : '🎉 Goal reached!'}
             </span>
-          ) : (
-            <span className="text-caption font-bold bg-gradient-to-r from-accent-teal to-accent-violet bg-clip-text text-transparent">
-              {remaining > 0 ? `${Math.round(remaining)} left` : '🎉 Goal!'}
-            </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// Horizontal macro pill with circular progress arc
+// Opal-style macro pill with colored dot
 const MacroPill: React.FC<{ 
   label: string; 
   current: number; 
   goal: number; 
   color: string;
-  icon: string;
   delay: number;
-}> = ({ label, current, goal, color, icon, delay }) => {
+}> = ({ label, current, goal, color, delay }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const progress = Math.min((current / goal) * 100, 100);
@@ -203,70 +202,56 @@ const MacroPill: React.FC<{
     };
   }, [delay, progress]);
   
-  const circumference = 2 * Math.PI * 8; // Small arc radius
-  const strokeDashoffset = circumference - (animatedProgress / 100) * circumference;
-  const glowIntensity = Math.min(progress / 100, 1);
-  
   return (
     <button
-      className={`flex items-center space-x-2 px-3 py-2 rounded-full transition-all duration-500 relative active:scale-95 ${
+      className={`flex items-center space-x-3 px-5 py-3.5 rounded-2xl transition-all duration-500 relative active:scale-95 ${
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
       }`}
       style={{
-        background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: progress > 0 ? `0 0 ${8 * glowIntensity}px ${color}40` : 'none',
+        background: 'rgba(26, 22, 51, 0.7)',
+        border: '1px solid rgba(139, 92, 246, 0.2)',
+        backdropFilter: 'blur(12px)',
       }}
     >
-      {/* Circular progress arc */}
-      <div className="relative w-6 h-6 flex-shrink-0">
-        <svg width="24" height="24" className="transform -rotate-90">
-          <circle
-            cx="12"
-            cy="12"
-            r="8"
-            fill="none"
-            stroke="rgba(255,255,255,0.1)"
-            strokeWidth="2"
-          />
-          {progress > 0 && (
-            <circle
-              cx="12"
-              cy="12"
-              r="8"
-              fill="none"
-              stroke={color}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              className="transition-all duration-1000 ease-out"
-              style={{
-                filter: `drop-shadow(0 0 4px ${color})`,
-              }}
-            />
-          )}
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs">{icon}</span>
-        </div>
+      {/* Colored dot with glow */}
+      <div 
+        className="w-3 h-3 rounded-full flex-shrink-0"
+        style={{
+          background: color,
+          boxShadow: `0 0 12px ${color}80`,
+        }}
+      />
+      
+      <div className="flex items-baseline space-x-1.5">
+        <span className="text-xl font-black text-white">{Math.round(current)}</span>
+        <span className="text-sm text-white/40 font-medium">/{goal}g</span>
       </div>
       
-      <div className="flex items-baseline space-x-1">
-        <span className="text-body-lg font-black text-white transition-all duration-300">{Math.round(current)}</span>
-        <span className="text-caption text-gray-500">/{goal}g</span>
+      {/* Progress bar underneath */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full overflow-hidden"
+        style={{ background: 'rgba(139, 92, 246, 0.1)' }}
+      >
+        <div 
+          className="h-full rounded-full transition-all duration-1000 ease-out"
+          style={{ 
+            width: `${animatedProgress}%`,
+            background: color,
+            boxShadow: `0 0 8px ${color}`,
+          }}
+        />
       </div>
     </button>
   );
 };
 
-// Enhanced meal card with press animation
+// Opal-style meal card
 const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> = ({ log, index, onClick }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), index * 50 + 600);
+    const timer = setTimeout(() => setIsVisible(true), index * 80 + 400);
     return () => clearTimeout(timer);
   }, [index]);
   
@@ -281,10 +266,10 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
   
   const getMealGradient = (type: string) => {
     switch (type) {
-      case 'breakfast': return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-      case 'lunch': return 'linear-gradient(135deg, #34d399, #10b981)';
-      case 'dinner': return 'linear-gradient(135deg, #8b5cf6, #6366f1)';
-      default: return 'linear-gradient(135deg, #f472b6, #ec4899)';
+      case 'breakfast': return 'linear-gradient(135deg, #FBBF24, #F59E0B)';
+      case 'lunch': return 'linear-gradient(135deg, #34D399, #10B981)';
+      case 'dinner': return 'linear-gradient(135deg, #8B5CF6, #A855F7)';
+      default: return 'linear-gradient(135deg, #F472B6, #EC4899)';
     }
   };
   
@@ -294,9 +279,9 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
       } ${isPressed ? 'scale-[0.98]' : 'hover:scale-[1.01]'}`}
       style={{
-        background: 'rgba(255,255,255,0.06)',
+        background: 'rgba(26, 22, 51, 0.6)',
         backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid rgba(139, 92, 246, 0.15)',
       }}
       onClick={onClick}
       onMouseDown={() => setIsPressed(true)}
@@ -307,7 +292,7 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
         <div className="relative">
           <div 
             className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0"
-            style={{ background: 'rgba(255,255,255,0.05)' }}
+            style={{ background: 'rgba(139, 92, 246, 0.1)' }}
           >
             {log.imageUrl ? (
               <img src={log.imageUrl} alt="Meal" className="w-full h-full object-cover" />
@@ -328,34 +313,42 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start">
             <div className="min-w-0 pr-2">
-              <p className="text-body font-bold text-white capitalize">{log.type}</p>
-              <p className="text-caption text-gray-400 truncate mt-0.5">
+              <p className="text-base font-bold text-white capitalize">{log.type}</p>
+              <p className="text-sm text-white/40 truncate mt-0.5">
                 {log.items.map(i => i.name).join(', ')}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <span className="text-title-2 font-black text-white">{Math.round(log.totalMacros.calories)}</span>
-              <span className="text-caption text-gray-500 ml-1">kcal</span>
+              <span className="text-xl font-black text-white">{Math.round(log.totalMacros.calories)}</span>
+              <span className="text-xs text-white/40 ml-1">kcal</span>
             </div>
           </div>
           
-          <div className="flex space-x-2 mt-2">
-            <span className="text-caption px-2 py-0.5 rounded-md font-bold text-emerald-400" style={{ background: 'rgba(52, 211, 153, 0.15)' }}>
+          <div className="flex space-x-2 mt-2.5">
+            <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
+              background: 'rgba(16, 185, 129, 0.15)', 
+              color: '#34D399' 
+            }}>
               P {Math.round(log.totalMacros.protein)}g
             </span>
-            <span className="text-caption px-2 py-0.5 rounded-md font-bold text-cyan-400" style={{ background: 'rgba(34, 211, 238, 0.15)' }}>
+            <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
+              background: 'rgba(139, 92, 246, 0.15)', 
+              color: '#A855F7' 
+            }}>
               C {Math.round(log.totalMacros.carbs)}g
             </span>
-            <span className="text-caption px-2 py-0.5 rounded-md font-bold text-orange-400" style={{ background: 'rgba(251, 146, 60, 0.15)' }}>
+            <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
+              background: 'rgba(251, 146, 60, 0.15)', 
+              color: '#FB923C' 
+            }}>
               F {Math.round(log.totalMacros.fat)}g
             </span>
           </div>
           
-          {/* Notes */}
           {log.note && (
-            <div className="mt-2 pt-2 border-t border-white/10">
-              <p className="text-caption text-gray-400 italic flex items-start">
-                <i className="fa-solid fa-note-sticky mr-1.5 mt-0.5 text-xs text-purple-400"></i>
+            <div className="mt-2 pt-2 border-t border-white/5">
+              <p className="text-xs text-white/40 italic flex items-start">
+                <span className="mr-1.5">📝</span>
                 <span>{log.note}</span>
               </p>
             </div>
@@ -366,7 +359,7 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
   );
 };
 
-// Memorable empty state with animated food illustration
+// Opal-style empty state
 const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
   const [isVisible, setIsVisible] = useState(false);
   
@@ -377,37 +370,35 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
   
   return (
     <div 
-      className={`text-center py-12 transition-all duration-700 ${
+      className={`text-center py-8 transition-all duration-700 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
-      {/* Animated plate with floating food */}
-      <div className="relative w-32 h-32 mx-auto mb-8">
-        {/* Plate */}
+      {/* Smaller, more compact illustration */}
+      <div className="relative w-24 h-24 mx-auto mb-6">
         <div 
-          className="absolute inset-0 rounded-full animate-breathe"
+          className="absolute inset-0 rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 70%)',
-            border: '2px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(236, 72, 153, 0.25))',
+            border: '2px solid rgba(139, 92, 246, 0.4)',
+            boxShadow: '0 0 30px rgba(139, 92, 246, 0.25)',
           }}
         />
         
-        {/* Floating food items */}
+        {/* Fewer, smaller floating food items */}
         {[
-          { emoji: '🍎', x: -20, y: -10, delay: 0 },
-          { emoji: '🥑', x: 20, y: -15, delay: 0.2 },
-          { emoji: '🥗', x: -15, y: 15, delay: 0.4 },
-          { emoji: '🍌', x: 15, y: 10, delay: 0.6 },
+          { emoji: '🍎', x: -14, y: -8, delay: 0 },
+          { emoji: '🥑', x: 14, y: -10, delay: 0.3 },
+          { emoji: '🍌', x: 0, y: 12, delay: 0.6 },
         ].map((food, idx) => (
           <div
             key={idx}
-            className="absolute text-2xl"
+            className="absolute text-lg"
             style={{
               left: `calc(50% + ${food.x}px)`,
               top: `calc(50% + ${food.y}px)`,
               transform: 'translate(-50%, -50%)',
-              animation: `float 3s ease-in-out infinite`,
+              animation: `float 4s ease-in-out infinite`,
               animationDelay: `${food.delay}s`,
             }}
           >
@@ -415,44 +406,34 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
           </div>
         ))}
         
-        {/* Center sparkle */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center text-4xl animate-spring-bounce"
-          style={{ animationDelay: '0.5s' }}
-        >
+        <div className="absolute inset-0 flex items-center justify-center text-2xl">
           ✨
         </div>
       </div>
       
-      <h3 className="text-title-1-lg font-bold text-white mb-2 animate-spring-up">Your plate is waiting!</h3>
-      <p className="text-body text-gray-400 mb-8 max-w-xs mx-auto">
-        Capture your first meal and let AI analyze the nutrition for you
+      <h3 className="text-xl font-bold text-white mb-1.5">Your plate is waiting!</h3>
+      <p className="text-sm text-white/60 mb-6 max-w-[260px] mx-auto leading-relaxed">
+        Capture your first meal and let AI analyze the nutrition
       </p>
       
       <button
         onClick={onAddMeal}
-        className="px-8 py-4 rounded-xl font-bold text-white transition-all duration-300 active:scale-95 relative overflow-hidden group"
+        className="px-6 py-3 rounded-xl font-bold text-white transition-all duration-300 active:scale-95 relative overflow-hidden group"
         style={{
-          background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-          boxShadow: '0 8px 32px rgba(139, 92, 246, 0.5)',
+          background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+          boxShadow: '0 6px 24px rgba(139, 92, 246, 0.35)',
         }}
       >
         <span className="relative z-10 flex items-center space-x-2">
           <span>Try it now</span>
           <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
         </span>
-        <div 
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          }}
-        />
       </button>
       
       <style>{`
         @keyframes float {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
-          50% { transform: translate(-50%, -50%) translateY(-10px) rotate(5deg); }
+          0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+          50% { transform: translate(-50%, -50%) translateY(-6px); }
         }
       `}</style>
     </div>
@@ -482,7 +463,6 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   }, [today]);
 
-
   useEffect(() => {
     const timer = setTimeout(() => setHeaderVisible(true), 100);
     return () => clearTimeout(timer);
@@ -508,174 +488,104 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
 
   return (
     <div className="h-full overflow-y-auto pb-28 relative">
-      {/* Animated background */}
+      {/* Opal-style animated background */}
       <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[#0a0a0f]" />
+        <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
         <div 
-          className="absolute inset-0 opacity-50"
+          className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 80%, rgba(34, 211, 238, 0.15) 0%, transparent 50%)
+              radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%)
             `,
           }}
         />
+        {/* Subtle grid pattern */}
         <div 
           className="absolute inset-0 opacity-[0.02]"
           style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px',
+            backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.5) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(139, 92, 246, 0.5) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px',
           }}
         />
       </div>
       
       {/* Content */}
       <div className="relative z-10">
-        {/* Compact Header */}
-        <div className={`pt-14 pb-6 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+      {/* Header */}
+        <div className={`pt-14 pb-4 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-body text-gray-400 font-medium flex items-center space-x-2">
+              <h1 className="text-2xl font-bold text-white flex items-center space-x-2">
                 <span>{greeting.emoji}</span>
                 <span>{greeting.text}</span>
-              </p>
-              <h1 className="text-title-1-lg font-bold text-white mt-0.5">{getFormattedDate()}</h1>
+              </h1>
+              <p className="text-sm text-white/50 font-medium mt-0.5">{getFormattedDate()}</p>
             </div>
             
-            {/* Streak badge with fire animation */}
+            {/* Compact streak badge */}
             <div 
-              className="relative overflow-hidden rounded-2xl px-3 py-2 transition-all duration-300 mr-2"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full"
               style={{
-                background: 'rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 0 20px rgba(249, 115, 22, 0.3)',
+                background: 'rgba(249, 115, 22, 0.15)',
+                border: '1px solid rgba(249, 115, 22, 0.3)',
               }}
             >
-              {/* Glow effect that intensifies with streak */}
-              <div 
-                className="absolute inset-0 rounded-2xl opacity-50 animate-breathe"
-                style={{
-                  background: 'radial-gradient(circle, rgba(249, 115, 22, 0.4), transparent 70%)',
-                }}
-              />
-              
-              {/* Particle sparks for milestone days */}
-              {[7, 14, 30, 100].includes(7) && (
-                <>
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute w-1 h-1 rounded-full"
-                      style={{
-                        left: `${20 + (i * 10)}%`,
-                        top: `${10 + (i % 2) * 80}%`,
-                        background: '#fbbf24',
-                        boxShadow: '0 0 6px #fbbf24',
-                        animation: `sparkle 2s ease-in-out infinite`,
-                        animationDelay: `${i * 0.2}s`,
-                      }}
-                    />
-                  ))}
-                </>
-              )}
-              
-              <div className="flex items-center space-x-2 relative z-10">
-                {/* Animated fire emoji */}
-                <div className="relative">
-                  <span 
-                    className="text-xl inline-block"
-                    style={{
-                      filter: 'drop-shadow(0 0 8px rgba(249, 115, 22, 0.8))',
-                      animation: 'flicker 1.5s ease-in-out infinite',
-                    }}
-                  >
-                    🔥
-                  </span>
-                  {/* Additional flame layers for depth */}
-                  <span 
-                    className="absolute inset-0 text-xl opacity-60"
-                    style={{
-                      filter: 'blur(2px) drop-shadow(0 0 4px rgba(249, 115, 22, 0.6))',
-                      animation: 'flicker 1.2s ease-in-out infinite reverse',
-                    }}
-                  >
-                    🔥
-                  </span>
-                </div>
-                <div>
-                  <p className="text-title-2 font-bold text-white leading-none">7</p>
-                  <p className="text-caption text-gray-400">day streak</p>
-                </div>
-              </div>
-              
-              <style>{`
-                @keyframes flicker {
-                  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-                  25% { transform: scale(1.1) rotate(-2deg); opacity: 0.9; }
-                  50% { transform: scale(0.95) rotate(2deg); opacity: 0.95; }
-                  75% { transform: scale(1.05) rotate(-1deg); opacity: 0.9; }
-                }
-                @keyframes sparkle {
-                  0%, 100% { opacity: 0; transform: scale(0) translateY(0); }
-                  50% { opacity: 1; transform: scale(1) translateY(-10px); }
-                }
-              `}</style>
-            </div>
-          </div>
+              <span className="text-base">🔥</span>
+              <span className="text-sm font-bold text-orange-400">7</span>
+           </div>
+           </div>
+        </div>
+
+        {/* Calorie Ring */}
+        <div className="flex justify-center py-4">
+          <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
         </div>
         
-        {/* Calorie Ring (smaller, denser) */}
-        <div className="flex justify-center py-2">
-          <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} onTapToBegin={onAddMeal} />
-        </div>
-        
-        {/* Horizontal Macro Pills */}
+        {/* Macro Pills */}
         <div className="px-6 mt-4">
-          <div className="flex flex-wrap gap-2 justify-center">
+          <div className="flex flex-wrap gap-3 justify-center">
             <MacroPill 
-              label="P" 
+              label="Protein" 
               current={totals.protein} 
               goal={settings.dailyProteinGoal}
-              color="#34d399"
-              icon="🥩"
+              color="#10B981"
               delay={200}
             />
             <MacroPill 
-              label="C" 
+              label="Carbs" 
               current={totals.carbs} 
               goal={settings.dailyCarbGoal}
-              color="#22d3ee"
-              icon="🍞"
+              color="#A855F7"
               delay={250}
             />
             <MacroPill 
-              label="F" 
+              label="Fat" 
               current={totals.fat} 
               goal={settings.dailyFatGoal}
-              color="#fb923c"
-              icon="🥑"
+              color="#F472B6"
               delay={300}
             />
-          </div>
         </div>
-        
+      </div>
+
         {/* Today's Meals */}
-        <div className="px-6 mt-6">
+        <div className="px-6 mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-title-2 font-bold text-white">Today's Meals</h3>
+            <h3 className="text-lg font-bold text-white">Today's Meals</h3>
             <span 
-              className="text-caption font-medium px-3 py-1 rounded-full"
+              className="text-xs font-medium px-3 py-1 rounded-full"
               style={{
-                background: 'rgba(255,255,255,0.08)',
+                background: 'rgba(139, 92, 246, 0.15)',
                 color: 'rgba(255,255,255,0.6)',
               }}
             >
               {today.length} {today.length === 1 ? 'meal' : 'meals'}
             </span>
           </div>
-          
+
           {today.length === 0 ? (
             <EmptyState onAddMeal={onAddMeal || (() => {})} />
           ) : (
@@ -691,47 +601,47 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
             </div>
           )}
         </div>
-        
+
         {/* Progress Banner */}
         {today.length > 0 && progressPercent > 0 && (
           <div className="px-6 mt-6 mb-6">
             <div 
-              className="relative overflow-hidden rounded-2xl p-4"
+              className="relative overflow-hidden rounded-2xl p-5"
               style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(34, 211, 238, 0.1))',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
               }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-caption text-gray-400 font-semibold uppercase tracking-wider">Daily Progress</p>
+                  <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">Daily Progress</p>
                   <div className="flex items-baseline mt-1">
-                    <span className="text-title-1-lg font-black bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    <span className="text-3xl font-black text-white">
                       {progressPercent}
                     </span>
-                    <span className="text-body text-gray-400 ml-1">%</span>
-                  </div>
-                </div>
-                
+                    <span className="text-base text-white/50 ml-1">%</span>
+                       </div>
+                   </div>
+
                 <div className="flex space-x-4">
                   <div className="text-center">
-                    <p className="text-emerald-400 text-title-2 font-bold">{Math.round(totals.protein)}g</p>
-                    <p className="text-caption text-gray-500 uppercase">P</p>
-                  </div>
+                    <p className="text-lg font-bold" style={{ color: '#10B981' }}>{Math.round(totals.protein)}g</p>
+                    <p className="text-xs text-white/40 uppercase">P</p>
+                       </div>
                   <div className="text-center">
-                    <p className="text-cyan-400 text-title-2 font-bold">{Math.round(totals.carbs)}g</p>
-                    <p className="text-caption text-gray-500 uppercase">C</p>
-                  </div>
+                    <p className="text-lg font-bold" style={{ color: '#A855F7' }}>{Math.round(totals.carbs)}g</p>
+                    <p className="text-xs text-white/40 uppercase">C</p>
+                   </div>
                   <div className="text-center">
-                    <p className="text-orange-400 text-title-2 font-bold">{Math.round(totals.fat)}g</p>
-                    <p className="text-caption text-gray-500 uppercase">F</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    <p className="text-lg font-bold" style={{ color: '#FB923C' }}>{Math.round(totals.fat)}g</p>
+                    <p className="text-xs text-white/40 uppercase">F</p>
+                   </div>
+               </div>
+           </div>
+         </div>
           </div>
         )}
-      </div>
+       </div>
 
       {/* Meal Detail Modal */}
       <MealDetailModal

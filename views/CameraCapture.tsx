@@ -295,11 +295,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
         
         // Only show placeholder if it's not a critical error that requires user action
         if (shouldShowPlaceholder && !errorMessage.includes("API_KEY_MISSING") && !errorMessage.includes("Invalid API key")) {
-          setResult([{
-               name: "Unknown Food",
-               servingSize: "1 serving",
-               macros: { calories: 0, protein: 0, carbs: 0, fat: 0 }
-          }]);
+        setResult([{
+             name: "Unknown Food",
+             servingSize: "1 serving",
+             macros: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        }]);
         } else {
           // For critical errors, reset to allow retry
           setResult(null);
@@ -718,8 +718,8 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                           e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
                         }}
                       >
-                          + Add Item
-                      </button>
+                        + Add Item
+                    </button>
                       <button 
                         onClick={handleSaveAsMeal} 
                         className="px-4 py-4 font-bold text-sm rounded-xl transition-all active:scale-95 flex items-center justify-center"
@@ -1065,11 +1065,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                 <div className="relative mb-4">
                     <div className="flex space-x-2">
                         <div className="flex-1 relative">
-                            <input 
-                                type="text" 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                                 placeholder="Search any food..."
                                 className="w-full text-white text-body px-4 py-3.5 rounded-xl outline-none transition-all duration-300 placeholder-gray-500 pr-12"
                                 style={{ 
@@ -1107,7 +1107,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                   <i className="fa-solid fa-microphone"></i>
                                 </button>
                               )}
-                            </div>
+                </div>
                         </div>
                     </div>
                     
@@ -1205,7 +1205,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                                      <span className="text-caption px-2 py-0.5 rounded font-bold text-orange-300" style={{ background: 'rgba(253, 186, 116, 0.15)' }}>
                                                          F {Math.round(item.macros.fat)}g
                                                      </span>
-                                                 </div>
+                                         </div>
                                              </div>
                                              <div 
                                                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-90"
@@ -1215,8 +1215,8 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                                  }}
                                              >
                                                 <i className="fa-solid fa-plus text-white text-sm"></i>
-                                             </div>
-                                         </button>
+                                         </div>
+                                     </button>
                                      ))}
                                  </>
                              )}
