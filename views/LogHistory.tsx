@@ -253,7 +253,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
   }, [filteredLogs]);
 
   return (
-    <div className="h-full overflow-y-auto pb-28 relative">
+    <div className="h-full flex flex-col relative">
       {/* Opal-style background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
@@ -268,8 +268,8 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
         />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto pb-28 relative z-10">
         {/* Header */}
         <div className={`pt-14 px-6 pb-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-center justify-between mb-4">
