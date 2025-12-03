@@ -4,6 +4,7 @@ import * as aiService from '../services/aiService.ts';
 import * as savedMealsService from '../services/savedMealsService.ts';
 import * as favoritesService from '../services/favoritesService.ts';
 import { hapticTap, hapticSuccess } from '../utils/haptics.ts';
+import NumericInput from '../components/NumericInput.tsx';
 
 declare global {
   interface Window {
@@ -470,7 +471,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
       if (field === 'name' || field === 'servingSize') {
           (item as any)[field] = value;
       } else {
-          item.macros = { ...item.macros, [field]: Number(value) };
+          // Only update if the value is not empty - allows users to clear and retype
+          const numValue = typeof value === 'string' ? parseFloat(value) : value;
+          if (!isNaN(numValue)) {
+            item.macros = { ...item.macros, [field]: numValue };
+          }
       }
       newResult[index] = item;
       setResult(newResult);
@@ -656,80 +661,56 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-gray-400 font-bold uppercase block text-center">Cals</label>
                                     <input 
-                                      type="number" 
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
                                       value={Math.round(item.macros.calories)} 
                                       onChange={(e) => handleUpdateItem(index, 'calories', e.target.value)} 
-                                      className="w-full rounded-lg py-2 text-center font-bold text-white text-sm outline-none transition-all active:scale-95"
+                                      className="w-full rounded-lg py-2 text-center font-bold text-white text-sm outline-none transition-all active:scale-95 focus:ring-2 focus:ring-indigo-500/30"
                                       style={{
                                         background: 'rgba(255,255,255,0.1)',
-                                      }}
-                                      onFocus={(e) => {
-                                        e.target.style.background = 'rgba(99, 102, 241, 0.2)';
-                                        e.target.style.boxShadow = '0 0 0 2px rgba(99, 102, 241, 0.3)';
-                                      }}
-                                      onBlur={(e) => {
-                                        e.target.style.background = 'rgba(255,255,255,0.1)';
-                                        e.target.style.boxShadow = 'none';
                                       }}
                                     />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-gray-400 font-bold uppercase block text-center">Prot</label>
                                     <input 
-                                      type="number" 
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
                                       value={Math.round(item.macros.protein)} 
                                       onChange={(e) => handleUpdateItem(index, 'protein', e.target.value)} 
-                                      className="w-full rounded-lg py-2 text-center font-bold text-emerald-300 text-sm outline-none transition-all active:scale-95"
+                                      className="w-full rounded-lg py-2 text-center font-bold text-emerald-300 text-sm outline-none transition-all active:scale-95 focus:ring-2 focus:ring-emerald-500/30"
                                       style={{
                                         background: 'rgba(16, 185, 129, 0.15)',
-                                      }}
-                                      onFocus={(e) => {
-                                        e.target.style.background = 'rgba(16, 185, 129, 0.25)';
-                                        e.target.style.boxShadow = '0 0 0 2px rgba(16, 185, 129, 0.3)';
-                                      }}
-                                      onBlur={(e) => {
-                                        e.target.style.background = 'rgba(16, 185, 129, 0.15)';
-                                        e.target.style.boxShadow = 'none';
                                       }}
                                     />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-gray-400 font-bold uppercase block text-center">Carbs</label>
                                     <input 
-                                      type="number" 
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
                                       value={Math.round(item.macros.carbs)} 
                                       onChange={(e) => handleUpdateItem(index, 'carbs', e.target.value)} 
-                                      className="w-full rounded-lg py-2 text-center font-bold text-cyan-300 text-sm outline-none transition-all active:scale-95"
+                                      className="w-full rounded-lg py-2 text-center font-bold text-cyan-300 text-sm outline-none transition-all active:scale-95 focus:ring-2 focus:ring-cyan-500/30"
                                       style={{
                                         background: 'rgba(34, 211, 238, 0.15)',
-                                      }}
-                                      onFocus={(e) => {
-                                        e.target.style.background = 'rgba(34, 211, 238, 0.25)';
-                                        e.target.style.boxShadow = '0 0 0 2px rgba(34, 211, 238, 0.3)';
-                                      }}
-                                      onBlur={(e) => {
-                                        e.target.style.background = 'rgba(34, 211, 238, 0.15)';
-                                        e.target.style.boxShadow = 'none';
                                       }}
                                     />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] text-gray-400 font-bold uppercase block text-center">Fat</label>
                                     <input 
-                                      type="number" 
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
                                       value={Math.round(item.macros.fat)} 
                                       onChange={(e) => handleUpdateItem(index, 'fat', e.target.value)} 
-                                      className="w-full rounded-lg py-2 text-center font-bold text-orange-300 text-sm outline-none transition-all active:scale-95"
+                                      className="w-full rounded-lg py-2 text-center font-bold text-orange-300 text-sm outline-none transition-all active:scale-95 focus:ring-2 focus:ring-orange-500/30"
                                       style={{
                                         background: 'rgba(251, 146, 60, 0.15)',
-                                      }}
-                                      onFocus={(e) => {
-                                        e.target.style.background = 'rgba(251, 146, 60, 0.25)';
-                                        e.target.style.boxShadow = '0 0 0 2px rgba(251, 146, 60, 0.3)';
-                                      }}
-                                      onBlur={(e) => {
-                                        e.target.style.background = 'rgba(251, 146, 60, 0.15)';
-                                        e.target.style.boxShadow = 'none';
                                       }}
                                     />
                                 </div>

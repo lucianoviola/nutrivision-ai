@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FoodItem, MealLog, Macros, AIProvider } from '../types.ts';
 import * as aiService from '../services/aiService.ts';
+import NumericInput from './NumericInput.tsx';
 
 interface PendingAnalysis {
   id: string;
@@ -570,16 +571,13 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                         <div>
                           <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
                           <div className="flex space-x-2">
-                            <input
-                              type="number"
+                            <NumericInput
                               value={parseServingSize(item.servingSize).quantity}
-                              onChange={(e) => {
-                                const qty = parseFloat(e.target.value) || 0;
+                              onChange={(qty) => {
                                 const unit = parseServingSize(item.servingSize).unit;
                                 updateServingSize(index, qty, unit);
                               }}
-                              step="0.1"
-                              min="0"
+                              allowDecimals={true}
                               className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
                               placeholder="100"
                             />
@@ -613,10 +611,10 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                         <div>
                           <label className="text-xs text-gray-400 mb-1 block">Calories</label>
                           <div className="relative">
-                            <input
-                              type="number"
-                              value={Math.round(item.macros.calories)}
-                              onChange={(e) => updateItemMacro(index, 'calories', parseFloat(e.target.value) || 0)}
+                            <NumericInput
+                              value={item.macros.calories}
+                              onChange={(val) => updateItemMacro(index, 'calories', val)}
+                              allowDecimals={false}
                               className="w-full px-3 py-2 pr-12 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
                               placeholder="0"
                             />
@@ -630,35 +628,32 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                       <div className="grid grid-cols-3 gap-2">
                         <div>
                           <label className="text-xs text-gray-400 mb-1 block">Protein (g)</label>
-                          <input
-                            type="number"
-                            value={Math.round(item.macros.protein * 10) / 10}
-                            onChange={(e) => updateItemMacro(index, 'protein', parseFloat(e.target.value) || 0)}
+                          <NumericInput
+                            value={item.macros.protein}
+                            onChange={(val) => updateItemMacro(index, 'protein', val)}
+                            allowDecimals={true}
                             className="w-full px-3 py-2 rounded-lg text-green-400 text-sm bg-white/5 border border-green-500/30 focus:border-green-500 focus:outline-none"
                             placeholder="0"
-                            step="0.1"
                           />
                         </div>
                         <div>
                           <label className="text-xs text-gray-400 mb-1 block">Carbs (g)</label>
-                          <input
-                            type="number"
-                            value={Math.round(item.macros.carbs * 10) / 10}
-                            onChange={(e) => updateItemMacro(index, 'carbs', parseFloat(e.target.value) || 0)}
+                          <NumericInput
+                            value={item.macros.carbs}
+                            onChange={(val) => updateItemMacro(index, 'carbs', val)}
+                            allowDecimals={true}
                             className="w-full px-3 py-2 rounded-lg text-blue-400 text-sm bg-white/5 border border-blue-500/30 focus:border-blue-500 focus:outline-none"
                             placeholder="0"
-                            step="0.1"
                           />
                         </div>
                         <div>
                           <label className="text-xs text-gray-400 mb-1 block">Fat (g)</label>
-                          <input
-                            type="number"
-                            value={Math.round(item.macros.fat * 10) / 10}
-                            onChange={(e) => updateItemMacro(index, 'fat', parseFloat(e.target.value) || 0)}
+                          <NumericInput
+                            value={item.macros.fat}
+                            onChange={(val) => updateItemMacro(index, 'fat', val)}
+                            allowDecimals={true}
                             className="w-full px-3 py-2 rounded-lg text-orange-400 text-sm bg-white/5 border border-orange-500/30 focus:border-orange-500 focus:outline-none"
                             placeholder="0"
-                            step="0.1"
                           />
                         </div>
                       </div>

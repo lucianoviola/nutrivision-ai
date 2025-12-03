@@ -17,6 +17,34 @@ const SettingRow: React.FC<{
   suffix?: string;
 }> = ({ icon, label, value, onChange, suffix = '' }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [inputValue, setInputValue] = useState(String(value));
+  
+  // Sync external value changes (e.g., from "Fix" button)
+  useEffect(() => {
+    if (!isFocused) {
+      setInputValue(String(value));
+    }
+  }, [value, isFocused]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    // Allow empty string or valid numbers
+    if (newValue === '' || /^\d*$/.test(newValue)) {
+      setInputValue(newValue);
+      // Only update parent if we have a valid number
+      if (newValue !== '' && !isNaN(Number(newValue))) {
+        onChange(Number(newValue));
+      }
+    }
+  };
+  
+  const handleBlur = () => {
+    setIsFocused(false);
+    // On blur, ensure we have a valid value (default to 0 if empty)
+    if (inputValue === '' || isNaN(Number(inputValue))) {
+      setInputValue(String(value));
+    }
+  };
   
   return (
     <div 
@@ -29,11 +57,13 @@ const SettingRow: React.FC<{
       </div>
       <div className="flex items-center space-x-2">
         <input 
-          type="number" 
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={inputValue}
+          onChange={handleChange}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onBlur={handleBlur}
           className="text-right outline-none font-bold w-20 text-white rounded-xl px-3 py-2 transition-all duration-300"
           style={{ 
             background: isFocused ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
