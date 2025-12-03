@@ -306,7 +306,7 @@ const AppContent: React.FC = () => {
       )}
       
       <div 
-        className={`flex-1 overflow-hidden transition-all duration-300 ease-out ${
+        className={`flex-1 min-h-0 transition-all duration-300 ease-out ${
           viewTransition === 'entering' 
             ? 'opacity-0 scale-[0.98] translate-y-2' 
             : viewTransition === 'exiting'
