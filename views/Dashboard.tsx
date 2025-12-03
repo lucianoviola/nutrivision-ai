@@ -204,27 +204,35 @@ const MacroPill: React.FC<{
   
   return (
     <button
-      className={`flex items-center space-x-3 px-5 py-3.5 rounded-2xl transition-all duration-500 relative active:scale-95 ${
+      className={`flex flex-col items-center px-5 py-3 rounded-2xl transition-all duration-500 relative active:scale-95 ${
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
       }`}
       style={{
         background: 'rgba(26, 22, 51, 0.7)',
         border: '1px solid rgba(139, 92, 246, 0.2)',
         backdropFilter: 'blur(12px)',
+        minWidth: '100px',
       }}
     >
-      {/* Colored dot with glow */}
-      <div 
-        className="w-3 h-3 rounded-full flex-shrink-0"
-        style={{
-          background: color,
-          boxShadow: `0 0 12px ${color}80`,
-        }}
-      />
+      {/* Label at top */}
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-1">
+        {label}
+      </span>
       
-      <div className="flex items-baseline space-x-1.5">
-        <span className="text-xl font-black text-white">{Math.round(current)}</span>
-        <span className="text-sm text-white/40 font-medium">/{goal}g</span>
+      <div className="flex items-center space-x-2">
+        {/* Colored dot with glow */}
+        <div 
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{
+            background: color,
+            boxShadow: `0 0 10px ${color}80`,
+          }}
+        />
+        
+        <div className="flex items-baseline space-x-1">
+          <span className="text-xl font-black text-white">{Math.round(current)}</span>
+          <span className="text-xs text-white/40 font-medium">/{goal}g</span>
+        </div>
       </div>
       
       {/* Progress bar underneath */}
