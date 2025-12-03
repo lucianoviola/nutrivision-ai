@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppView } from '../types.ts';
+import { hapticTap, hapticSelection } from '../utils/haptics.ts';
 
 interface TabBarProps {
   currentView: AppView;
@@ -67,9 +68,14 @@ interface TabItemProps {
 const TabItem: React.FC<TabItemProps> = ({ icon, activeIcon, label, isActive, onClick }) => {
   const [isPressed, setIsPressed] = useState(false);
   
+  const handleClick = () => {
+    hapticTap();
+    onClick();
+  };
+  
   return (
     <button 
-      onClick={onClick}
+      onClick={handleClick}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
@@ -151,7 +157,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentView, onChangeView }) => {
         {/* Center FAB - Opal style (refined) */}
         <div className="flex-1 flex justify-center -mt-6">
           <button
-            onClick={() => onChangeView(AppView.CAMERA)}
+            onClick={() => { hapticSelection(); onChangeView(AppView.CAMERA); }}
             onMouseDown={() => setCenterPressed(true)}
             onMouseUp={() => setCenterPressed(false)}
             onMouseLeave={() => setCenterPressed(false)}

@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { FoodItem, MealLog, Macros, AIProvider } from '../types.ts';
 import * as aiService from '../services/aiService.ts';
 import * as savedMealsService from '../services/savedMealsService.ts';
+import * as favoritesService from '../services/favoritesService.ts';
+import { hapticTap, hapticSuccess } from '../utils/haptics.ts';
 
 declare global {
   interface Window {
@@ -35,6 +37,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
     const saved = localStorage.getItem('nutrivision_recent_searches');
     return saved ? JSON.parse(saved) : [];
   });
+  const [favorites, setFavorites] = useState<favoritesService.FavoriteFood[]>(() => 
+    favoritesService.getFavorites()
+  );
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -391,6 +396,24 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
     const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, 5);
     setRecentSearches(updated);
     localStorage.setItem('nutrivision_recent_searches', JSON.stringify(updated));
+  };
+
+  // Toggle favorite
+  const handleToggleFavorite = (food: FoodItem) => {
+    hapticTap();
+    const isFav = favoritesService.toggleFavorite(food);
+    setFavorites(favoritesService.getFavorites());
+    if (isFav) {
+      hapticSuccess();
+    }
+  };
+
+  // Add favorite to result
+  const handleAddFavoriteToResult = (fav: favoritesService.FavoriteFood) => {
+    hapticTap();
+    favoritesService.incrementUseCount(fav.id);
+    setResult(prev => prev ? [...prev, { ...fav }] : [{ ...fav }]);
+    setFavorites(favoritesService.getFavorites());
   };
 
   // Manual search (when pressing Enter or button)
@@ -1199,9 +1222,50 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                 
                 {/* Results */}
                 <div className="flex-1 overflow-y-auto pb-10 min-h-0">
-                    {/* No query state - show recent searches and suggestions */}
+                    {/* No query state - show favorites, recent searches and suggestions */}
                     {!searchQuery && !searchResults && (
                         <div>
+                          {/* Favorites */}
+                          {favorites.length > 0 && (
+                            <div className="mb-6">
+                              <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-2 flex items-center space-x-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#FBBF24">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                <span>Favorites</span>
+                              </p>
+                              <div className="space-y-2">
+                                {favorites.slice(0, 4).map((fav) => (
+                                  <button
+                                    key={fav.id}
+                                    onClick={() => handleAddFavoriteToResult(fav)}
+                                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all active:scale-[0.98]"
+                                    style={{
+                                      background: 'rgba(251, 191, 36, 0.08)',
+                                      border: '1px solid rgba(251, 191, 36, 0.2)',
+                                    }}
+                                  >
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(251, 191, 36, 0.15)' }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#FBBF24">
+                                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                      </div>
+                                      <div className="text-left">
+                                        <p className="text-white font-medium text-sm">{fav.name}</p>
+                                        <p className="text-white/40 text-xs">{fav.servingSize}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-white font-bold text-sm">{Math.round(fav.macros.calories)}</p>
+                                      <p className="text-white/40 text-xs">kcal</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
                           {/* Recent Searches */}
                           {recentSearches.length > 0 && (
                             <div className="mb-6">
@@ -1259,19 +1323,21 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                           </div>
                           
                           {/* Info */}
-                          <div className="text-center mt-8">
-                            <div 
-                                className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
-                                style={{ background: 'rgba(139, 92, 246, 0.15)' }}
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                  <circle cx="11" cy="11" r="7" stroke="#8B5CF6" strokeWidth="2"/>
-                                  <path d="M21 21l-4.35-4.35" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/>
-                                </svg>
+                          {favorites.length === 0 && recentSearches.length === 0 && (
+                            <div className="text-center mt-8">
+                              <div 
+                                  className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
+                                  style={{ background: 'rgba(139, 92, 246, 0.15)' }}
+                              >
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="11" cy="11" r="7" stroke="#8B5CF6" strokeWidth="2"/>
+                                    <path d="M21 21l-4.35-4.35" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/>
+                                  </svg>
+                              </div>
+                              <p className="text-white/70 font-medium text-sm">Search for any food</p>
+                              <p className="text-white/30 text-xs mt-1">From USDA & OpenFoodFacts databases</p>
                             </div>
-                            <p className="text-white/70 font-medium text-sm">Search for any food</p>
-                            <p className="text-white/30 text-xs mt-1">From USDA & OpenFoodFacts databases</p>
-                          </div>
+                          )}
                         </div>
                     )}
                     
@@ -1340,17 +1406,47 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                                          F {Math.round(item.macros.fat)}g
                                                      </span>
                                          </div>
-                                             </div>
-                                             <div 
-                                                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-90"
-                                                 style={{ 
-                                                     background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                                     boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-                                                 }}
-                                             >
-                                                <i className="fa-solid fa-plus text-white text-sm"></i>
                                          </div>
+                                            <div className="flex items-center space-x-2 flex-shrink-0">
+                                              {/* Favorite button */}
+                                              <button
+                                                onClick={(e) => { 
+                                                  e.stopPropagation(); 
+                                                  handleToggleFavorite(item); 
+                                                }}
+                                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95"
+                                                style={{ 
+                                                  background: favoritesService.isFavorite(item.name) 
+                                                    ? 'rgba(251, 191, 36, 0.2)' 
+                                                    : 'rgba(255,255,255,0.05)',
+                                                  border: favoritesService.isFavorite(item.name)
+                                                    ? '1px solid rgba(251, 191, 36, 0.3)'
+                                                    : '1px solid rgba(255,255,255,0.1)',
+                                                }}
+                                              >
+                                                <svg 
+                                                  width="16" 
+                                                  height="16" 
+                                                  viewBox="0 0 24 24" 
+                                                  fill={favoritesService.isFavorite(item.name) ? '#FBBF24' : 'none'}
+                                                  stroke={favoritesService.isFavorite(item.name) ? '#FBBF24' : 'rgba(255,255,255,0.4)'}
+                                                  strokeWidth="2"
+                                                >
+                                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </svg>
                                      </button>
+                                              {/* Add button */}
+                                              <div 
+                                                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                                                  style={{ 
+                                                      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                                      boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                                                  }}
+                                              >
+                                                 <i className="fa-solid fa-plus text-white text-sm"></i>
+                                              </div>
+                                            </div>
+                                    </button>
                                      ))}
                                  </>
                              )}

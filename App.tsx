@@ -10,8 +10,11 @@ import AnalyzingOverlay from './components/AnalyzingOverlay.tsx';
 import AuthGate from './components/AuthGate.tsx';
 import { ToastProvider, useToast } from './components/Toast.tsx';
 import OfflineIndicator from './components/OfflineIndicator.tsx';
+import SplashScreen from './components/SplashScreen.tsx';
 import { healthService } from './services/healthService.ts';
 import * as savedMealsService from './services/savedMealsService.ts';
+import { hapticSuccess, hapticError, hapticTap, hapticImpact } from './utils/haptics.ts';
+import { compressImage, needsCompression } from './utils/imageCompression.ts';
 
 // Type for pending analysis
 interface PendingAnalysis {
@@ -41,6 +44,7 @@ const AppContent: React.FC = () => {
   const [deletedMeal, setDeletedMeal] = useState<MealLog | null>(null);
   const [previousCaloriePercent, setPreviousCaloriePercent] = useState(0);
   const [previousGoals, setPreviousGoals] = useState({ protein: 0, carbs: 0, fat: 0 });
+  const [showSplash, setShowSplash] = useState(true);
   
   const { showSuccess, showError, showCelebration, showUndo, showToast } = useToast();
 
@@ -72,10 +76,20 @@ const AppContent: React.FC = () => {
   }, [settings]);
 
   // Handle when user captures an image - starts background analysis
-  const handleImageCapture = (imageData: string) => {
+  const handleImageCapture = async (imageData: string) => {
+    // Compress image if needed
+    let processedImage = imageData;
+    if (needsCompression(imageData)) {
+      try {
+        processedImage = await compressImage(imageData, 1024, 0.85);
+      } catch (err) {
+        console.warn('Image compression failed, using original:', err);
+      }
+    }
+    
     const analysis: PendingAnalysis = {
       id: Date.now().toString(),
-      imageData,
+      imageData: processedImage,
       timestamp: Date.now(),
     };
     setPendingAnalysis(analysis);
@@ -185,6 +199,9 @@ const AppContent: React.FC = () => {
     const mealToDelete = logs.find(l => l.id === id);
     if (!mealToDelete) return;
     
+    // Haptic feedback for delete
+    hapticImpact();
+    
     // Store for undo
     setDeletedMeal(mealToDelete);
     
@@ -194,6 +211,7 @@ const AppContent: React.FC = () => {
     // Show undo toast
     showUndo("Meal deleted", () => {
       // Restore the meal
+      hapticSuccess();
       if (mealToDelete) {
         setLogs(prev => [mealToDelete, ...prev].sort((a, b) => 
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -256,6 +274,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden" style={{ background: '#0D0B1C' }}>
+      {/* Splash Screen */}
+      {showSplash && (
+        <SplashScreen onComplete={() => setShowSplash(false)} minDuration={1800} />
+      )}
+      
       <div 
         className={`flex-1 overflow-hidden transition-all duration-300 ease-out ${
           viewTransition === 'entering' 

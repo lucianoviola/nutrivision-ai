@@ -338,3 +338,216 @@ button:active {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
+
+/* ============================================
+   MICRO-ANIMATIONS
+   ============================================ */
+
+/* Subtle scale on hover */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+/* Press feedback */
+.press-scale {
+  transition: transform 0.1s ease;
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* Wiggle animation */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Pop animation */
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.animate-pop {
+  animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Subtle bounce */
+@keyframes subtle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.animate-subtle-bounce {
+  animation: subtle-bounce 1s ease-in-out infinite;
+}
+
+/* Fade slide in from right */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Fade slide in from left */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+/* Scale fade in */
+@keyframes scale-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-scale-fade-in {
+  animation: scale-fade-in 0.2s ease-out;
+}
+
+/* Confetti particles */
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(720deg);
+  }
+}
+
+/* Ripple effect */
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Orbit animations for floating particles */
+@keyframes orbit0 {
+  from { transform: rotate(0deg) translateX(35px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(35px) rotate(-360deg); }
+}
+@keyframes orbit1 {
+  from { transform: rotate(90deg) translateX(40px) rotate(-90deg); }
+  to { transform: rotate(450deg) translateX(40px) rotate(-450deg); }
+}
+@keyframes orbit2 {
+  from { transform: rotate(180deg) translateX(32px) rotate(-180deg); }
+  to { transform: rotate(540deg) translateX(32px) rotate(-540deg); }
+}
+@keyframes orbit3 {
+  from { transform: rotate(270deg) translateX(38px) rotate(-270deg); }
+  to { transform: rotate(630deg) translateX(38px) rotate(-630deg); }
+}
+
+/* ============================================
+   NEW GRADIENT VARIATIONS
+   ============================================ */
+.gradient-sunset {
+  background: linear-gradient(135deg, #F472B6 0%, #FB923C 50%, #FBBF24 100%);
+}
+
+.gradient-ocean {
+  background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 50%, #8B5CF6 100%);
+}
+
+.gradient-forest {
+  background: linear-gradient(135deg, #10B981 0%, #14B8A6 50%, #06B6D4 100%);
+}
+
+.gradient-aurora {
+  background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 50%, #10B981 100%);
+}
+
+.gradient-fire {
+  background: linear-gradient(135deg, #EF4444 0%, #F97316 50%, #FBBF24 100%);
+}
+
+.gradient-midnight {
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+}
+
+.gradient-candy {
+  background: linear-gradient(135deg, #EC4899 0%, #8B5CF6 50%, #6366F1 100%);
+}
+
+/* Animated gradient background */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-animated {
+  background: linear-gradient(270deg, #8B5CF6, #EC4899, #3B82F6, #8B5CF6);
+  background-size: 400% 400%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* ============================================
+   FOCUS STATES
+   ============================================ */
+.focus-ring {
+  transition: box-shadow 0.2s ease;
+}
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+}
+
+/* ============================================
+   RESPONSIVE TYPOGRAPHY
+   ============================================ */
+.text-display {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.text-title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.text-body {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  line-height: 1.6;
+}
+
+.text-caption {
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+  line-height: 1.5;
+}
