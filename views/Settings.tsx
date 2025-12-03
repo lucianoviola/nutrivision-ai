@@ -189,7 +189,61 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                 onChange={(v) => onUpdateSettings({...settings, dailyFatGoal: v})}
                 suffix="g"
               />
+              
+              {/* Calorie calculation from macros */}
+              {(() => {
+                const calculatedCalories = 
+                  (settings.dailyProteinGoal * 4) + 
+                  (settings.dailyCarbGoal * 4) + 
+                  (settings.dailyFatGoal * 9);
+                const difference = calculatedCalories - settings.dailyCalorieGoal;
+                const isMatch = Math.abs(difference) <= 50; // Allow 50 cal tolerance
+                
+                return (
+                  <div 
+                    className="p-4 flex items-center justify-between"
+                    style={{ 
+                      background: isMatch 
+                        ? 'rgba(16, 185, 129, 0.1)' 
+                        : 'rgba(251, 191, 36, 0.1)',
+                      borderTop: '1px solid rgba(139, 92, 246, 0.1)',
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm">{isMatch ? '✓' : '⚠️'}</span>
+                      <span className="text-xs text-white/50">
+                        Macros = <span className="font-bold text-white/80">{calculatedCalories}</span> kcal
+                      </span>
+                    </div>
+                    {!isMatch && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-amber-400">
+                          {difference > 0 ? '+' : ''}{difference} kcal
+                        </span>
+                        <button
+                          onClick={() => onUpdateSettings({...settings, dailyCalorieGoal: calculatedCalories})}
+                          className="text-xs font-bold px-2 py-1 rounded-lg transition-all active:scale-95"
+                          style={{
+                            background: 'rgba(139, 92, 246, 0.2)',
+                            color: '#A855F7',
+                          }}
+                        >
+                          Fix
+                        </button>
+                      </div>
+                    )}
+                    {isMatch && (
+                      <span className="text-xs text-green-400 font-medium">Balanced ✓</span>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
+            
+            {/* Macro breakdown hint */}
+            <p className="text-[10px] text-white/30 mt-2 px-1">
+              Protein & Carbs = 4 cal/g • Fat = 9 cal/g
+            </p>
           </div>
 
           {/* OpenAI API Configuration */}

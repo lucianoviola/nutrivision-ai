@@ -13,37 +13,29 @@ interface LogHistoryProps {
 // Animated timeline empty state with personality
 const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [nodesVisible, setNodesVisible] = useState([false, false, false, false]);
   
   useEffect(() => {
-    const timer1 = setTimeout(() => setIsVisible(true), 300);
-    const timer2 = setTimeout(() => setNodesVisible([true, false, false, false]), 500);
-    const timer3 = setTimeout(() => setNodesVisible([true, true, false, false]), 700);
-    const timer4 = setTimeout(() => setNodesVisible([true, true, true, false]), 900);
-    const timer5 = setTimeout(() => setNodesVisible([true, true, true, true]), 1100);
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      clearTimeout(timer4);
-      clearTimeout(timer5);
-    };
+    const timer = setTimeout(() => setIsVisible(true), 300);
+    return () => clearTimeout(timer);
   }, []);
   
   if (searchQuery) {
     return (
       <div className="text-center mt-16">
         <div 
-          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl animate-spring-up"
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(139, 92, 246, 0.15)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
           }}
         >
-          🔍
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="rgba(255,255,255,0.5)" strokeWidth="2"/>
+            <path d="M21 21l-4.35-4.35" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
         </div>
         <p className="text-white font-semibold text-lg">No meals found</p>
-        <p className="text-gray-400 text-sm mt-1">Try a different search term</p>
+        <p className="text-white/40 text-sm mt-1">Try a different search term</p>
       </div>
     );
   }
@@ -54,95 +46,91 @@ const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) =
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
-      {/* Animated timeline illustration */}
-      <div className="relative w-full max-w-sm mx-auto mb-8 h-32">
-        {/* Timeline line */}
+      {/* Abstract orbiting illustration */}
+      <div className="relative w-32 h-32 mx-auto mb-8">
+        {/* Outer glow */}
         <div 
-          className="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2"
+          className="absolute inset-0 rounded-full"
           style={{
-            background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.3), rgba(34, 211, 238, 0.2), transparent)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite',
           }}
         />
         
-        {/* Timeline nodes */}
-        {[
-          { emoji: '🍎', y: 0, delay: 0 },
-          { emoji: '🥗', y: 30, delay: 0.2 },
-          { emoji: '🍌', y: 60, delay: 0.4 },
-          { emoji: '🥑', y: 90, delay: 0.6 },
-        ].map((node, idx) => (
+        {/* Main orb */}
+        <div 
+          className="absolute inset-4 rounded-full"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2))',
+            border: '1px solid rgba(139, 92, 246, 0.4)',
+            boxShadow: '0 0 50px rgba(139, 92, 246, 0.3), inset 0 0 30px rgba(236, 72, 153, 0.15)',
+            animation: 'breathe 3s ease-in-out infinite',
+          }}
+        />
+        
+        {/* Inner highlight */}
+        <div 
+          className="absolute inset-10 rounded-full"
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%)',
+          }}
+        />
+        
+        {/* Orbiting particles */}
+        {[0, 1, 2].map((i) => (
           <div
-            key={idx}
-            className="absolute left-1/2 -translate-x-1/2"
+            key={i}
+            className="absolute w-2 h-2 rounded-full"
             style={{
-              top: `${node.y}%`,
-              transform: 'translate(-50%, -50%)',
+              background: i === 0 ? '#A855F7' : i === 1 ? '#EC4899' : '#8B5CF6',
+              boxShadow: `0 0 10px ${i === 0 ? '#A855F7' : i === 1 ? '#EC4899' : '#8B5CF6'}`,
+              left: '50%',
+              top: '50%',
+              animation: `historyOrbit${i} ${5 + i}s linear infinite`,
             }}
-          >
-            {/* Pulsing node */}
-            <div
-              className={`relative transition-all duration-500 ${
-                nodesVisible[idx] ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
-              }`}
-              style={{
-                animationDelay: `${node.delay}s`,
-              }}
-            >
-              {/* Outer glow */}
-              <div 
-                className="absolute inset-0 rounded-full animate-breathe"
-                style={{
-                  background: 'radial-gradient(circle, rgba(139, 92, 246, 0.4), transparent)',
-                  transform: 'scale(2)',
-                }}
-              />
-              {/* Node circle */}
-              <div 
-                className="relative w-12 h-12 rounded-full flex items-center justify-center text-xl"
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '2px solid rgba(139, 92, 246, 0.5)',
-                  boxShadow: '0 0 20px rgba(139, 92, 246, 0.4)',
-                }}
-              >
-                {node.emoji}
-              </div>
-            </div>
-          </div>
+          />
         ))}
+        
+        {/* Center clock icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="opacity-50">
+            <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5"/>
+            <path d="M12 7v5l3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
       </div>
       
-      {/* Personality copy */}
-      <h3 className="text-title-1-lg font-bold text-white mb-2 animate-spring-up">Your story starts here</h3>
-      <p className="text-body text-gray-400 mb-8 max-w-xs mx-auto">
+      <h3 className="text-xl font-bold text-white mb-2">Your story starts here</h3>
+      <p className="text-sm text-white/50 mb-6 max-w-[240px] mx-auto">
         Every meal tells a tale
       </p>
       
-      {/* CTA Button */}
       <button
         onClick={() => {/* Navigate to camera */}}
-        className="px-8 py-4 rounded-xl font-bold text-white transition-all duration-300 active:scale-95 relative overflow-hidden group"
+        className="px-6 py-3 rounded-xl font-bold text-white transition-all duration-300 active:scale-95"
         style={{
-          background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-          boxShadow: '0 8px 32px rgba(139, 92, 246, 0.5)',
+          background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+          boxShadow: '0 6px 24px rgba(139, 92, 246, 0.35)',
         }}
       >
-        <span className="relative z-10 flex items-center space-x-2">
+        <span className="flex items-center space-x-2">
           <span>Log your first meal</span>
-          <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          <span>→</span>
         </span>
-        <div 
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          }}
-        />
       </button>
       
       <style>{`
-        @keyframes floatTimeline {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
-          50% { transform: translate(-50%, -50%) translateY(-8px) rotate(5deg); }
+        @keyframes historyOrbit0 {
+          from { transform: translate(-50%, -50%) rotate(0deg) translateX(40px) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg) translateX(40px) rotate(-360deg); }
+        }
+        @keyframes historyOrbit1 {
+          from { transform: translate(-50%, -50%) rotate(120deg) translateX(48px) rotate(-120deg); }
+          to { transform: translate(-50%, -50%) rotate(480deg) translateX(48px) rotate(-480deg); }
+        }
+        @keyframes historyOrbit2 {
+          from { transform: translate(-50%, -50%) rotate(240deg) translateX(36px) rotate(-240deg); }
+          to { transform: translate(-50%, -50%) rotate(600deg) translateX(36px) rotate(-600deg); }
         }
       `}</style>
     </div>

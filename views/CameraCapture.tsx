@@ -31,6 +31,10 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
   const [savedMealName, setSavedMealName] = useState('');
   const [showSavedMeals, setShowSavedMeals] = useState(false);
   const [mealNote, setMealNote] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    const saved = localStorage.getItem('nutrivision_recent_searches');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -380,9 +384,21 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
     };
   }, [searchQuery, debouncedSearch]);
 
+  // Save to recent searches
+  const saveRecentSearch = (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem('nutrivision_recent_searches', JSON.stringify(updated));
+  };
+
   // Manual search (when pressing Enter or button)
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+    
+    // Save to recent searches
+    saveRecentSearch(searchQuery);
     
     // Cancel debounced search
     if (searchTimeoutRef.current) {
@@ -731,7 +747,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                         title="Save this meal for later"
                       >
                           <i className="fa-solid fa-bookmark"></i>
-                      </button>
+                    </button>
                     </div>
                     
                     {/* Notes/Journal Section */}
@@ -1019,9 +1035,65 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
            </div>
 
            {/* Barcode */}
-           <div className={`absolute inset-0 flex flex-col items-center justify-center bg-black ${mode === 'barcode' ? 'visible' : 'invisible'}`}>
-               <div id="barcode-reader" className="w-full max-w-sm rounded-xl overflow-hidden border border-white/20 shadow-2xl relative z-10"></div>
-               <p className="mt-8 text-white/60 text-sm font-medium">Point camera at a barcode</p>
+           <div className={`absolute inset-0 flex flex-col items-center justify-center ${mode === 'barcode' ? 'visible' : 'invisible'}`}
+             style={{ background: '#0D0B1C' }}
+           >
+               {/* Scanner container */}
+               <div className="relative">
+                 {/* Animated corners */}
+                 <div className="absolute -inset-4 pointer-events-none z-20">
+                   {[
+                     { top: 0, left: 0, borderRight: 'none', borderBottom: 'none' },
+                     { top: 0, right: 0, borderLeft: 'none', borderBottom: 'none' },
+                     { bottom: 0, left: 0, borderRight: 'none', borderTop: 'none' },
+                     { bottom: 0, right: 0, borderLeft: 'none', borderTop: 'none' },
+                   ].map((style, i) => (
+                     <div
+                       key={i}
+                       className="absolute w-8 h-8"
+                       style={{
+                         ...style,
+                         border: '3px solid #8B5CF6',
+                         borderRadius: '4px',
+                         filter: 'drop-shadow(0 0 8px rgba(139, 92, 246, 0.6))',
+                       }}
+                     />
+                   ))}
+                 </div>
+                 
+                 {/* Scan line animation */}
+                 <div 
+                   className="absolute left-0 right-0 h-0.5 z-20 pointer-events-none"
+                   style={{
+                     background: 'linear-gradient(90deg, transparent, #EC4899, transparent)',
+                     boxShadow: '0 0 12px #EC4899',
+                     animation: 'scanLine 2s ease-in-out infinite',
+                   }}
+                 />
+                 
+                 <div id="barcode-reader" className="w-80 h-80 rounded-xl overflow-hidden border border-purple-500/30 shadow-2xl relative z-10"
+                   style={{ boxShadow: '0 0 40px rgba(139, 92, 246, 0.3)' }}
+                 ></div>
+               </div>
+               
+               {/* Instructions */}
+               <div className="mt-8 text-center">
+                 <div className="flex items-center justify-center space-x-2 mb-2">
+                   <div 
+                     className="w-2 h-2 rounded-full animate-pulse"
+                     style={{ background: '#8B5CF6', boxShadow: '0 0 8px #8B5CF6' }}
+                   />
+                   <p className="text-white/80 text-sm font-medium">Scanning for barcode...</p>
+                 </div>
+                 <p className="text-white/40 text-xs">Position barcode within the frame</p>
+               </div>
+               
+               <style>{`
+                 @keyframes scanLine {
+                   0%, 100% { top: 10%; opacity: 0; }
+                   50% { top: 90%; opacity: 1; }
+                 }
+               `}</style>
            </div>
 
            {/* Search */}
@@ -1098,7 +1170,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                     <i className="fa-solid fa-times"></i>
                                 </button>
                               )}
-                              {/* Voice search button (visual only) */}
+                              {/* Mic button (visual only) */}
                               {!isSearching && !searchQuery && (
                                 <button 
                                   className="text-gray-500 hover:text-indigo-400 transition-colors duration-200 active:scale-95"
@@ -1127,17 +1199,79 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                 
                 {/* Results */}
                 <div className="flex-1 overflow-y-auto pb-10 min-h-0">
-                    {/* No query state */}
+                    {/* No query state - show recent searches and suggestions */}
                     {!searchQuery && !searchResults && (
-                        <div className="text-center mt-16">
-                            <div 
-                                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl"
-                                style={{ background: 'rgba(255,255,255,0.05)' }}
-                            >
-                                🔍
+                        <div>
+                          {/* Recent Searches */}
+                          {recentSearches.length > 0 && (
+                            <div className="mb-6">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">Recent</p>
+                                <button 
+                                  onClick={() => {
+                                    setRecentSearches([]);
+                                    localStorage.removeItem('nutrivision_recent_searches');
+                                  }}
+                                  className="text-xs text-white/30 hover:text-white/50"
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {recentSearches.map((search, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => setSearchQuery(search)}
+                                    className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all active:scale-95"
+                                    style={{
+                                      background: 'rgba(139, 92, 246, 0.1)',
+                                      border: '1px solid rgba(139, 92, 246, 0.2)',
+                                    }}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                                      <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="rgba(139, 92, 246, 0.6)" strokeWidth="2"/>
+                                    </svg>
+                                    <span className="text-sm text-white/70">{search}</span>
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                            <p className="text-white font-semibold">Search for any food</p>
-                            <p className="text-gray-500 text-sm mt-1">Verified nutrition data from official databases</p>
+                          )}
+                          
+                          {/* Quick Suggestions */}
+                          <div className="mb-6">
+                            <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-2">Popular</p>
+                            <div className="flex flex-wrap gap-2">
+                              {['Chicken breast', 'Rice', 'Banana', 'Eggs', 'Salmon', 'Oatmeal', 'Avocado', 'Greek yogurt'].map((food) => (
+                                <button
+                                  key={food}
+                                  onClick={() => setSearchQuery(food)}
+                                  className="px-3 py-2 rounded-lg text-sm text-white/60 transition-all active:scale-95 hover:text-white"
+                                  style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                  }}
+                                >
+                                  {food}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Info */}
+                          <div className="text-center mt-8">
+                            <div 
+                                className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
+                                style={{ background: 'rgba(139, 92, 246, 0.15)' }}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                  <circle cx="11" cy="11" r="7" stroke="#8B5CF6" strokeWidth="2"/>
+                                  <path d="M21 21l-4.35-4.35" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
+                            </div>
+                            <p className="text-white/70 font-medium text-sm">Search for any food</p>
+                            <p className="text-white/30 text-xs mt-1">From USDA & OpenFoodFacts databases</p>
+                          </div>
                         </div>
                     )}
                     

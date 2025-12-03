@@ -21,7 +21,7 @@ const getDayLabel = (date: Date, short = false) => {
   return days[date.getDay()];
 };
 
-// Opal-style calorie bar
+// Opal-style calorie bar with tap support
 const CalorieBar: React.FC<{
   value: number;
   goal: number;
@@ -32,7 +32,7 @@ const CalorieBar: React.FC<{
   date: Date;
 }> = ({ value, goal, label, isToday, maxValue, delay, date }) => {
   const [animatedHeight, setAnimatedHeight] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isActive, setIsActive] = useState(false);
   const percentage = Math.min((value / maxValue) * 100, 100);
   const isOverGoal = value > goal;
   
@@ -44,15 +44,24 @@ const CalorieBar: React.FC<{
   const formatDate = (d: Date) => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
+
+  const handleTap = () => {
+    if (value > 0) {
+      setIsActive(true);
+      // Auto-dismiss after 2 seconds
+      setTimeout(() => setIsActive(false), 2000);
+    }
+  };
   
   return (
     <div 
-      className="flex flex-col items-center flex-1 relative group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="flex flex-col items-center flex-1 relative group cursor-pointer"
+      onMouseEnter={() => setIsActive(true)}
+      onMouseLeave={() => setIsActive(false)}
+      onClick={handleTap}
     >
       {/* Tooltip */}
-      {isHovered && value > 0 && (
+      {isActive && value > 0 && (
         <div 
           className="absolute -top-16 z-20 px-3 py-2 rounded-xl text-white text-xs font-bold whitespace-nowrap"
           style={{
@@ -75,7 +84,7 @@ const CalorieBar: React.FC<{
       <div className="relative h-28 w-full flex flex-col justify-end items-center">
         <div 
           className={`w-6 rounded-lg transition-all duration-500 relative overflow-hidden ${
-            isHovered ? 'scale-110' : 'scale-100'
+            isActive ? 'scale-110' : 'scale-100'
           }`}
           style={{ 
             height: `${animatedHeight}%`, 
@@ -90,7 +99,7 @@ const CalorieBar: React.FC<{
                 : isToday 
                   ? 'linear-gradient(180deg, #8B5CF6, #EC4899)'
                   : 'linear-gradient(180deg, rgba(139, 92, 246, 0.6), rgba(139, 92, 246, 0.3))',
-              boxShadow: isHovered 
+              boxShadow: isActive 
                 ? `0 0 16px ${isOverGoal ? 'rgba(239, 68, 68, 0.5)' : isToday ? 'rgba(139, 92, 246, 0.5)' : 'rgba(139, 92, 246, 0.3)'}` 
                 : 'none',
             }}
@@ -103,7 +112,7 @@ const CalorieBar: React.FC<{
             style={{ 
               bottom: `calc(${animatedHeight}% + 4px)`,
               color: isOverGoal ? '#F43F5E' : isToday ? '#A855F7' : 'rgba(255,255,255,0.5)',
-              transform: isHovered ? 'scale(1.2)' : 'scale(1)',
+              transform: isActive ? 'scale(1.2)' : 'scale(1)',
             }}
           >
             {Math.round(value)}
@@ -113,7 +122,7 @@ const CalorieBar: React.FC<{
       
       <span className={`text-[10px] mt-2 font-semibold transition-all duration-300 ${
         isToday ? 'text-purple-400 scale-110' : 'text-white/40'
-      } ${isHovered ? 'scale-110' : ''}`}>
+      } ${isActive ? 'scale-110' : ''}`}>
         {label}
       </span>
     </div>

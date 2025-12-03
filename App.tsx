@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppView, MealLog, UserSettings } from './types.ts';
 import TabBar from './components/TabBar.tsx';
 import Dashboard from './views/Dashboard.tsx';
@@ -8,6 +8,8 @@ import LogHistory from './views/LogHistory.tsx';
 import Stats from './views/Stats.tsx';
 import AnalyzingOverlay from './components/AnalyzingOverlay.tsx';
 import AuthGate from './components/AuthGate.tsx';
+import { ToastProvider, useToast } from './components/Toast.tsx';
+import OfflineIndicator from './components/OfflineIndicator.tsx';
 import { healthService } from './services/healthService.ts';
 import * as savedMealsService from './services/savedMealsService.ts';
 
@@ -28,13 +30,19 @@ const DEFAULT_SETTINGS: UserSettings = {
   aiProvider: 'openai',
 };
 
-const App: React.FC = () => {
+// Inner app component that can use toast hooks
+const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [pendingAnalysis, setPendingAnalysis] = useState<PendingAnalysis | null>(null);
   const [viewTransition, setViewTransition] = useState<'entering' | 'entered' | 'exiting'>('entered');
   const [savedMealToLoad, setSavedMealToLoad] = useState<savedMealsService.SavedMeal | null>(null);
+  const [deletedMeal, setDeletedMeal] = useState<MealLog | null>(null);
+  const [previousCaloriePercent, setPreviousCaloriePercent] = useState(0);
+  const [previousGoals, setPreviousGoals] = useState({ protein: 0, carbs: 0, fat: 0 });
+  
+  const { showSuccess, showError, showCelebration, showUndo, showToast } = useToast();
 
   // Load from local storage on mount
   useEffect(() => {
@@ -49,7 +57,7 @@ const App: React.FC = () => {
     if (!openaiKey) {
       setCurrentView(AppView.SETTINGS);
       setTimeout(() => {
-        alert("Welcome! Please enter your OpenAI API Key in the Settings to start using AI features.\n\n🔒 Your key is stored locally and never shared.");
+        showToast("Welcome! Add your OpenAI API key to get started.", 'info', { duration: 5000 });
       }, 500);
     }
   }, []);
@@ -74,9 +82,74 @@ const App: React.FC = () => {
     setCurrentView(AppView.DASHBOARD); // Return to dashboard while analyzing
   };
 
+  // Check if goals are reached and celebrate
+  const checkGoalCelebration = useCallback((newLogs: MealLog[]) => {
+    const today = new Date();
+    const todayLogs = newLogs.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate.getDate() === today.getDate() && 
+             logDate.getMonth() === today.getMonth() && 
+             logDate.getFullYear() === today.getFullYear();
+    });
+    
+    const totals = todayLogs.reduce((acc, log) => ({
+      calories: acc.calories + log.totalMacros.calories,
+      protein: acc.protein + log.totalMacros.protein,
+      carbs: acc.carbs + log.totalMacros.carbs,
+      fat: acc.fat + log.totalMacros.fat,
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+    
+    const caloriePercent = Math.round((totals.calories / settings.dailyCalorieGoal) * 100);
+    const proteinPercent = Math.round((totals.protein / settings.dailyProteinGoal) * 100);
+    const carbsPercent = Math.round((totals.carbs / settings.dailyCarbGoal) * 100);
+    const fatPercent = Math.round((totals.fat / settings.dailyFatGoal) * 100);
+    
+    // Check for 100% achievements (celebrate once per goal)
+    const achieved: string[] = [];
+    
+    if (caloriePercent >= 100 && previousCaloriePercent < 100) {
+      achieved.push('calories');
+    }
+    if (proteinPercent >= 100 && previousGoals.protein < 100) {
+      achieved.push('protein');
+    }
+    if (carbsPercent >= 100 && previousGoals.carbs < 100) {
+      achieved.push('carbs');
+    }
+    if (fatPercent >= 100 && previousGoals.fat < 100) {
+      achieved.push('fat');
+    }
+    
+    // Show celebration based on achievements
+    if (achieved.length === 4) {
+      showCelebration("🏆 All daily goals reached! Perfect day!");
+    } else if (achieved.length > 1) {
+      showCelebration(`🎉 ${achieved.join(' & ')} goals reached!`);
+    } else if (achieved.includes('calories')) {
+      showCelebration("🎉 Daily calorie goal reached!");
+    } else if (achieved.includes('protein')) {
+      showSuccess("💪 Protein goal reached!");
+    } else if (achieved.includes('carbs')) {
+      showSuccess("🍞 Carbs goal reached!");
+    } else if (achieved.includes('fat')) {
+      showSuccess("🥑 Fat goal reached!");
+    }
+    
+    // Update previous values
+    setPreviousCaloriePercent(caloriePercent);
+    setPreviousGoals({ protein: proteinPercent, carbs: carbsPercent, fat: fatPercent });
+  }, [settings, previousCaloriePercent, previousGoals, showCelebration, showSuccess]);
+
   // Handle when analysis is complete and user saves
   const handleAnalysisComplete = async (log: MealLog) => {
-    setLogs(prev => [log, ...prev]);
+    const newLogs = [log, ...logs];
+    setLogs(newLogs);
+    
+    // Show success toast
+    showSuccess(`${log.type.charAt(0).toUpperCase() + log.type.slice(1)} saved!`);
+    
+    // Check for goal celebration
+    checkGoalCelebration(newLogs);
     
     // Sync to HealthKit if enabled
     if (settings.appleHealthConnected) {
@@ -95,7 +168,11 @@ const App: React.FC = () => {
 
   // Legacy save handler for manual entry or search results
   const handleSaveLog = async (log: MealLog) => {
-    setLogs(prev => [log, ...prev]);
+    const newLogs = [log, ...logs];
+    setLogs(newLogs);
+    
+    showSuccess(`${log.type.charAt(0).toUpperCase() + log.type.slice(1)} saved!`);
+    checkGoalCelebration(newLogs);
     
     if (settings.appleHealthConnected) {
       await healthService.saveLog(log);
@@ -105,9 +182,25 @@ const App: React.FC = () => {
   };
 
   const handleDeleteLog = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this log?")) {
-      setLogs(prev => prev.filter(l => l.id !== id));
-    }
+    const mealToDelete = logs.find(l => l.id === id);
+    if (!mealToDelete) return;
+    
+    // Store for undo
+    setDeletedMeal(mealToDelete);
+    
+    // Remove immediately
+    setLogs(prev => prev.filter(l => l.id !== id));
+    
+    // Show undo toast
+    showUndo("Meal deleted", () => {
+      // Restore the meal
+      if (mealToDelete) {
+        setLogs(prev => [mealToDelete, ...prev].sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        ));
+        showSuccess("Meal restored!");
+      }
+    });
   };
 
   const handleUpdateLog = (updatedMeal: MealLog) => {
@@ -116,6 +209,8 @@ const App: React.FC = () => {
       localStorage.setItem('nutrivision_logs', JSON.stringify(updated));
       return updated;
     });
+    
+    showSuccess("Meal updated!");
     
     // Sync to HealthKit if enabled
     if (settings.appleHealthConnected) {
@@ -160,47 +255,57 @@ const App: React.FC = () => {
   };
 
   return (
-    <AuthGate>
-      <div className="flex flex-col h-full w-full bg-[#F8F6F4] overflow-hidden">
-        <div 
-          className={`flex-1 transition-all duration-300 overflow-hidden ${
-            viewTransition === 'entering' 
-              ? 'opacity-0 translate-x-4' 
-              : viewTransition === 'exiting'
-              ? 'opacity-0 -translate-x-4'
-              : 'opacity-100 translate-x-0'
-          }`}
-        >
-          {renderView()}
-        </div>
-        
-        {/* Camera is a modal overlay */}
-        {currentView === AppView.CAMERA && (
-          <CameraCapture 
-            onSave={handleSaveLog}
-            onImageCapture={handleImageCapture}
-            onCancel={() => {
-              setCurrentView(AppView.DASHBOARD);
-              setSavedMealToLoad(null);
-            }}
-            aiProvider={settings.aiProvider}
-            savedMealToLoad={savedMealToLoad}
-          />
-        )}
-
-        {/* Background analysis overlay */}
-        <AnalyzingOverlay
-          pendingAnalysis={pendingAnalysis}
-          aiProvider={settings.aiProvider}
-          onComplete={handleAnalysisComplete}
-          onDismiss={handleDismissAnalysis}
-        />
-
-        {/* Tab bar is hidden if camera is active */}
-        {currentView !== AppView.CAMERA && (
-          <TabBar currentView={currentView} onChangeView={handleViewChange} />
-        )}
+    <div className="flex flex-col h-full w-full overflow-hidden" style={{ background: '#0D0B1C' }}>
+      <div 
+        className={`flex-1 overflow-hidden transition-all duration-300 ease-out ${
+          viewTransition === 'entering' 
+            ? 'opacity-0 scale-[0.98] translate-y-2' 
+            : viewTransition === 'exiting'
+            ? 'opacity-0 scale-[0.98] -translate-y-2'
+            : 'opacity-100 scale-100 translate-y-0'
+        }`}
+      >
+        {renderView()}
       </div>
+      
+      {/* Camera is a modal overlay */}
+      {currentView === AppView.CAMERA && (
+        <CameraCapture 
+          onSave={handleSaveLog}
+          onImageCapture={handleImageCapture}
+          onCancel={() => {
+            setCurrentView(AppView.DASHBOARD);
+            setSavedMealToLoad(null);
+          }}
+          aiProvider={settings.aiProvider}
+          savedMealToLoad={savedMealToLoad}
+        />
+      )}
+
+      {/* Background analysis overlay */}
+      <AnalyzingOverlay
+        pendingAnalysis={pendingAnalysis}
+        aiProvider={settings.aiProvider}
+        onComplete={handleAnalysisComplete}
+        onDismiss={handleDismissAnalysis}
+      />
+
+      {/* Tab bar is hidden if camera is active */}
+      {currentView !== AppView.CAMERA && (
+        <TabBar currentView={currentView} onChangeView={handleViewChange} />
+      )}
+    </div>
+  );
+};
+
+// Main App wrapper with providers
+const App: React.FC = () => {
+  return (
+    <AuthGate>
+      <ToastProvider>
+        <OfflineIndicator />
+        <AppContent />
+      </ToastProvider>
     </AuthGate>
   );
 };

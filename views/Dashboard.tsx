@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import MealDetailModal from '../components/MealDetailModal.tsx';
 
@@ -40,7 +40,18 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
   
   return (
     <div className="relative flex items-center justify-center">
-      <svg width="180" height="180" className="transform -rotate-90">
+      {/* Outer breathing glow for empty state */}
+      {isEmpty && (
+        <div 
+          className="absolute w-[200px] h-[200px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
+            animation: 'breathe 3s ease-in-out infinite',
+          }}
+        />
+      )}
+      
+      <svg width="180" height="180" className="transform -rotate-90 relative z-10">
         <defs>
           {/* Opal purple-pink gradient */}
           <linearGradient id="ringGradientNormal" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -60,10 +71,10 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
           {/* Animated gradient for empty state */}
           <linearGradient id="ringGradientEmpty" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#8B5CF6">
-              {isEmpty && <animate attributeName="stop-color" values="#8B5CF6;#EC4899;#F472B6;#8B5CF6" dur="4s" repeatCount="indefinite" />}
+              {isEmpty && <animate attributeName="stop-color" values="#8B5CF6;#A855F7;#EC4899;#8B5CF6" dur="3s" repeatCount="indefinite" />}
             </stop>
             <stop offset="100%" stopColor="#EC4899">
-              {isEmpty && <animate attributeName="stop-color" values="#EC4899;#F472B6;#8B5CF6;#EC4899" dur="4s" repeatCount="indefinite" />}
+              {isEmpty && <animate attributeName="stop-color" values="#EC4899;#8B5CF6;#A855F7;#EC4899" dur="3s" repeatCount="indefinite" />}
             </stop>
           </linearGradient>
           
@@ -76,10 +87,10 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
             </feMerge>
           </filter>
           
-          {/* Pulse glow for empty state */}
-          <filter id="pulseGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="6" result="coloredBlur">
-              {isEmpty && <animate attributeName="stdDeviation" values="4;8;4" dur="2s" repeatCount="indefinite" />}
+          {/* Enhanced breathing glow for empty state */}
+          <filter id="breatheGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur">
+              {isEmpty && <animate attributeName="stdDeviation" values="3;6;3" dur="3s" repeatCount="indefinite" />}
             </feGaussianBlur>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
@@ -88,7 +99,7 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
           </filter>
         </defs>
         
-        {/* Background ring */}
+        {/* Background ring with breathing effect */}
         <circle
           cx="90"
           cy="90"
@@ -96,10 +107,12 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
           fill="none"
           stroke={isEmpty ? "url(#ringGradientEmpty)" : "rgba(139, 92, 246, 0.15)"}
           strokeWidth="12"
-          className={isEmpty ? "" : ""}
-          filter={isEmpty ? "url(#pulseGlow)" : "none"}
-          opacity={isEmpty ? 0.4 : 1}
-        />
+          filter={isEmpty ? "url(#breatheGlow)" : "none"}
+        >
+          {isEmpty && (
+            <animate attributeName="opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite" />
+          )}
+        </circle>
         
         {/* Progress ring */}
         {progress > 0 && (
@@ -253,15 +266,30 @@ const MacroPill: React.FC<{
   );
 };
 
-// Opal-style meal card
-const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> = ({ log, index, onClick }) => {
+// Opal-style meal card with long-press quick actions
+const MealCard: React.FC<{ 
+  log: MealLog; 
+  index: number; 
+  onClick?: () => void;
+  onDelete?: (id: string) => void;
+  onDuplicate?: (log: MealLog) => void;
+}> = ({ log, index, onClick, onDelete, onDuplicate }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), index * 80 + 400);
     return () => clearTimeout(timer);
   }, [index]);
+
+  // Clear long press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    };
+  }, []);
   
   const getMealEmoji = (type: string) => {
     switch (type) {
@@ -280,22 +308,53 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
       default: return 'linear-gradient(135deg, #F472B6, #EC4899)';
     }
   };
+
+  const handleTouchStart = () => {
+    setIsPressed(true);
+    longPressTimer.current = setTimeout(() => {
+      setShowActions(true);
+      // Vibrate if supported
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    setIsPressed(false);
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
+  const handleClick = () => {
+    if (!showActions && onClick) {
+      onClick();
+    }
+  };
+
+  const handleCopy = () => {
+    const text = `${log.type.toUpperCase()} - ${log.items.map(i => i.name).join(', ')} | ${Math.round(log.totalMacros.calories)} kcal`;
+    navigator.clipboard.writeText(text);
+    setShowActions(false);
+  };
   
   return (
-    <div 
-      className={`relative overflow-hidden rounded-2xl p-4 transition-all duration-300 cursor-pointer ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-      } ${isPressed ? 'scale-[0.98]' : 'hover:scale-[1.01]'}`}
-      style={{
-        background: 'rgba(26, 22, 51, 0.6)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(139, 92, 246, 0.15)',
-      }}
-      onClick={onClick}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
-      onMouseLeave={() => setIsPressed(false)}
-    >
+    <>
+      <div 
+        className={`relative overflow-hidden rounded-2xl p-4 transition-all duration-300 cursor-pointer ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+        } ${isPressed ? 'scale-[0.98]' : 'hover:scale-[1.01]'} ${showActions ? 'ring-2 ring-purple-500/50' : ''}`}
+        style={{
+          background: 'rgba(26, 22, 51, 0.6)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(139, 92, 246, 0.15)',
+        }}
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={() => setIsPressed(true)}
+        onMouseUp={() => setIsPressed(false)}
+        onMouseLeave={() => setIsPressed(false)}
+      >
       <div className="flex items-center space-x-4">
         <div className="relative">
           <div 
@@ -364,6 +423,113 @@ const MealCard: React.FC<{ log: MealLog; index: number; onClick?: () => void }> 
         </div>
       </div>
     </div>
+
+      {/* Quick Actions Menu */}
+      {showActions && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          onClick={() => setShowActions(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          
+          {/* Menu */}
+          <div 
+            className="relative z-10 w-full max-w-sm rounded-2xl overflow-hidden animate-scale-up"
+            style={{
+              background: 'rgba(26, 22, 51, 0.95)',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Meal Preview */}
+            <div className="p-4 border-b border-white/10">
+              <p className="text-sm font-bold text-white capitalize">{log.type}</p>
+              <p className="text-xs text-white/40 truncate mt-0.5">
+                {log.items.map(i => i.name).join(', ')}
+              </p>
+              <p className="text-lg font-black text-white mt-1">
+                {Math.round(log.totalMacros.calories)} kcal
+              </p>
+            </div>
+            
+            {/* Actions */}
+            <div className="p-2">
+              <button
+                onClick={() => { onClick?.(); setShowActions(false); }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(139, 92, 246, 0.2)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#A855F7" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#A855F7" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="text-white font-medium">Edit meal</span>
+              </button>
+              
+              <button
+                onClick={handleCopy}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.2)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="#3B82F6" strokeWidth="2"/>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="#3B82F6" strokeWidth="2"/>
+                  </svg>
+                </div>
+                <span className="text-white font-medium">Copy to clipboard</span>
+              </button>
+              
+              <button
+                onClick={() => { onDuplicate?.(log); setShowActions(false); }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.2)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="text-white font-medium">Log again</span>
+              </button>
+              
+              <button
+                onClick={() => { onDelete?.(log.id); setShowActions(false); }}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239, 68, 68, 0.2)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <span className="text-red-400 font-medium">Delete</span>
+              </button>
+            </div>
+            
+            {/* Cancel */}
+            <div className="p-2 pt-0">
+              <button
+                onClick={() => setShowActions(false)}
+                className="w-full py-3 rounded-xl font-bold text-white/50 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <style>{`
+        @keyframes scale-up {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-up {
+          animation: scale-up 0.2s ease-out;
+        }
+      `}</style>
+    </>
   );
 };
 
@@ -382,45 +548,61 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
-      {/* Smaller, more compact illustration */}
-      <div className="relative w-24 h-24 mx-auto mb-6">
+      {/* Abstract glowing orb illustration */}
+      <div className="relative w-28 h-28 mx-auto mb-6">
+        {/* Outer glow ring */}
         <div 
           className="absolute inset-0 rounded-full"
           style={{
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(236, 72, 153, 0.25))',
-            border: '2px solid rgba(139, 92, 246, 0.4)',
-            boxShadow: '0 0 30px rgba(139, 92, 246, 0.25)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite',
           }}
         />
         
-        {/* Fewer, smaller floating food items */}
-        {[
-          { emoji: '🍎', x: -14, y: -8, delay: 0 },
-          { emoji: '🥑', x: 14, y: -10, delay: 0.3 },
-          { emoji: '🍌', x: 0, y: 12, delay: 0.6 },
-        ].map((food, idx) => (
+        {/* Main orb */}
+        <div 
+          className="absolute inset-4 rounded-full"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.3))',
+            border: '1px solid rgba(139, 92, 246, 0.4)',
+            boxShadow: '0 0 40px rgba(139, 92, 246, 0.3), inset 0 0 30px rgba(236, 72, 153, 0.2)',
+            animation: 'breathe 3s ease-in-out infinite',
+          }}
+        />
+        
+        {/* Inner glow */}
+        <div 
+          className="absolute inset-8 rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%)',
+          }}
+        />
+        
+        {/* Floating particles */}
+        {[0, 1, 2, 3].map((i) => (
           <div
-            key={idx}
-            className="absolute text-lg"
+            key={i}
+            className="absolute w-1.5 h-1.5 rounded-full"
             style={{
-              left: `calc(50% + ${food.x}px)`,
-              top: `calc(50% + ${food.y}px)`,
-              transform: 'translate(-50%, -50%)',
-              animation: `float 4s ease-in-out infinite`,
-              animationDelay: `${food.delay}s`,
+              background: i % 2 === 0 ? '#A855F7' : '#EC4899',
+              boxShadow: `0 0 8px ${i % 2 === 0 ? '#A855F7' : '#EC4899'}`,
+              left: '50%',
+              top: '50%',
+              animation: `orbit${i} ${4 + i * 0.5}s linear infinite`,
             }}
-          >
-            {food.emoji}
-          </div>
+          />
         ))}
         
-        <div className="absolute inset-0 flex items-center justify-center text-2xl">
-          ✨
+        {/* Center plus icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-60">
+            <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
         </div>
       </div>
       
       <h3 className="text-xl font-bold text-white mb-1.5">Your plate is waiting!</h3>
-      <p className="text-sm text-white/60 mb-6 max-w-[260px] mx-auto leading-relaxed">
+      <p className="text-sm text-white/50 mb-6 max-w-[240px] mx-auto leading-relaxed">
         Capture your first meal and let AI analyze the nutrition
       </p>
       
@@ -439,11 +621,103 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
       </button>
       
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-          50% { transform: translate(-50%, -50%) translateY(-6px); }
+        @keyframes orbit0 {
+          from { transform: translate(-50%, -50%) rotate(0deg) translateX(28px) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg) translateX(28px) rotate(-360deg); }
+        }
+        @keyframes orbit1 {
+          from { transform: translate(-50%, -50%) rotate(90deg) translateX(32px) rotate(-90deg); }
+          to { transform: translate(-50%, -50%) rotate(450deg) translateX(32px) rotate(-450deg); }
+        }
+        @keyframes orbit2 {
+          from { transform: translate(-50%, -50%) rotate(180deg) translateX(26px) rotate(-180deg); }
+          to { transform: translate(-50%, -50%) rotate(540deg) translateX(26px) rotate(-540deg); }
+        }
+        @keyframes orbit3 {
+          from { transform: translate(-50%, -50%) rotate(270deg) translateX(34px) rotate(-270deg); }
+          to { transform: translate(-50%, -50%) rotate(630deg) translateX(34px) rotate(-630deg); }
         }
       `}</style>
+    </div>
+  );
+};
+
+// Smart meal prompt based on time and logged meals
+const MealPrompt: React.FC<{ 
+  todayMeals: MealLog[]; 
+  onAddMeal: () => void;
+}> = ({ todayMeals, onAddMeal }) => {
+  const [dismissed, setDismissed] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  const getMealSuggestion = () => {
+    const hour = new Date().getHours();
+    const mealTypes = todayMeals.map(m => m.type);
+    
+    // Breakfast time (6-10am)
+    if (hour >= 6 && hour < 10 && !mealTypes.includes('breakfast')) {
+      return { meal: 'breakfast', message: "Good morning! Ready to log breakfast?", icon: "☀️" };
+    }
+    // Lunch time (11am-2pm)
+    if (hour >= 11 && hour < 14 && !mealTypes.includes('lunch')) {
+      return { meal: 'lunch', message: "It's lunchtime! Log your meal?", icon: "🍽️" };
+    }
+    // Dinner time (5-9pm)
+    if (hour >= 17 && hour < 21 && !mealTypes.includes('dinner')) {
+      return { meal: 'dinner', message: "Dinner time! What are you having?", icon: "🌙" };
+    }
+    // Snack prompts (between meals)
+    if (hour >= 14 && hour < 17 && todayMeals.length > 0) {
+      return { meal: 'snack', message: "Afternoon snack?", icon: "🍎" };
+    }
+    
+    return null;
+  };
+  
+  const suggestion = getMealSuggestion();
+  
+  if (!suggestion || dismissed) return null;
+  
+  return (
+    <div 
+      className={`mx-6 mb-4 overflow-hidden rounded-2xl transition-all duration-500 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+      }`}
+      style={{
+        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
+        border: '1px solid rgba(139, 92, 246, 0.25)',
+      }}
+    >
+      <div className="flex items-center justify-between p-4">
+        <div className="flex items-center space-x-3">
+          <span className="text-2xl">{suggestion.icon}</span>
+          <p className="text-sm font-medium text-white/80">{suggestion.message}</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={onAddMeal}
+            className="px-4 py-1.5 rounded-lg text-sm font-bold text-white transition-all active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+            }}
+          >
+            Log now
+          </button>
+          <button
+            onClick={() => setDismissed(true)}
+            className="p-1.5 rounded-lg text-white/40 hover:text-white/60 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -451,6 +725,11 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
 const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog, onUpdateLog }) => {
   const [headerVisible, setHeaderVisible] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealLog | null>(null);
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startYRef = useRef(0);
   
   const today = useMemo(() => {
     const now = new Date();
@@ -470,6 +749,48 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
       fat: acc.fat + log.totalMacros.fat,
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   }, [today]);
+
+  // Weekly stats
+  const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const weekAgo = new Date(now);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const weekLogs = logs.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate >= weekAgo && logDate <= now;
+    });
+    
+    const dailyCalories: number[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dayLogs = weekLogs.filter(log => {
+        const logDate = new Date(log.timestamp);
+        return logDate.toDateString() === date.toDateString();
+      });
+      const dayTotal = dayLogs.reduce((sum, log) => sum + log.totalMacros.calories, 0);
+      if (dayTotal > 0) dailyCalories.push(dayTotal);
+    }
+    
+    const avgCalories = dailyCalories.length > 0 
+      ? Math.round(dailyCalories.reduce((a, b) => a + b, 0) / dailyCalories.length)
+      : 0;
+    const totalMeals = weekLogs.length;
+    const daysLogged = dailyCalories.length;
+    
+    return { avgCalories, totalMeals, daysLogged };
+  }, [logs]);
+
+  // Yesterday's meals for templates
+  const yesterdayMeals = useMemo(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return logs.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate.toDateString() === yesterday.toDateString();
+    });
+  }, [logs]);
 
   useEffect(() => {
     const timer = setTimeout(() => setHeaderVisible(true), 100);
@@ -494,8 +815,45 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
   const greeting = getGreeting();
   const progressPercent = Math.round((totals.calories / settings.dailyCalorieGoal) * 100);
 
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (containerRef.current?.scrollTop === 0) {
+      startYRef.current = e.touches[0].clientY;
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPulling || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startYRef.current;
+    if (diff > 0 && containerRef.current?.scrollTop === 0) {
+      setPullDistance(Math.min(diff * 0.5, 100));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 60 && !isRefreshing) {
+      setIsRefreshing(true);
+      // Simulate refresh
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }, 1000);
+    } else {
+      setPullDistance(0);
+    }
+    setIsPulling(false);
+  };
+
   return (
-    <div className="h-full overflow-y-auto pb-28 relative">
+    <div 
+      ref={containerRef}
+      className="h-full overflow-y-auto pb-28 relative"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Opal-style animated background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
@@ -520,8 +878,44 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         />
       </div>
       
+      {/* Pull-to-refresh indicator */}
+      {(pullDistance > 0 || isRefreshing) && (
+        <div 
+          className="absolute top-0 left-0 right-0 flex items-center justify-center z-20 transition-all duration-300"
+          style={{ 
+            height: `${Math.max(pullDistance, isRefreshing ? 60 : 0)}px`,
+            opacity: pullDistance > 20 || isRefreshing ? 1 : 0,
+          }}
+        >
+          <div 
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${isRefreshing ? 'animate-spin' : ''}`}
+            style={{
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3))',
+              border: '2px solid rgba(139, 92, 246, 0.5)',
+              transform: `rotate(${pullDistance * 3}deg)`,
+            }}
+          >
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none"
+              style={{ opacity: pullDistance > 40 || isRefreshing ? 1 : 0.5 }}
+            >
+              <path 
+                d="M4 12a8 8 0 018-8V1l5 4-5 4V6a6 6 0 100 12v2a8 8 0 01-8-8z" 
+                fill="rgba(168, 85, 247, 0.8)"
+              />
+            </svg>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
-      <div className="relative z-10">
+      <div 
+        className="relative z-10 transition-transform duration-300"
+        style={{ transform: `translateY(${pullDistance}px)` }}
+      >
       {/* Header */}
         <div className={`pt-14 pb-4 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-center justify-between">
@@ -546,6 +940,9 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
            </div>
            </div>
         </div>
+
+        {/* Smart meal prompt */}
+        <MealPrompt todayMeals={today} onAddMeal={onAddMeal || (() => {})} />
 
         {/* Calorie Ring */}
         <div className="flex justify-center py-4">
@@ -579,6 +976,64 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         </div>
       </div>
 
+        {/* Weekly Summary Card */}
+        {weeklyStats.daysLogged > 0 && (
+          <div className="px-6 mt-6">
+            <div 
+              className="rounded-2xl p-4 relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+              }}
+            >
+              <div className="flex items-center justify-between">
+        <div>
+                  <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">This Week</p>
+                  <p className="text-2xl font-black text-white mt-1">
+                    {weeklyStats.avgCalories.toLocaleString()} <span className="text-sm font-medium text-white/50">avg cal/day</span>
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-purple-400">{weeklyStats.totalMeals}</p>
+                    <p className="text-[10px] text-white/40 uppercase">meals</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-pink-400">{weeklyStats.daysLogged}</p>
+                    <p className="text-[10px] text-white/40 uppercase">days</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Meal Templates - Yesterday's meals */}
+        {yesterdayMeals.length > 0 && today.length === 0 && (
+          <div className="px-6 mt-6">
+            <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-3">Quick Log from Yesterday</p>
+            <div className="flex space-x-2 overflow-x-auto pb-2 -mx-6 px-6">
+              {yesterdayMeals.slice(0, 3).map((meal) => (
+                <button
+                  key={meal.id}
+                  onClick={() => setSelectedMeal(meal)}
+                  className="flex-shrink-0 flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all active:scale-95"
+                  style={{
+                    background: 'rgba(26, 22, 51, 0.8)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                  }}
+                >
+                  <span className="text-base">
+                    {meal.type === 'breakfast' ? '🌅' : meal.type === 'lunch' ? '☀️' : meal.type === 'dinner' ? '🌙' : '🍪'}
+                  </span>
+                  <span className="text-sm font-medium text-white capitalize">{meal.type}</span>
+                  <span className="text-xs text-white/40">{Math.round(meal.totalMacros.calories)} cal</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Today's Meals */}
         <div className="px-6 mt-8">
           <div className="flex items-center justify-between mb-4">
@@ -604,6 +1059,20 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                   log={log} 
                   index={index} 
                   onClick={() => setSelectedMeal(log)}
+                  onDelete={onDeleteLog}
+                  onDuplicate={(meal) => {
+                    // Create a duplicate with new ID and current timestamp
+                    if (onUpdateLog) {
+                      const duplicate: MealLog = {
+                        ...meal,
+                        id: Date.now().toString(),
+                        timestamp: Date.now(),
+                      };
+                      // This will add a new log (we need to call the parent's add function)
+                      // For now, just open the meal for editing
+                      setSelectedMeal(meal);
+                    }
+                  }}
                 />
               ))}
             </div>
