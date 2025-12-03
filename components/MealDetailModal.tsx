@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MealLog, FoodItem, Macros, AIProvider } from '../types.ts';
 import * as aiService from '../services/aiService.ts';
 import NumericInput from './NumericInput.tsx';
@@ -21,6 +21,12 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
   const [correctionText, setCorrectionText] = useState('');
   const [isCorrecting, setIsCorrecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Swipe to close state
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (meal) {
@@ -29,12 +35,53 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
       setMealNote(meal.note || '');
       setIsEditing(false);
       setEditingItemIndex(null);
+      setDragY(0);
       document.body.style.overflow = 'hidden';
     }
     return () => {
       document.body.style.overflow = '';
     };
   }, [meal]);
+  
+  // Swipe to close handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Only allow swipe from the handle area or when scrolled to top
+    const target = e.target as HTMLElement;
+    const isHandle = target.closest('[data-handle]');
+    const scrollContainer = modalRef.current?.querySelector('[data-scroll-content]');
+    const isScrolledToTop = !scrollContainer || scrollContainer.scrollTop === 0;
+    
+    if (isHandle || isScrolledToTop) {
+      dragStartY.current = e.touches[0].clientY;
+      setIsDragging(true);
+    }
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - dragStartY.current;
+    
+    // Only allow dragging down
+    if (diff > 0) {
+      setDragY(diff);
+    }
+  };
+  
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    // If dragged more than 100px, close the modal
+    if (dragY > 100) {
+      handleClose();
+    } else {
+      // Snap back
+      setDragY(0);
+    }
+  };
 
   // Parse serving size into quantity and unit
   const parseServingSize = (servingSize: string): { quantity: number; unit: string } => {
@@ -244,22 +291,35 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
         isVisible ? 'bg-black/70 backdrop-blur-md' : 'bg-transparent'
       }`}
       onClick={handleClose}
+      style={{
+        opacity: isVisible ? Math.max(0, 1 - dragY / 300) : 0,
+      }}
     >
       <div 
-        className={`w-full max-w-lg rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col transition-all duration-300 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+        ref={modalRef}
+        className={`w-full max-w-lg rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col ${
+          isDragging ? '' : 'transition-all duration-300'
+        } ${
+          isVisible && dragY === 0 ? 'translate-y-0 opacity-100' : !isVisible ? 'translate-y-full opacity-0' : ''
         }`}
         style={{
           background: 'linear-gradient(180deg, #1a1a1f 0%, #0a0a0f 100%)',
           border: '1px solid rgba(255,255,255,0.1)',
+          transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
         }}
         onClick={e => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-2">
+        {/* Handle bar - drag indicator */}
+        <div 
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+          data-handle="true"
+        >
           <div 
-            className="w-10 h-1 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.2)' }}
+            className={`w-10 h-1 rounded-full transition-all ${isDragging ? 'w-14 bg-white/40' : ''}`}
+            style={{ background: isDragging ? undefined : 'rgba(255,255,255,0.2)' }}
           />
         </div>
 
@@ -297,7 +357,7 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-5" data-scroll-content="true">
           {/* Image */}
           {meal.imageUrl && (
             <div className="relative mb-5">
