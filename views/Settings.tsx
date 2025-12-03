@@ -123,7 +123,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
   };
 
   return (
-    <div className="flex-1 overflow-y-auto pb-28 h-full relative">
+    <div className="h-full overflow-y-auto pb-28 relative">
       {/* Opal-style background */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />

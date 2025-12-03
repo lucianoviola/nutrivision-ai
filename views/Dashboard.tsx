@@ -3,6 +3,7 @@ import { MealLog, UserSettings } from '../types.ts';
 import MealDetailModal from '../components/MealDetailModal.tsx';
 import InsightsCard from '../components/InsightsCard.tsx';
 import SmartSuggestions from '../components/SmartSuggestions.tsx';
+import { DashboardSkeleton, MealCardSkeleton } from '../components/Skeleton.tsx';
 
 interface DashboardProps {
   logs: MealLog[];
@@ -219,34 +220,33 @@ const MacroPill: React.FC<{
   
   return (
     <button
-      className={`flex flex-col items-center px-5 py-3 rounded-2xl transition-all duration-500 relative active:scale-95 ${
-        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+      className={`flex flex-col items-center px-2 py-3 rounded-2xl transition-all duration-500 relative active:scale-95 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
         background: 'rgba(26, 22, 51, 0.7)',
         border: '1px solid rgba(139, 92, 246, 0.2)',
         backdropFilter: 'blur(12px)',
-        minWidth: '100px',
       }}
     >
       {/* Label at top */}
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40 mb-1">
+      <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40 mb-1">
         {label}
       </span>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1.5">
         {/* Colored dot with glow */}
         <div 
-          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          className="w-2 h-2 rounded-full flex-shrink-0"
           style={{
             background: color,
-            boxShadow: `0 0 10px ${color}80`,
+            boxShadow: `0 0 8px ${color}80`,
           }}
         />
         
-        <div className="flex items-baseline space-x-1">
-          <span className="text-xl font-black text-white">{Math.round(current)}</span>
-          <span className="text-xs text-white/40 font-medium">/{goal}g</span>
+        <div className="flex items-baseline space-x-0.5">
+          <span className="text-lg font-black text-white">{Math.round(current)}</span>
+          <span className="text-[10px] text-white/40 font-medium">/{goal}g</span>
         </div>
       </div>
       
@@ -730,8 +730,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef(0);
+  
+  // Simulate initial load
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialLoad(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
   
   const today = useMemo(() => {
     const now = new Date();
@@ -877,6 +884,29 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
     setIsPulling(false);
   };
 
+  // Show skeleton on initial load
+  if (isInitialLoad) {
+    return (
+      <div className="h-full overflow-y-auto pb-28 relative">
+        {/* Opal-style animated background */}
+        <div className="fixed inset-0 -z-10">
+          <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%)
+              `,
+            }}
+          />
+        </div>
+        <DashboardSkeleton />
+      </div>
+    );
+  }
+  
   return (
     <div 
       ref={containerRef}
@@ -985,9 +1015,9 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
           <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
         </div>
         
-        {/* Macro Pills */}
-        <div className="px-6 mt-4">
-          <div className="flex flex-wrap gap-3 justify-center">
+        {/* Macro Pills - always 3 in a row */}
+        <div className="px-4 mt-4">
+          <div className="grid grid-cols-3 gap-2">
             <MacroPill 
               label="Protein" 
               current={totals.protein} 
@@ -1009,8 +1039,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
               color="#F472B6"
               delay={300}
             />
+          </div>
         </div>
-      </div>
 
         {/* Weekly Summary Card */}
         {weeklyStats.daysLogged > 0 && (

@@ -8,11 +8,24 @@ interface SmartSuggestionsProps {
   onAddMeal?: () => void;
 }
 
-const mealTypeEmoji: Record<string, string> = {
-  breakfast: '🌅',
-  lunch: '☀️',
-  dinner: '🌙',
-  snack: '🍪',
+// Context-aware emoji based on suggestion type
+const getSuggestionEmoji = (suggestion: MealSuggestion): string => {
+  // Check for specific keywords in the title
+  const title = suggestion.title.toLowerCase();
+  if (title.includes('protein')) return '💪';
+  if (title.includes('energy')) return '⚡';
+  if (title.includes('light')) return '🥗';
+  if (title.includes('low-carb')) return '🥑';
+  if (title.includes('balanced')) return '⚖️';
+  
+  // Fallback to meal type
+  const mealEmojis: Record<string, string> = {
+    breakfast: '🌅',
+    lunch: '☀️',
+    dinner: '🌙',
+    snack: '🍎',
+  };
+  return mealEmojis[suggestion.mealType] || '🍽️';
 };
 
 const macroColors: Record<string, string> = {
@@ -65,8 +78,15 @@ const SuggestionCard: React.FC<{
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <span className="text-xl">{mealTypeEmoji[suggestion.mealType]}</span>
+          <div className="flex items-center space-x-3">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
+              }}
+            >
+              {getSuggestionEmoji(suggestion)}
+            </div>
             <div>
               <h4 className="font-bold text-white text-sm">{suggestion.title}</h4>
               <p className="text-white/40 text-xs">{suggestion.reason}</p>
@@ -102,12 +122,13 @@ const SuggestionCard: React.FC<{
               <div 
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ 
-                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.1))',
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
+                  border: '1px solid rgba(139, 92, 246, 0.2)',
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" 
-                    fill="rgba(139, 92, 246, 0.8)"/>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="rgba(168, 85, 247, 0.6)" strokeWidth="1.5"/>
+                  <path d="M8 12h8M12 8v8" stroke="rgba(168, 85, 247, 0.8)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
               <div className="flex-1">
@@ -138,14 +159,17 @@ const SuggestionCard: React.FC<{
           </div>
         )}
 
-        {/* Progress dots */}
-        <div className="flex justify-center space-x-1 mt-3">
+        {/* Progress dots - more visible */}
+        <div className="flex justify-center space-x-1.5 mt-3">
           {suggestion.suggestions.map((_, i) => (
             <div
               key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                i === selectedFood ? 'bg-purple-500 w-3' : 'bg-white/20'
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === selectedFood 
+                  ? 'w-4 bg-purple-400' 
+                  : 'w-1.5 bg-white/30'
               }`}
+              style={i === selectedFood ? { boxShadow: '0 0 6px rgba(168, 85, 247, 0.5)' } : {}}
             />
           ))}
         </div>
@@ -155,9 +179,13 @@ const SuggestionCard: React.FC<{
 };
 
 const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({ logs, settings, onAddMeal }) => {
+  const [showAll, setShowAll] = useState(false);
   const suggestions = generateSuggestions(logs, settings);
 
   if (suggestions.length === 0) return null;
+
+  // Show only first suggestion by default
+  const visibleSuggestions = showAll ? suggestions : suggestions.slice(0, 1);
 
   return (
     <div className="px-6 mt-6">
@@ -183,12 +211,19 @@ const SmartSuggestions: React.FC<SmartSuggestionsProps> = ({ logs, settings, onA
           <h3 className="text-base font-bold text-white">Smart Suggestions</h3>
         </div>
         
-        <span className="text-xs text-white/40">Based on today</span>
+        {suggestions.length > 1 && (
+          <button 
+            onClick={() => setShowAll(!showAll)}
+            className="text-xs text-purple-400 font-medium hover:text-purple-300 transition-colors"
+          >
+            {showAll ? 'Show less' : `+${suggestions.length - 1} more`}
+          </button>
+        )}
       </div>
 
       {/* Suggestions */}
       <div className="space-y-3">
-        {suggestions.map((suggestion, index) => (
+        {visibleSuggestions.map((suggestion, index) => (
           <SuggestionCard 
             key={suggestion.id} 
             suggestion={suggestion} 

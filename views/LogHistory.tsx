@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import PhotoGallery from './PhotoGallery.tsx';
 import MealDetailModal from '../components/MealDetailModal.tsx';
+import { MealCardSkeleton } from '../components/Skeleton.tsx';
 
 interface LogHistoryProps {
   logs: MealLog[];
@@ -144,10 +145,16 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
   const [searchQuery, setSearchQuery] = useState('');
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealLog | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const sortedLogs = [...logs].sort((a, b) => b.timestamp - a.timestamp);
 
   useEffect(() => {
     const timer = setTimeout(() => setHeaderVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialLoad(false), 500);
     return () => clearTimeout(timer);
   }, []);
 

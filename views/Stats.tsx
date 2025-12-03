@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import AnimatedNumber from '../components/AnimatedNumber.tsx';
 import DeficiencyAlerts from '../components/DeficiencyAlerts.tsx';
+import { StatCardSkeleton, ChartSkeleton } from '../components/Skeleton.tsx';
 
 interface StatsProps {
   logs: MealLog[];
@@ -355,9 +356,15 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
   const [period, setPeriod] = useState<TimePeriod>('week');
   const [viewMode, setViewMode] = useState<ViewMode>('chart');
   const [headerVisible, setHeaderVisible] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   useEffect(() => {
     const timer = setTimeout(() => setHeaderVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialLoad(false), 500);
     return () => clearTimeout(timer);
   }, []);
   
@@ -569,7 +576,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               iconColor="#10B981"
               label="On Target"
               value={`${summaryStats.goalAchievement}%`}
-              subtitle={`${summaryStats.daysLogged} ${summaryStats.daysLogged === 1 ? 'day' : 'days'} logged`}
+              subtitle={summaryStats.daysLogged === 0 ? 'No data yet' : `${summaryStats.daysLogged} ${summaryStats.daysLogged === 1 ? 'day' : 'days'} logged`}
               delay={100}
             />
           </div>
@@ -580,7 +587,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               iconColor="#FBBF24"
               label="Day Streak"
               value={summaryStats.streak}
-              subtitle="Keep it up!"
+              subtitle={summaryStats.streak === 0 ? 'Start logging!' : 'Keep it up!'}
               delay={200}
             />
             <StatCard

@@ -51,7 +51,7 @@ const InsightItem: React.FC<{ insight: Insight; index: number }> = ({ insight, i
 
   return (
     <div
-      className={`relative rounded-2xl p-4 transition-all duration-500 ${
+      className={`rounded-2xl p-4 transition-all duration-500 ${
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
       }`}
       style={{
@@ -68,29 +68,22 @@ const InsightItem: React.FC<{ insight: Insight; index: number }> = ({ insight, i
         </div>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
+          {/* Title row with type badge inline */}
+          <div className="flex items-center space-x-2 mb-1">
             <h4 className="font-bold text-white text-sm">{insight.title}</h4>
             {insight.metric && (
               <span 
-                className="text-xs font-bold px-2 py-0.5 rounded-md"
+                className="text-xs font-bold px-2 py-0.5 rounded-md ml-auto"
                 style={{ background: colors.bg, color: colors.text }}
               >
                 {insight.metric}
               </span>
             )}
           </div>
-          <p className="text-white/50 text-xs mt-1 leading-relaxed">
+          <p className="text-white/50 text-xs leading-relaxed">
             {insight.description}
           </p>
         </div>
-      </div>
-      
-      {/* Type badge */}
-      <div 
-        className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-        style={{ background: colors.bg, color: colors.text }}
-      >
-        {insight.type}
       </div>
     </div>
   );

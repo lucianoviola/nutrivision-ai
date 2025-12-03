@@ -101,7 +101,7 @@ export const analyzeMenuPhoto = async (
     throw new Error('Menu scanning is only available with OpenAI provider');
   }
   
-  const serviceCall = openaiService.analyzeMenuPhoto(base64Image);
+  const serviceCall = openaiService.analyzeRestaurantMenu(base64Image);
   return withTimeout(serviceCall, 60000, 'Menu analysis timed out. Please try again.');
 };
 
