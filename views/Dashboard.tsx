@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import MealDetailModal from '../components/MealDetailModal.tsx';
+import InsightsCard from '../components/InsightsCard.tsx';
+import SmartSuggestions from '../components/SmartSuggestions.tsx';
 
 interface DashboardProps {
   logs: MealLog[];
@@ -792,6 +794,35 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
     });
   }, [logs]);
 
+  // Calculate current streak
+  const currentStreak = useMemo(() => {
+    if (logs.length === 0) return 0;
+    
+    // Get unique dates with logs
+    const datesWithLogs = new Set(
+      logs.map(log => new Date(log.timestamp).toDateString())
+    );
+    
+    let streak = 0;
+    const today = new Date();
+    
+    // Check each day going backwards
+    for (let i = 0; i < 365; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() - i);
+      const dateStr = checkDate.toDateString();
+      
+      if (datesWithLogs.has(dateStr)) {
+        streak++;
+      } else if (i > 0) {
+        // Allow today to be missing (day not over yet)
+        break;
+      }
+    }
+    
+    return streak;
+  }, [logs]);
+
   useEffect(() => {
     const timer = setTimeout(() => setHeaderVisible(true), 100);
     return () => clearTimeout(timer);
@@ -928,16 +959,21 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
             </div>
             
             {/* Compact streak badge */}
-            <div 
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full"
-              style={{
-                background: 'rgba(249, 115, 22, 0.15)',
-                border: '1px solid rgba(249, 115, 22, 0.3)',
-              }}
-            >
-              <span className="text-base">🔥</span>
-              <span className="text-sm font-bold text-orange-400">7</span>
-           </div>
+            {currentStreak > 0 && (
+              <div 
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full"
+                style={{
+                  background: currentStreak >= 7 
+                    ? 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.15))'
+                    : 'rgba(249, 115, 22, 0.15)',
+                  border: `1px solid ${currentStreak >= 7 ? 'rgba(249, 115, 22, 0.4)' : 'rgba(249, 115, 22, 0.3)'}`,
+                  boxShadow: currentStreak >= 7 ? '0 0 12px rgba(249, 115, 22, 0.2)' : 'none',
+                }}
+              >
+                <span className={`text-base ${currentStreak >= 7 ? 'animate-pulse' : ''}`}>🔥</span>
+                <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
+              </div>
+            )}
            </div>
         </div>
 
@@ -1007,6 +1043,12 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
             </div>
           </div>
         )}
+
+        {/* AI Insights */}
+        <InsightsCard logs={logs} settings={settings} />
+
+        {/* Smart Suggestions */}
+        <SmartSuggestions logs={logs} settings={settings} onAddMeal={onAddMeal} />
 
         {/* Meal Templates - Yesterday's meals */}
         {yesterdayMeals.length > 0 && today.length === 0 && (
@@ -1118,6 +1160,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
          </div>
           </div>
         )}
+
        </div>
 
       {/* Meal Detail Modal */}

@@ -236,6 +236,32 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleDuplicateLog = (meal: MealLog) => {
+    hapticSuccess();
+    
+    // Create a new meal with new ID and current timestamp
+    const duplicatedMeal: MealLog = {
+      ...meal,
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+    };
+    
+    setLogs(prev => {
+      const updated = [duplicatedMeal, ...prev].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      localStorage.setItem('nutrivision_logs', JSON.stringify(updated));
+      return updated;
+    });
+    
+    showSuccess("Meal duplicated!");
+    
+    // Sync to HealthKit if enabled
+    if (settings.appleHealthConnected) {
+      healthService.saveLog(duplicatedMeal);
+    }
+  };
+
   // Handle view changes with transition
   const handleViewChange = (view: AppView) => {
     setViewTransition('exiting');
@@ -262,7 +288,7 @@ const AppContent: React.FC = () => {
       case AppView.DASHBOARD:
         return <Dashboard logs={logs} settings={settings} onAddMeal={() => setCurrentView(AppView.CAMERA)} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} />;
       case AppView.HISTORY:
-        return <LogHistory logs={logs} onDelete={handleDeleteLog} onUpdateLog={handleUpdateLog} settings={settings} />;
+        return <LogHistory logs={logs} onDelete={handleDeleteLog} onUpdateLog={handleUpdateLog} onDuplicateLog={handleDuplicateLog} settings={settings} />;
       case AppView.STATS:
         return <Stats logs={logs} settings={settings} />;
       case AppView.SETTINGS:

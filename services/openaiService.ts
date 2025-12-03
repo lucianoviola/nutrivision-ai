@@ -229,6 +229,99 @@ export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]>
   }
 };
 
+// Restaurant menu item type
+export interface MenuItem {
+  name: string;
+  description?: string;
+  price?: string;
+  servingSize: string;
+  macros: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  tags?: string[]; // e.g., "vegetarian", "spicy", "gluten-free"
+}
+
+export interface MenuAnalysisResult {
+  restaurantName?: string;
+  menuItems: MenuItem[];
+}
+
+export const analyzeRestaurantMenu = async (base64Image: string): Promise<MenuAnalysisResult> => {
+  console.log('🍽️ Analyzing restaurant menu image...');
+  const openai = getOpenAiInstance();
+  const startTime = Date.now();
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a nutrition expert analyzing restaurant menus. Extract menu items and estimate their nutritional content based on typical restaurant portions and preparation methods.
+
+For each item:
+- Estimate portion sizes based on typical restaurant servings
+- Calculate macros based on common ingredients and preparation methods
+- Be realistic about restaurant portions (they're usually larger than home-cooked)
+- Account for cooking oils, sauces, and hidden calories
+
+Return a JSON object with this structure:
+{
+  "restaurantName": "string (if visible)",
+  "menuItems": [{
+    "name": "string",
+    "description": "string (if available)",
+    "price": "string (if visible)",
+    "servingSize": "string (e.g., '1 plate', '12 oz')",
+    "macros": { "calories": number, "protein": number, "carbs": number, "fat": number },
+    "tags": ["string"] (e.g., "vegetarian", "high-protein", "spicy")
+  }]
+}`
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Analyze this restaurant menu image. Identify menu items and estimate their nutritional content. Focus on main dishes and popular items visible in the image.',
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
+              },
+            },
+          ],
+        },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: 2000,
+    });
+
+    const apiDuration = Date.now() - startTime;
+    console.log(`⏱️ Menu analysis completed in ${(apiDuration / 1000).toFixed(2)}s`);
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No response from OpenAI');
+    }
+
+    const data = JSON.parse(content);
+    console.log(`✅ Found ${data.menuItems?.length || 0} menu items`);
+    
+    return {
+      restaurantName: data.restaurantName,
+      menuItems: data.menuItems || [],
+    };
+  } catch (error) {
+    console.error('Menu Analysis Error:', error);
+    throw error;
+  }
+};
+
 export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => {
   console.log('🔍 OpenAI searchFoodDatabase called with:', query);
   const startTime = Date.now();
@@ -342,5 +435,115 @@ export const getNutritionalInfoFromBarcode = async (barcode: string): Promise<Fo
   }
 
   return null;
+};
+
+// Menu item schema for structured output
+const menuItemSchema = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Name of the menu item' },
+          description: { type: 'string', description: 'Brief description if available' },
+          price: { type: 'string', description: 'Price if visible (e.g., "$12.99")' },
+          servingSize: { type: 'string', description: 'Estimated serving size' },
+          macros: {
+            type: 'object',
+            properties: {
+              calories: { type: 'number', description: 'Estimated calories' },
+              protein: { type: 'number', description: 'Estimated protein in grams' },
+              carbs: { type: 'number', description: 'Estimated carbohydrates in grams' },
+              fat: { type: 'number', description: 'Estimated fat in grams' },
+            },
+            required: ['calories', 'protein', 'carbs', 'fat'],
+          },
+          category: { type: 'string', description: 'Category like Appetizers, Mains, Desserts' },
+          isHealthy: { type: 'boolean', description: 'Whether this is a healthier option' },
+        },
+        required: ['name', 'servingSize', 'macros'],
+      },
+    },
+    restaurantName: { type: 'string', description: 'Name of the restaurant if visible' },
+    cuisineType: { type: 'string', description: 'Type of cuisine (Italian, Mexican, etc.)' },
+  },
+  required: ['items'],
+} as const;
+
+export interface MenuItem extends FoodItem {
+  description?: string;
+  price?: string;
+  category?: string;
+  isHealthy?: boolean;
+}
+
+export interface MenuAnalysisResult {
+  items: MenuItem[];
+  restaurantName?: string;
+  cuisineType?: string;
+}
+
+/**
+ * Analyze a restaurant menu photo and extract items with nutrition estimates
+ */
+export const analyzeMenuPhoto = async (base64Image: string): Promise<MenuAnalysisResult> => {
+  console.log('📋 Analyzing restaurant menu...');
+  const startTime = Date.now();
+  
+  const openai = getOpenAiInstance();
+  
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `You are a nutrition expert analyzing restaurant menus. 
+For each menu item visible in the image:
+1. Identify the dish name and any description
+2. Note the price if visible
+3. Estimate realistic serving size and nutritional macros based on typical restaurant portions
+4. Mark healthier options (high protein, lower calorie, balanced macros)
+
+Be accurate with nutrition estimates - restaurant portions are often larger than home cooking.
+Return structured JSON with all menu items you can identify.`,
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`,
+              detail: 'high',
+            },
+          },
+          {
+            type: 'text',
+            text: 'Analyze this restaurant menu. Extract all visible menu items with estimated nutrition info. Include the restaurant name and cuisine type if visible.',
+          },
+        ],
+      },
+    ],
+    response_format: { type: 'json_object' },
+    max_tokens: 4096,
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error('No response from OpenAI');
+  }
+
+  const duration = Date.now() - startTime;
+  console.log(`✅ Menu analysis complete in ${duration}ms`);
+
+  const data = JSON.parse(content);
+  
+  return {
+    items: data.items || [],
+    restaurantName: data.restaurantName,
+    cuisineType: data.cuisineType,
+  };
 };
 

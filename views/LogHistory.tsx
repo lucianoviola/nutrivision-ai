@@ -7,6 +7,7 @@ interface LogHistoryProps {
   logs: MealLog[];
   onDelete: (id: string) => void;
   onUpdateLog?: (meal: MealLog) => void;
+  onDuplicateLog?: (meal: MealLog) => void;
   settings?: UserSettings;
 }
 
@@ -137,7 +138,7 @@ const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) =
   );
 };
 
-const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, settings }) => {
+const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, onDuplicateLog, settings }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [headerVisible, setHeaderVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -485,6 +486,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, se
                           copiedId={copiedId}
                           onCopy={handleCopy}
                           onDelete={onDelete}
+                          onDuplicate={onDuplicateLog}
                           onSelect={setSelectedMeal}
                           formatTime={formatTime}
                           getMealEmoji={getMealEmoji}
@@ -527,11 +529,12 @@ const SwipeableMealCard: React.FC<{
   copiedId: string | null;
   onCopy: (log: MealLog) => void;
   onDelete: (id: string) => void;
+  onDuplicate?: (log: MealLog) => void;
   onSelect: (log: MealLog) => void;
   formatTime: (ts: number) => string;
   getMealEmoji: (type: string) => string;
   getMealGradient: (type: string) => string;
-}> = ({ log, index, copiedId, onCopy, onDelete, onSelect, formatTime, getMealEmoji, getMealGradient }) => {
+}> = ({ log, index, copiedId, onCopy, onDelete, onDuplicate, onSelect, formatTime, getMealEmoji, getMealGradient }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -567,7 +570,9 @@ const SwipeableMealCard: React.FC<{
   };
 
   const handleDuplicate = () => {
-    // TODO: Implement duplicate functionality
+    if (onDuplicate) {
+      onDuplicate(log);
+    }
     setSwipeOffset(0);
   };
 

@@ -59,6 +59,23 @@ export const correctFoodAnalysis = async (
   return withTimeout(serviceCall, 60000, 'Correction timed out. Please try again.');
 };
 
+// Re-export menu analysis types and function
+export type { MenuItem, MenuAnalysisResult } from './openaiService.ts';
+
+export const analyzeRestaurantMenu = async (
+  base64Image: string,
+  provider: AIProvider
+): Promise<openaiService.MenuAnalysisResult> => {
+  console.log(`🍽️ Analyzing restaurant menu with ${provider === 'openai' ? 'OpenAI' : 'Gemini'}...`);
+  
+  if (provider !== 'openai') {
+    throw new Error('Menu analysis is only available with OpenAI provider');
+  }
+  
+  const serviceCall = openaiService.analyzeRestaurantMenu(base64Image);
+  return withTimeout(serviceCall, 90000, 'Menu analysis timed out. Please try again.');
+};
+
 export const getNutritionalInfoFromBarcode = async (barcode: string, provider: AIProvider): Promise<FoodItem | null> => {
   // OpenFoodFacts is tried first regardless of provider
   // Then falls back to the selected AI provider
@@ -68,5 +85,23 @@ export const getNutritionalInfoFromBarcode = async (barcode: string, provider: A
   
   // 20 second timeout for barcode lookup
   return withTimeout(serviceCall, 20000, 'Barcode lookup timed out. Please try again.');
+};
+
+/**
+ * Analyze a restaurant menu photo
+ */
+export const analyzeMenuPhoto = async (
+  base64Image: string, 
+  provider: AIProvider
+): Promise<openaiService.MenuAnalysisResult> => {
+  console.log(`📋 Analyzing menu with ${provider === 'openai' ? 'OpenAI' : 'Gemini'}...`);
+  
+  // Currently only OpenAI supports menu analysis
+  if (provider !== 'openai') {
+    throw new Error('Menu scanning is only available with OpenAI provider');
+  }
+  
+  const serviceCall = openaiService.analyzeMenuPhoto(base64Image);
+  return withTimeout(serviceCall, 60000, 'Menu analysis timed out. Please try again.');
 };
 

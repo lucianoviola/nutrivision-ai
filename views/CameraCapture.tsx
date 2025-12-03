@@ -26,7 +26,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
   const [searchResults, setSearchResults] = useState<FoodItem[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'camera' | 'search' | 'barcode'>('camera');
+  const [mode, setMode] = useState<'camera' | 'search' | 'barcode' | 'menu'>('camera');
+  const [menuResults, setMenuResults] = useState<any>(null);
+  const [analyzingMenu, setAnalyzingMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
   const [showSaveMealDialog, setShowSaveMealDialog] = useState(false);
@@ -973,6 +975,20 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                 >
                   Search
                 </button>
+                <button 
+                  onClick={() => setMode('menu')} 
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
+                    mode === 'menu' 
+                      ? 'text-black' 
+                      : 'text-white hover:text-gray-300'
+                  }`}
+                  style={mode === 'menu' ? {
+                    background: 'linear-gradient(135deg, #ffffff, #f3f4f6)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  } : {}}
+                >
+                  Menu
+                </button>
             </div>
             <div className="w-10"></div>
        </div>
@@ -1453,6 +1469,168 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                         </div>
                     )}
                 </div>
+           </div>
+
+           {/* Menu Scanner */}
+           <div className={`absolute inset-0 ${mode === 'menu' ? 'visible' : 'invisible'} flex flex-col`}
+             style={{ background: '#0D0B1C' }}
+           >
+             <div className="flex-1 flex flex-col items-center justify-center px-6">
+               {!menuResults && !analyzingMenu && (
+                 <>
+                   <div 
+                     className="w-24 h-24 rounded-2xl flex items-center justify-center mb-6"
+                     style={{
+                       background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
+                       border: '1px solid rgba(139, 92, 246, 0.3)',
+                     }}
+                   >
+                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                       <path d="M4 6h16M4 12h16M4 18h12" stroke="#A855F7" strokeWidth="2" strokeLinecap="round"/>
+                     </svg>
+       </div>
+                   <h3 className="text-xl font-bold text-white mb-2">Menu Scanner</h3>
+                   <p className="text-white/50 text-sm text-center mb-8 max-w-xs">
+                     Take a photo of a restaurant menu to get nutrition estimates for each dish
+                   </p>
+                   
+                   <div className="flex space-x-4">
+                     <button
+                       onClick={() => {
+                         setMode('camera');
+                         // When photo is taken in camera mode, check if we should analyze as menu
+                       }}
+                       className="px-6 py-3 rounded-xl font-bold text-white transition-all active:scale-95"
+                       style={{
+                         background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                       }}
+                     >
+                       📷 Take Photo
+                     </button>
+                     <label className="px-6 py-3 rounded-xl font-bold text-white/70 transition-all active:scale-95 cursor-pointer"
+                       style={{
+                         background: 'rgba(255,255,255,0.1)',
+                         border: '1px solid rgba(255,255,255,0.2)',
+                       }}
+                     >
+                       📁 Upload
+                       <input 
+                         type="file" 
+                         accept="image/*" 
+                         className="hidden"
+                         onChange={async (e) => {
+                           const file = e.target.files?.[0];
+                           if (!file) return;
+                           setAnalyzingMenu(true);
+                           const reader = new FileReader();
+                           reader.onloadend = async () => {
+                             const base64 = (reader.result as string).split(',')[1];
+                             try {
+                               const result = await aiService.analyzeMenuPhoto(base64, aiProvider);
+                               setMenuResults(result);
+                             } catch (err: any) {
+                               alert(err.message || 'Failed to analyze menu');
+                             }
+                             setAnalyzingMenu(false);
+                           };
+                           reader.readAsDataURL(file);
+                         }}
+                       />
+                     </label>
+                   </div>
+                 </>
+               )}
+
+               {analyzingMenu && (
+                 <div className="text-center">
+                   <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mb-4 mx-auto"></div>
+                   <p className="text-white font-medium">Analyzing menu...</p>
+                   <p className="text-white/50 text-sm mt-1">This may take a moment</p>
+                 </div>
+               )}
+
+               {menuResults && (
+                 <div className="w-full h-full overflow-y-auto py-4">
+                   {menuResults.restaurantName && (
+                     <div className="text-center mb-4">
+                       <h3 className="text-lg font-bold text-white">{menuResults.restaurantName}</h3>
+                       {menuResults.cuisineType && (
+                         <p className="text-white/50 text-sm">{menuResults.cuisineType} Cuisine</p>
+                       )}
+                     </div>
+                   )}
+                   
+                   <div className="space-y-3">
+                     {menuResults.items?.map((item: any, idx: number) => (
+                       <button
+                         key={idx}
+                         onClick={() => {
+                           setResult(prev => prev ? [...prev, {
+                             name: item.name,
+                             servingSize: item.servingSize || '1 serving',
+                             macros: item.macros,
+                           }] : [{
+                             name: item.name,
+                             servingSize: item.servingSize || '1 serving',
+                             macros: item.macros,
+                           }]);
+                           setMenuResults(null);
+                         }}
+                         className="w-full p-4 rounded-xl text-left transition-all active:scale-[0.98]"
+                         style={{
+                           background: item.isHealthy 
+                             ? 'rgba(16, 185, 129, 0.1)' 
+                             : 'rgba(255,255,255,0.05)',
+                           border: item.isHealthy 
+                             ? '1px solid rgba(16, 185, 129, 0.3)' 
+                             : '1px solid rgba(255,255,255,0.1)',
+                         }}
+                       >
+                         <div className="flex justify-between items-start">
+                           <div className="flex-1 pr-3">
+                             <div className="flex items-center space-x-2">
+                               <p className="font-bold text-white">{item.name}</p>
+                               {item.isHealthy && (
+                                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">
+                                   Healthier
+                                 </span>
+                               )}
+                             </div>
+                             {item.description && (
+                               <p className="text-white/50 text-xs mt-1">{item.description}</p>
+                             )}
+                             <div className="flex flex-wrap gap-2 mt-2">
+                               <span className="text-xs px-2 py-0.5 rounded font-bold text-orange-400" style={{ background: 'rgba(251, 146, 60, 0.15)' }}>
+                                 {Math.round(item.macros.calories)} cal
+                               </span>
+                               <span className="text-xs px-2 py-0.5 rounded font-bold text-emerald-400" style={{ background: 'rgba(52, 211, 153, 0.15)' }}>
+                                 P {Math.round(item.macros.protein)}g
+                               </span>
+                               <span className="text-xs px-2 py-0.5 rounded font-bold text-cyan-400" style={{ background: 'rgba(34, 211, 238, 0.15)' }}>
+                                 C {Math.round(item.macros.carbs)}g
+                               </span>
+                               <span className="text-xs px-2 py-0.5 rounded font-bold text-orange-300" style={{ background: 'rgba(253, 186, 116, 0.15)' }}>
+                                 F {Math.round(item.macros.fat)}g
+                               </span>
+                             </div>
+                           </div>
+                           {item.price && (
+                             <span className="text-white/70 font-bold">{item.price}</span>
+                           )}
+                         </div>
+                       </button>
+                     ))}
+                   </div>
+                   
+                   <button
+                     onClick={() => setMenuResults(null)}
+                     className="w-full mt-4 py-3 rounded-xl font-bold text-white/50 hover:text-white transition-colors"
+                   >
+                     Scan Another Menu
+                   </button>
+                 </div>
+               )}
+             </div>
            </div>
        </div>
 
