@@ -8,6 +8,7 @@ import LogHistory from './views/LogHistory.tsx';
 import Stats from './views/Stats.tsx';
 import AnalyzingOverlay from './components/AnalyzingOverlay.tsx';
 import AuthGate from './components/AuthGate.tsx';
+import SupabaseAuth from './components/SupabaseAuth.tsx';
 import { ToastProvider, useToast } from './components/Toast.tsx';
 import OfflineIndicator from './components/OfflineIndicator.tsx';
 import SplashScreen from './components/SplashScreen.tsx';
@@ -15,6 +16,8 @@ import { healthService } from './services/healthService.ts';
 import * as savedMealsService from './services/savedMealsService.ts';
 import { hapticSuccess, hapticError, hapticTap, hapticImpact } from './utils/haptics.ts';
 import { compressImage, needsCompression } from './utils/imageCompression.ts';
+import * as supabaseService from './services/supabaseService.ts';
+import { User } from '@supabase/supabase-js';
 
 // Type for pending analysis
 interface PendingAnalysis {
@@ -34,7 +37,7 @@ const DEFAULT_SETTINGS: UserSettings = {
 };
 
 // Inner app component that can use toast hooks
-const AppContent: React.FC = () => {
+const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
@@ -45,35 +48,95 @@ const AppContent: React.FC = () => {
   const [previousCaloriePercent, setPreviousCaloriePercent] = useState(0);
   const [previousGoals, setPreviousGoals] = useState({ protein: 0, carbs: 0, fat: 0 });
   const [showSplash, setShowSplash] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasMigrated, setHasMigrated] = useState(false);
   
   const { showSuccess, showError, showCelebration, showUndo, showToast } = useToast();
+  
+  const useSupabase = supabaseService.isSupabaseConfigured() && user;
 
-  // Load from local storage on mount
+  // Load data - from Supabase if logged in, otherwise localStorage
   useEffect(() => {
-    const savedLogs = localStorage.getItem('nutrivision_logs');
-    const savedSettings = localStorage.getItem('nutrivision_settings');
-    if (savedLogs) setLogs(JSON.parse(savedLogs));
-    if (savedSettings) setSettings(JSON.parse(savedSettings));
+    const loadData = async () => {
+      setIsLoading(true);
+      
+      if (useSupabase && user) {
+        // Load from Supabase
+        try {
+          const [cloudLogs, cloudSettings] = await Promise.all([
+            supabaseService.getMealLogs(user.id),
+            supabaseService.getUserSettings(user.id),
+          ]);
+          
+          if (cloudLogs.length > 0) {
+            setLogs(cloudLogs);
+          }
+          if (cloudSettings) {
+            setSettings(cloudSettings);
+          }
+          
+          // Check if we need to migrate local data
+          const hasLocalData = localStorage.getItem('nutrivision_logs');
+          const hasCloudData = cloudLogs.length > 0;
+          
+          if (hasLocalData && !hasCloudData && !hasMigrated) {
+            const localLogs = JSON.parse(hasLocalData);
+            if (localLogs.length > 0) {
+              showToast('Migrating your local data to cloud...', 'info');
+              const result = await supabaseService.migrateFromLocalStorage(user.id);
+              if (result.success) {
+                showSuccess(`Migrated ${result.migratedCount} meals to cloud!`);
+                // Reload from cloud
+                const newLogs = await supabaseService.getMealLogs(user.id);
+                setLogs(newLogs);
+                // Clear local storage after successful migration
+                localStorage.removeItem('nutrivision_logs');
+                localStorage.removeItem('nutrivision_settings');
+              }
+              setHasMigrated(true);
+            }
+          }
+        } catch (err) {
+          console.error('Error loading from Supabase:', err);
+          // Fallback to localStorage
+          const savedLogs = localStorage.getItem('nutrivision_logs');
+          const savedSettings = localStorage.getItem('nutrivision_settings');
+          if (savedLogs) setLogs(JSON.parse(savedLogs));
+          if (savedSettings) setSettings(JSON.parse(savedSettings));
+        }
+      } else {
+        // Load from localStorage
+        const savedLogs = localStorage.getItem('nutrivision_logs');
+        const savedSettings = localStorage.getItem('nutrivision_settings');
+        if (savedLogs) setLogs(JSON.parse(savedLogs));
+        if (savedSettings) setSettings(JSON.parse(savedSettings));
+      }
 
-    // Check for OpenAI API key (only check localStorage - env vars not secure in production)
-    const openaiKey = localStorage.getItem('nutrivision_openai_api_key');
+      // Check for OpenAI API key
+      const openaiKey = localStorage.getItem('nutrivision_openai_api_key');
+      if (!openaiKey) {
+        setCurrentView(AppView.SETTINGS);
+        setTimeout(() => {
+          showToast("Welcome! Add your OpenAI API key to get started.", 'info', { duration: 5000 });
+        }, 500);
+      }
+      
+      setIsLoading(false);
+    };
     
-    if (!openaiKey) {
-      setCurrentView(AppView.SETTINGS);
-      setTimeout(() => {
-        showToast("Welcome! Add your OpenAI API key to get started.", 'info', { duration: 5000 });
-      }, 500);
-    }
-  }, []);
+    loadData();
+  }, [user, useSupabase]);
 
-  // Save changes to local storage
+  // Save settings changes
   useEffect(() => {
-    localStorage.setItem('nutrivision_logs', JSON.stringify(logs));
-  }, [logs]);
-
-  useEffect(() => {
+    // Always save to localStorage as backup
     localStorage.setItem('nutrivision_settings', JSON.stringify(settings));
-  }, [settings]);
+    
+    // Also save to Supabase if logged in
+    if (useSupabase && user && !isLoading) {
+      supabaseService.updateUserSettings(user.id, settings);
+    }
+  }, [settings, user, useSupabase, isLoading]);
 
   // Handle when user captures an image - starts background analysis
   const handleImageCapture = async (imageData: string) => {
@@ -182,8 +245,22 @@ const AppContent: React.FC = () => {
 
   // Legacy save handler for manual entry or search results
   const handleSaveLog = async (log: MealLog) => {
+    // Optimistic update - add to state immediately
     const newLogs = [log, ...logs];
     setLogs(newLogs);
+    
+    // Save to localStorage as backup
+    localStorage.setItem('nutrivision_logs', JSON.stringify(newLogs));
+    
+    // Save to Supabase if logged in
+    if (useSupabase && user) {
+      try {
+        await supabaseService.createMealLog(user.id, log);
+      } catch (err) {
+        console.error('Error saving to Supabase:', err);
+        showError('Cloud sync failed, saved locally');
+      }
+    }
     
     showSuccess(`${log.type.charAt(0).toUpperCase() + log.type.slice(1)} saved!`);
     checkGoalCelebration(newLogs);
@@ -195,7 +272,7 @@ const AppContent: React.FC = () => {
     setCurrentView(AppView.DASHBOARD);
   };
 
-  const handleDeleteLog = (id: string) => {
+  const handleDeleteLog = async (id: string) => {
     const mealToDelete = logs.find(l => l.id === id);
     if (!mealToDelete) return;
     
@@ -205,28 +282,52 @@ const AppContent: React.FC = () => {
     // Store for undo
     setDeletedMeal(mealToDelete);
     
-    // Remove immediately
-    setLogs(prev => prev.filter(l => l.id !== id));
+    // Remove immediately (optimistic)
+    const newLogs = logs.filter(l => l.id !== id);
+    setLogs(newLogs);
+    localStorage.setItem('nutrivision_logs', JSON.stringify(newLogs));
+    
+    // Delete from Supabase
+    if (useSupabase && user) {
+      supabaseService.deleteMealLog(user.id, id);
+    }
     
     // Show undo toast
-    showUndo("Meal deleted", () => {
+    showUndo("Meal deleted", async () => {
       // Restore the meal
       hapticSuccess();
       if (mealToDelete) {
-        setLogs(prev => [mealToDelete, ...prev].sort((a, b) => 
+        const restoredLogs = [mealToDelete, ...logs].sort((a, b) => 
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        ));
+        );
+        setLogs(restoredLogs);
+        localStorage.setItem('nutrivision_logs', JSON.stringify(restoredLogs));
+        
+        // Re-create in Supabase
+        if (useSupabase && user) {
+          supabaseService.createMealLog(user.id, mealToDelete);
+        }
+        
         showSuccess("Meal restored!");
       }
     });
   };
 
-  const handleUpdateLog = (updatedMeal: MealLog) => {
+  const handleUpdateLog = async (updatedMeal: MealLog) => {
     setLogs(prev => {
       const updated = prev.map(log => log.id === updatedMeal.id ? updatedMeal : log);
       localStorage.setItem('nutrivision_logs', JSON.stringify(updated));
       return updated;
     });
+    
+    // Update in Supabase
+    if (useSupabase && user) {
+      try {
+        await supabaseService.updateMealLog(user.id, updatedMeal);
+      } catch (err) {
+        console.error('Error updating in Supabase:', err);
+      }
+    }
     
     showSuccess("Meal updated!");
     
@@ -236,7 +337,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const handleDuplicateLog = (meal: MealLog) => {
+  const handleDuplicateLog = async (meal: MealLog) => {
     hapticSuccess();
     
     // Create a new meal with new ID and current timestamp
@@ -246,13 +347,20 @@ const AppContent: React.FC = () => {
       timestamp: Date.now(),
     };
     
-    setLogs(prev => {
-      const updated = [duplicatedMeal, ...prev].sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-      localStorage.setItem('nutrivision_logs', JSON.stringify(updated));
-      return updated;
-    });
+    const newLogs = [duplicatedMeal, ...logs].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    setLogs(newLogs);
+    localStorage.setItem('nutrivision_logs', JSON.stringify(newLogs));
+    
+    // Save to Supabase
+    if (useSupabase && user) {
+      try {
+        await supabaseService.createMealLog(user.id, duplicatedMeal);
+      } catch (err) {
+        console.error('Error saving duplicate to Supabase:', err);
+      }
+    }
     
     showSuccess("Meal duplicated!");
     
@@ -347,16 +455,67 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Main App wrapper with providers
+// Main App wrapper with providers and auth
 const App: React.FC = () => {
-  return (
-    <AuthGate>
-      <ToastProvider>
-        <OfflineIndicator />
-        <AppContent />
-      </ToastProvider>
-    </AuthGate>
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  
+  useEffect(() => {
+    // Check if Supabase is configured
+    if (!supabaseService.isSupabaseConfigured()) {
+      // No Supabase - use old password auth
+      setAuthLoading(false);
+      return;
+    }
+    
+    // Get initial user
+    supabaseService.getCurrentUser().then(u => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    
+    // Subscribe to auth changes
+    const unsubscribe = supabaseService.onAuthStateChange((u) => {
+      setUser(u);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0D0B1C' }}>
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #EC4899)' }}>
+            <span className="text-3xl">🍽️</span>
+          </div>
+          <p className="text-white/50">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If Supabase is configured but no user, show auth
+  if (supabaseService.isSupabaseConfigured() && !user) {
+    return <SupabaseAuth onSuccess={() => {}} />;
+  }
+  
+  // Otherwise show app (with old AuthGate if no Supabase)
+  const content = (
+    <ToastProvider>
+      <OfflineIndicator />
+      <AppContent user={user} />
+    </ToastProvider>
   );
+  
+  // Use old AuthGate only if Supabase is not configured
+  if (!supabaseService.isSupabaseConfigured()) {
+    return <AuthGate>{content}</AuthGate>;
+  }
+  
+  return content;
 };
 
 export default App;
