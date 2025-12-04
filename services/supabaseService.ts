@@ -4,11 +4,21 @@ import { MealLog, FoodItem, UserSettings, Macros } from '../types.ts';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Log configuration status
+console.log('Supabase config:', { 
+  hasUrl: Boolean(supabaseUrl), 
+  hasKey: Boolean(supabaseAnonKey),
+  url: supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'none'
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials not found. Cloud sync disabled.');
 }
 
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+// Only create client if we have valid credentials
+export const supabase: SupabaseClient = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : createClient('https://placeholder.supabase.co', 'placeholder'); // Dummy client that won't be used
 
 // Types for database
 interface DbMealLog {
@@ -90,8 +100,21 @@ export async function signOut(): Promise<void> {
  * Get the current authenticated user.
  */
 export async function getCurrentUser(): Promise<User | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('Error getting user:', error);
+      return null;
+    }
+    return user;
+  } catch (err) {
+    console.error('Exception getting user:', err);
+    return null;
+  }
 }
 
 /**

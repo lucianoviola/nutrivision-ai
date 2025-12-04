@@ -459,27 +459,50 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   useEffect(() => {
     // Check if Supabase is configured
     if (!supabaseService.isSupabaseConfigured()) {
+      console.log('Supabase not configured, using local auth');
       // No Supabase - use old password auth
       setAuthLoading(false);
       return;
     }
     
-    // Get initial user
-    supabaseService.getCurrentUser().then(u => {
-      setUser(u);
+    console.log('Checking Supabase auth...');
+    
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      console.warn('Auth check timed out');
       setAuthLoading(false);
-    });
+      setAuthError('Connection timed out');
+    }, 10000);
+    
+    // Get initial user
+    supabaseService.getCurrentUser()
+      .then(u => {
+        console.log('Auth check complete, user:', u?.email || 'none');
+        clearTimeout(timeout);
+        setUser(u);
+        setAuthLoading(false);
+      })
+      .catch(err => {
+        console.error('Auth error:', err);
+        clearTimeout(timeout);
+        setAuthLoading(false);
+        setAuthError(err.message);
+      });
     
     // Subscribe to auth changes
     const unsubscribe = supabaseService.onAuthStateChange((u) => {
       setUser(u);
     });
     
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
   
   // Show loading while checking auth
@@ -497,8 +520,14 @@ const App: React.FC = () => {
     );
   }
   
-  // If Supabase is configured but no user, show auth
-  if (supabaseService.isSupabaseConfigured() && !user) {
+  // Show error if auth failed (fallback to local auth)
+  if (authError) {
+    console.warn('Auth error, falling back to local mode:', authError);
+    // Fall through to show app with old auth
+  }
+  
+  // If Supabase is configured but no user (and no error), show auth
+  if (supabaseService.isSupabaseConfigured() && !user && !authError) {
     return <SupabaseAuth onSuccess={() => {}} />;
   }
   
