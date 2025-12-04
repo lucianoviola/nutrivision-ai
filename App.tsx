@@ -474,12 +474,12 @@ const App: React.FC = () => {
     
     console.log('Checking Supabase auth...');
     
-    // Add timeout to prevent infinite loading
+    // Add timeout to prevent infinite loading (3 seconds)
     const timeout = setTimeout(() => {
-      console.warn('Auth check timed out');
+      console.warn('Auth check timed out - falling back to local auth');
       setAuthLoading(false);
       setAuthError('Connection timed out');
-    }, 10000);
+    }, 3000);
     
     // Get initial user
     supabaseService.getCurrentUser()
