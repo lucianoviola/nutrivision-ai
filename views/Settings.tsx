@@ -330,7 +330,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
           <div>
             <div className="flex items-center space-x-3 mb-4 px-1">
               <span className="text-xl">⚡</span>
-              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider">OpenAI API</h3>
+              <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider">AI API Keys</h3>
             </div>
             <div 
               className="rounded-2xl overflow-hidden"
@@ -341,10 +341,10 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               }}
             >
               <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center space-x-2">
                     <span>🔑</span>
-                    <span className="text-sm font-medium text-white/70">API Key</span>
+                    <span className="text-sm font-medium text-white/70">API Keys</span>
                   </div>
                   <button 
                     onClick={() => setShowKeyInput(!showKeyInput)} 
@@ -360,67 +360,110 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                 </div>
                 
                 {!showKeyInput && (
-                  <div className="flex items-center space-x-2">
-                    {openaiApiKey ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.2)' }}>
-                          <svg className="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                          </svg>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/50">OpenAI</span>
+                      {openaiApiKey ? (
+                        <div className="flex items-center space-x-1">
+                          <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.2)' }}>
+                            <svg className="w-2.5 h-2.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span className="text-xs text-green-400">Configured</span>
                         </div>
-                        <span className="text-xs text-green-400 font-medium">Key configured</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                        <span className="text-xs text-amber-400 font-medium">No key set</span>
+                      ) : (
+                        <span className="text-xs text-amber-400">Not set</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/50">Gemini</span>
+                      {geminiApiKey ? (
+                        <div className="flex items-center space-x-1">
+                          <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.2)' }}>
+                            <svg className="w-2.5 h-2.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span className="text-xs text-green-400">Configured</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-white/40">Not set</span>
+                      )}
+                    </div>
+                    {supabaseService.isSupabaseConfigured() && (openaiApiKey || geminiApiKey) && (
+                      <div className="flex items-center space-x-1 pt-1">
+                        <span className="text-xs text-purple-400">☁️ Synced to cloud</span>
                       </div>
                     )}
                   </div>
                 )}
                 
                 {showKeyInput && (
-                  <div className="mt-3 space-y-3">
-                    <input 
-                      type="password"
-                      value={openaiApiKey}
-                      onChange={(e) => setOpenaiApiKey(e.target.value)}
-                      placeholder="Paste your OpenAI API key"
-                      className="w-full rounded-xl px-4 py-3 text-base outline-none text-white placeholder-white/30 transition-all duration-300"
-                      style={{
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                        e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.2)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
+                  <div className="mt-3 space-y-4">
+                    {/* OpenAI Key */}
+                    <div>
+                      <label className="text-xs text-white/50 mb-1 block">OpenAI API Key</label>
+                      <input 
+                        type="password"
+                        value={openaiApiKey}
+                        onChange={(e) => setOpenaiApiKey(e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full rounded-xl px-4 py-3 text-base outline-none text-white placeholder-white/30 transition-all duration-300"
+                        style={{
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                        }}
+                      />
+                      <a 
+                        href="https://platform.openai.com/api-keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs mt-1 inline-block"
+                        style={{ color: '#A855F7' }}
+                      >
+                        Get OpenAI key →
+                      </a>
+                    </div>
+                    
+                    {/* Gemini Key */}
+                    <div>
+                      <label className="text-xs text-white/50 mb-1 block">Gemini API Key (optional)</label>
+                      <input 
+                        type="password"
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiApiKey(e.target.value)}
+                        placeholder="AIza..."
+                        className="w-full rounded-xl px-4 py-3 text-base outline-none text-white placeholder-white/30 transition-all duration-300"
+                        style={{
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                        }}
+                      />
+                      <a 
+                        href="https://aistudio.google.com/app/apikey"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs mt-1 inline-block"
+                        style={{ color: '#A855F7' }}
+                      >
+                        Get Gemini key →
+                      </a>
+                    </div>
+                    
                     <button 
-                      onClick={handleSaveKey} 
-                      className="w-full text-white text-base font-bold py-3 rounded-xl transition-all duration-300 active:scale-95"
+                      onClick={handleSaveKey}
+                      disabled={isSavingKey}
+                      className="w-full text-white text-base font-bold py-3 rounded-xl transition-all duration-300 active:scale-95 disabled:opacity-50"
                       style={{
                         background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
                         boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
                       }}
                     >
-                      Save Key
+                      {isSavingKey ? 'Saving...' : 'Save Keys'}
                     </button>
                     <p className="text-xs text-white/30 leading-relaxed">
-                      🔒 Key is stored locally on your device. Get your key from{' '}
-                      <a 
-                        href="https://platform.openai.com/api-keys"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline"
-                        style={{ color: '#A855F7' }}
-                      >
-                        OpenAI Platform
-                      </a>
+                      🔒 Keys are {supabaseService.isSupabaseConfigured() ? 'encrypted & synced to your cloud account' : 'stored locally on your device'}
                     </p>
                   </div>
                 )}

@@ -22,6 +22,13 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
   const [isCorrecting, setIsCorrecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Food search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Swipe to close state
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -174,12 +181,59 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
 
   const addNewItem = () => {
     const newItem: FoodItem = {
-      name: 'New Food',
-      servingSize: '100g',
+      name: '',
+      servingSize: '1 serving',
       macros: { calories: 0, protein: 0, carbs: 0, fat: 0 }
     };
     setEditableItems([...editableItems, newItem]);
     setEditingItemIndex(editableItems.length);
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+  
+  // Search food database
+  const handleSearchFood = async (query: string, itemIndex: number) => {
+    setSearchQuery(query);
+    updateItem(itemIndex, { name: query });
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+    
+    // Debounce search
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await aiService.searchFoodDatabase(query, aiProvider);
+        setSearchResults(results);
+        setShowSearchResults(true);
+      } catch (err) {
+        console.error('Search error:', err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+  };
+  
+  // Select food from search results
+  const handleSelectFood = (food: FoodItem, itemIndex: number) => {
+    updateItem(itemIndex, {
+      name: food.name,
+      servingSize: food.servingSize,
+      macros: { ...food.macros }
+    });
+    setSearchResults([]);
+    setShowSearchResults(false);
+    setSearchQuery('');
   };
 
   const handleCorrect = async () => {
@@ -447,15 +501,52 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                     // Edit mode
                     <div className="space-y-3">
                       <div className="flex items-center justify-between mb-2">
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) => updateItem(index, { name: e.target.value })}
-                          className="flex-1 px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
-                          placeholder="Food name"
-                        />
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) => handleSearchFood(e.target.value, index)}
+                            onFocus={() => item.name.length >= 2 && setShowSearchResults(true)}
+                            className="w-full px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
+                            placeholder="Search food..."
+                            autoFocus={item.name === ''}
+                          />
+                          {isSearching && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                          
+                          {/* Search Results Dropdown */}
+                          {showSearchResults && searchResults.length > 0 && editingItemIndex === index && (
+                            <div 
+                              className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto"
+                              style={{ 
+                                background: 'rgba(26, 22, 51, 0.98)', 
+                                border: '1px solid rgba(139, 92, 246, 0.3)',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                              }}
+                            >
+                              {searchResults.map((food, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => handleSelectFood(food, index)}
+                                  className="w-full px-3 py-2 text-left hover:bg-purple-500/20 transition-colors border-b border-white/5 last:border-0"
+                                >
+                                  <p className="text-sm text-white font-medium truncate">{food.name}</p>
+                                  <p className="text-xs text-white/50">
+                                    {food.macros.calories} cal · {food.servingSize}
+                                  </p>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <button
-                          onClick={() => setEditingItemIndex(null)}
+                          onClick={() => {
+                            setEditingItemIndex(null);
+                            setShowSearchResults(false);
+                          }}
                           className="ml-2 px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-all active:scale-95"
                         >
                           <i className="fa-solid fa-check"></i>

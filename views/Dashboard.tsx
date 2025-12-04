@@ -1,8 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import MealDetailModal from '../components/MealDetailModal.tsx';
-import InsightsCard from '../components/InsightsCard.tsx';
-import SmartSuggestions from '../components/SmartSuggestions.tsx';
 import { DashboardSkeleton, MealCardSkeleton } from '../components/Skeleton.tsx';
 
 interface DashboardProps {
@@ -991,12 +989,6 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
             </div>
           </div>
         )}
-
-        {/* AI Insights */}
-        <InsightsCard logs={logs} settings={settings} />
-
-        {/* Smart Suggestions */}
-        <SmartSuggestions logs={logs} settings={settings} onAddMeal={onAddMeal} />
 
         {/* Meal Templates - Yesterday's meals */}
         {yesterdayMeals.length > 0 && today.length === 0 && (
