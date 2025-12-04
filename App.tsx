@@ -112,12 +112,14 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
         if (savedSettings) setSettings(JSON.parse(savedSettings));
       }
 
-      // Check for OpenAI API key
+      // Check for OpenAI API key - only show reminder once
       const openaiKey = localStorage.getItem('nutrivision_openai_api_key');
-      if (!openaiKey) {
+      const hasSeenKeyReminder = localStorage.getItem('nutrivision_seen_key_reminder');
+      if (!openaiKey && !hasSeenKeyReminder) {
+        localStorage.setItem('nutrivision_seen_key_reminder', 'true');
         setCurrentView(AppView.SETTINGS);
         setTimeout(() => {
-          showToast("Welcome! Add your OpenAI API key to get started.", 'info', { duration: 5000 });
+          showToast("Add your OpenAI API key to analyze food photos.", 'info', { duration: 5000 });
         }, 500);
       }
       

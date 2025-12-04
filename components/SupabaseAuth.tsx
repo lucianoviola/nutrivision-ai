@@ -5,6 +5,9 @@ interface SupabaseAuthProps {
   onSuccess: () => void;
 }
 
+// Set to true temporarily to create your account, then set back to false
+const ALLOW_SIGN_UP = true; // ← TEMPORARY: Set back to false after creating your account!
+
 const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -19,6 +22,13 @@ const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
     setError(null);
     setSuccess(null);
     setLoading(true);
+
+    // Block sign-up if not allowed
+    if (isSignUp && !ALLOW_SIGN_UP) {
+      setError('Sign up is disabled');
+      setLoading(false);
+      return;
+    }
 
     if (isSignUp) {
       if (password !== confirmPassword) {
@@ -206,21 +216,23 @@ const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
           </button>
         </form>
         
-        {/* Toggle sign up / sign in */}
-        <p className="text-center mt-6 text-white/50">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setSuccess(null);
-            }}
-            className="font-semibold hover:underline"
-            style={{ color: '#A855F7' }}
-          >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
-        </p>
+        {/* Toggle sign up / sign in - only show if sign-up is allowed */}
+        {ALLOW_SIGN_UP && (
+          <p className="text-center mt-6 text-white/50">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+                setSuccess(null);
+              }}
+              className="font-semibold hover:underline"
+              style={{ color: '#A855F7' }}
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
+        )}
         
         {/* Data privacy note */}
         <p className="text-center mt-6 text-xs text-white/30">
