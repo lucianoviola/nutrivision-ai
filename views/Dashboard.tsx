@@ -644,85 +644,6 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
   );
 };
 
-// Smart meal prompt based on time and logged meals
-const MealPrompt: React.FC<{ 
-  todayMeals: MealLog[]; 
-  onAddMeal: () => void;
-}> = ({ todayMeals, onAddMeal }) => {
-  const [dismissed, setDismissed] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 800);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  const getMealSuggestion = () => {
-    const hour = new Date().getHours();
-    const mealTypes = todayMeals.map(m => m.type);
-    
-    // Breakfast time (6-10am)
-    if (hour >= 6 && hour < 10 && !mealTypes.includes('breakfast')) {
-      return { meal: 'breakfast', message: "Good morning! Ready to log breakfast?", icon: "☀️" };
-    }
-    // Lunch time (11am-2pm)
-    if (hour >= 11 && hour < 14 && !mealTypes.includes('lunch')) {
-      return { meal: 'lunch', message: "It's lunchtime! Log your meal?", icon: "🍽️" };
-    }
-    // Dinner time (5-9pm)
-    if (hour >= 17 && hour < 21 && !mealTypes.includes('dinner')) {
-      return { meal: 'dinner', message: "Dinner time! What are you having?", icon: "🌙" };
-    }
-    // Snack prompts (between meals)
-    if (hour >= 14 && hour < 17 && todayMeals.length > 0) {
-      return { meal: 'snack', message: "Afternoon snack?", icon: "🍎" };
-    }
-    
-    return null;
-  };
-  
-  const suggestion = getMealSuggestion();
-  
-  if (!suggestion || dismissed) return null;
-  
-  return (
-    <div 
-      className={`mx-6 mb-4 overflow-hidden rounded-2xl transition-all duration-500 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}
-      style={{
-        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
-        border: '1px solid rgba(139, 92, 246, 0.25)',
-      }}
-    >
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center space-x-3">
-          <span className="text-2xl">{suggestion.icon}</span>
-          <p className="text-sm font-medium text-white/80">{suggestion.message}</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={onAddMeal}
-            className="px-4 py-1.5 rounded-lg text-sm font-bold text-white transition-all active:scale-95"
-            style={{
-              background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
-            }}
-          >
-            Log now
-          </button>
-          <button
-            onClick={() => setDismissed(true)}
-            className="p-1.5 rounded-lg text-white/40 hover:text-white/60 transition-colors"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog, onUpdateLog }) => {
   const [headerVisible, setHeaderVisible] = useState(false);
@@ -906,7 +827,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
       </div>
     );
   }
-  
+
   return (
     <div 
       ref={containerRef}
@@ -1002,13 +923,10 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
               >
                 <span className={`text-base ${currentStreak >= 7 ? 'animate-pulse' : ''}`}>🔥</span>
                 <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
-              </div>
+           </div>
             )}
            </div>
         </div>
-
-        {/* Smart meal prompt */}
-        <MealPrompt todayMeals={today} onAddMeal={onAddMeal || (() => {})} />
 
         {/* Calorie Ring */}
         <div className="flex justify-center py-4">
@@ -1039,8 +957,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
               color="#F472B6"
               delay={300}
             />
-          </div>
         </div>
+      </div>
 
         {/* Weekly Summary Card */}
         {weeklyStats.daysLogged > 0 && (

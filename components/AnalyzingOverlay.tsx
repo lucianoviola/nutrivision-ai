@@ -357,9 +357,19 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
                 <i className="fa-solid fa-exclamation-triangle text-white text-xl"></i>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white">Analysis failed</p>
-                <p className="text-xs text-white/80">Tap to retry</p>
+                <p className="text-xs text-white/80 truncate">
+                  {error?.includes('API') || error?.includes('key') 
+                    ? '⚠️ Check API key in Settings' 
+                    : error?.includes('No food') 
+                    ? '📷 No food detected - try again'
+                    : error?.includes('timeout') || error?.includes('Timeout')
+                    ? '⏱️ Request timed out'
+                    : error?.includes('network') || error?.includes('fetch')
+                    ? '📶 Check your connection'
+                    : 'Tap to see details'}
+                </p>
               </div>
               <div className="text-white/70">
                 <i className="fa-solid fa-chevron-up"></i>
@@ -515,8 +525,38 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               >
                 <i className="fa-solid fa-exclamation-circle text-red-400 text-2xl"></i>
               </div>
-              <p className="text-white font-medium mb-1">Analysis failed</p>
-              <p className="text-gray-400 text-sm mb-4">{error}</p>
+              <p className="text-white font-medium mb-2">Analysis failed</p>
+              
+              {/* Contextual error message */}
+              <div className="rounded-xl p-3 mb-4 mx-4 text-left" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                {error?.includes('API') || error?.includes('key') || error?.includes('KEY') ? (
+                  <>
+                    <p className="text-red-300 text-sm font-medium mb-1">🔑 API Key Issue</p>
+                    <p className="text-gray-400 text-xs">Go to Settings and add your OpenAI or Gemini API key.</p>
+                  </>
+                ) : error?.includes('No food') ? (
+                  <>
+                    <p className="text-amber-300 text-sm font-medium mb-1">📷 No Food Detected</p>
+                    <p className="text-gray-400 text-xs">Make sure food is clearly visible in the photo. Try taking a closer shot.</p>
+                  </>
+                ) : error?.includes('timeout') || error?.includes('Timeout') ? (
+                  <>
+                    <p className="text-amber-300 text-sm font-medium mb-1">⏱️ Request Timed Out</p>
+                    <p className="text-gray-400 text-xs">The AI is taking too long. Try again or use a smaller image.</p>
+                  </>
+                ) : error?.includes('network') || error?.includes('fetch') || error?.includes('Failed to fetch') ? (
+                  <>
+                    <p className="text-amber-300 text-sm font-medium mb-1">📶 Connection Issue</p>
+                    <p className="text-gray-400 text-xs">Check your internet connection and try again.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-red-300 text-sm font-medium mb-1">Something went wrong</p>
+                    <p className="text-gray-400 text-xs break-words">{error || 'Unknown error occurred'}</p>
+                  </>
+                )}
+              </div>
+              
               <button
                 onClick={handleRetry}
                 className="px-4 py-2 text-white rounded-xl text-sm font-bold transition-all active:scale-95"

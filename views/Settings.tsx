@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserSettings, MealLog } from '../types.ts';
 import { healthService } from '../services/healthService.ts';
+import * as supabaseService from '../services/supabaseService.ts';
 
 interface SettingsProps {
   settings: UserSettings;
@@ -81,13 +82,35 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [isNativeApp, setIsNativeApp] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(false);
+  const [isSavingKey, setIsSavingKey] = useState(false);
 
   useEffect(() => {
-    const openaiKey = localStorage.getItem('nutrivision_openai_api_key') || '';
-    setOpenaiApiKey(openaiKey);
+    // Load API keys - try Supabase first, fall back to localStorage
+    const loadApiKeys = async () => {
+      if (supabaseService.isSupabaseConfigured()) {
+        const user = await supabaseService.getCurrentUser();
+        if (user) {
+          const keys = await supabaseService.getApiKeys(user.id);
+          if (keys) {
+            setOpenaiApiKey(keys.openaiKey || '');
+            setGeminiApiKey(keys.geminiKey || '');
+            // Also sync to localStorage for the services to use
+            if (keys.openaiKey) localStorage.setItem('nutrivision_openai_api_key', keys.openaiKey);
+            if (keys.geminiKey) localStorage.setItem('nutrivision_gemini_api_key', keys.geminiKey);
+            return;
+          }
+        }
+      }
+      // Fallback to localStorage
+      setOpenaiApiKey(localStorage.getItem('nutrivision_openai_api_key') || '');
+      setGeminiApiKey(localStorage.getItem('nutrivision_gemini_api_key') || '');
+    };
+    
+    loadApiKeys();
     setIsNativeApp(healthService.isAvailable());
     const timer = setTimeout(() => setHeaderVisible(true), 100);
     return () => clearTimeout(timer);
@@ -99,9 +122,36 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
     setTimeout(() => setShowToast(false), 2500);
   };
 
-  const handleSaveKey = () => {
+  const handleSaveKey = async () => {
+    setIsSavingKey(true);
+    
+    // Always save to localStorage (services use this)
     localStorage.setItem('nutrivision_openai_api_key', openaiApiKey);
-    showToastNotification('API Key saved successfully');
+    localStorage.setItem('nutrivision_gemini_api_key', geminiApiKey);
+    
+    // Also save to Supabase if configured
+    if (supabaseService.isSupabaseConfigured()) {
+      const user = await supabaseService.getCurrentUser();
+      if (user) {
+        const success = await supabaseService.saveApiKeys(
+          user.id, 
+          openaiApiKey || null, 
+          geminiApiKey || null,
+          settings.aiProvider
+        );
+        if (success) {
+          showToastNotification('API Keys saved & synced to cloud ☁️');
+        } else {
+          showToastNotification('Saved locally (cloud sync failed)');
+        }
+      } else {
+        showToastNotification('API Key saved locally');
+      }
+    } else {
+      showToastNotification('API Key saved locally');
+    }
+    
+    setIsSavingKey(false);
     setShowKeyInput(false);
   };
 

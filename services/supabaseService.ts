@@ -53,6 +53,9 @@ interface DbProfile {
   daily_protein_goal: number;
   daily_carb_goal: number;
   daily_fat_goal: number;
+  openai_api_key: string | null;
+  gemini_api_key: string | null;
+  ai_provider: string | null;
 }
 
 // ============ AUTH ============
@@ -152,8 +155,55 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
     dailyCarbGoal: profile.daily_carb_goal,
     dailyFatGoal: profile.daily_fat_goal,
     appleHealthConnected: false,
-    aiProvider: 'openai',
+    aiProvider: (profile.ai_provider as 'openai' | 'gemini') || 'openai',
   };
+}
+
+/**
+ * Get API keys from profile.
+ */
+export async function getApiKeys(userId: string): Promise<{ openaiKey: string | null; geminiKey: string | null } | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('openai_api_key, gemini_api_key')
+    .eq('id', userId)
+    .single();
+  
+  if (error || !data) {
+    console.error('Error fetching API keys:', error);
+    return null;
+  }
+  
+  return {
+    openaiKey: data.openai_api_key,
+    geminiKey: data.gemini_api_key,
+  };
+}
+
+/**
+ * Save API keys to profile.
+ */
+export async function saveApiKeys(
+  userId: string, 
+  openaiKey: string | null, 
+  geminiKey: string | null,
+  aiProvider: 'openai' | 'gemini'
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      openai_api_key: openaiKey || null,
+      gemini_api_key: geminiKey || null,
+      ai_provider: aiProvider,
+    })
+    .eq('id', userId);
+  
+  if (error) {
+    console.error('Error saving API keys:', error);
+    return false;
+  }
+  
+  return true;
 }
 
 /**
