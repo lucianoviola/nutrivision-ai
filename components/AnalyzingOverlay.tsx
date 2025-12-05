@@ -708,9 +708,9 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                         </button>
                       </div>
                       
-                      {/* Serving Size - the ONLY editable field */}
+                      {/* Quantity - the ONLY editable field */}
                       <div>
-                        <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
+                        <label className="text-xs text-gray-400 mb-1 block">Quantity</label>
                         <div className="flex space-x-2">
                           <NumericInput
                             value={parseServingSize(item.servingSize).quantity}
@@ -719,7 +719,7 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                               updateServingSize(index, qty, unit);
                             }}
                             allowDecimals={true}
-                            className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                            className="w-24 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
                             placeholder="1"
                           />
                           <select
@@ -728,25 +728,26 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                               const qty = parseServingSize(item.servingSize).quantity;
                               updateServingSize(index, qty, e.target.value);
                             }}
-                            className="px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                            className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
                           >
-                            <option value="g">g</option>
-                            <option value="kg">kg</option>
-                            <option value="oz">oz</option>
-                            <option value="lb">lb</option>
+                            <option value="g">grams</option>
+                            <option value="kg">kilograms</option>
+                            <option value="oz">ounces</option>
+                            <option value="lb">pounds</option>
                             <option value="cup">cup</option>
                             <option value="cups">cups</option>
-                            <option value="tbsp">tbsp</option>
-                            <option value="tsp">tsp</option>
-                            <option value="ml">ml</option>
-                            <option value="l">l</option>
+                            <option value="tbsp">tablespoon</option>
+                            <option value="tsp">teaspoon</option>
+                            <option value="ml">milliliters</option>
+                            <option value="l">liters</option>
                             <option value="piece">piece</option>
                             <option value="pieces">pieces</option>
                             <option value="slice">slice</option>
                             <option value="slices">slices</option>
+                            <option value="medium">medium</option>
+                            <option value="large">large</option>
+                            <option value="small">small</option>
                             <option value="serving">serving</option>
-                            <option value="servings">servings</option>
-                            <option value="pack">pack</option>
                           </select>
                         </div>
                       </div>

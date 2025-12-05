@@ -804,9 +804,9 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: "Good Morning", emoji: "🌅" };
-    if (hour < 18) return { text: "Good Afternoon", emoji: "☀️" };
-    return { text: "Good Evening", emoji: "🌙" };
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
   };
   
   const getFormattedDate = () => {
@@ -948,9 +948,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         <div className={`pt-14 sm:pt-16 md:pt-20 pb-4 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white flex items-center space-x-2">
-                <span>{greeting.emoji}</span>
-                <span>{greeting.text}</span>
+              <h1 className="text-2xl font-bold text-white">
+                {greeting}
               </h1>
               <p className="text-sm text-white/50 font-medium mt-0.5">{getFormattedDate()}</p>
             </div>
