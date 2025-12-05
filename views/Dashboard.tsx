@@ -222,8 +222,8 @@ const MacroPill: React.FC<{
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: 'rgba(26, 22, 51, 0.5)',
-        border: '1px solid rgba(139, 92, 246, 0.12)',
+        background: 'rgba(26, 22, 51, 0.4)',
+        border: '1px solid rgba(139, 92, 246, 0.08)',
         backdropFilter: 'blur(12px)',
       }}
     >
@@ -250,15 +250,15 @@ const MacroPill: React.FC<{
       
       {/* Progress bar underneath */}
       <div 
-        className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full overflow-hidden"
-        style={{ background: 'rgba(139, 92, 246, 0.1)' }}
+        className="absolute bottom-0 left-0 right-0 h-1 rounded-full overflow-hidden"
+        style={{ background: 'rgba(139, 92, 246, 0.08)' }}
       >
         <div 
           className="h-full rounded-full transition-all duration-1000 ease-out"
           style={{ 
             width: `${animatedProgress}%`,
-            background: color,
-            boxShadow: `0 0 8px ${color}`,
+            background: `linear-gradient(90deg, ${color}CC, ${color})`,
+            boxShadow: `0 0 10px ${color}80`,
           }}
         />
       </div>
