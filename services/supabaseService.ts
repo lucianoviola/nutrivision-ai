@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
-import { MealLog, FoodItem, UserSettings, Macros } from '../types.ts';
+import { MealLog, FoodItem, UserSettings, Macros, Micronutrients } from '../types.ts';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -43,6 +43,101 @@ interface DbFoodItem {
   protein: number;
   carbs: number;
   fat: number;
+  // Micronutrients (optional, may be null)
+  fiber?: number | null;
+  sugar?: number | null;
+  vitamin_a?: number | null;
+  vitamin_c?: number | null;
+  vitamin_d?: number | null;
+  vitamin_e?: number | null;
+  vitamin_k?: number | null;
+  vitamin_b6?: number | null;
+  vitamin_b12?: number | null;
+  folate?: number | null;
+  calcium?: number | null;
+  iron?: number | null;
+  magnesium?: number | null;
+  potassium?: number | null;
+  sodium?: number | null;
+  zinc?: number | null;
+  saturated_fat?: number | null;
+  trans_fat?: number | null;
+  cholesterol?: number | null;
+  omega3?: number | null;
+  omega6?: number | null;
+}
+
+/**
+ * Convert DB micronutrients to app Micronutrients type.
+ */
+function dbMicrosToAppMicros(item: DbFoodItem): Micronutrients | undefined {
+  const micros: Micronutrients = {};
+  
+  if (item.fiber != null) micros.fiber = item.fiber;
+  if (item.sugar != null) micros.sugar = item.sugar;
+  if (item.vitamin_a != null) micros.vitaminA = item.vitamin_a;
+  if (item.vitamin_c != null) micros.vitaminC = item.vitamin_c;
+  if (item.vitamin_d != null) micros.vitaminD = item.vitamin_d;
+  if (item.vitamin_e != null) micros.vitaminE = item.vitamin_e;
+  if (item.vitamin_k != null) micros.vitaminK = item.vitamin_k;
+  if (item.vitamin_b6 != null) micros.vitaminB6 = item.vitamin_b6;
+  if (item.vitamin_b12 != null) micros.vitaminB12 = item.vitamin_b12;
+  if (item.folate != null) micros.folate = item.folate;
+  if (item.calcium != null) micros.calcium = item.calcium;
+  if (item.iron != null) micros.iron = item.iron;
+  if (item.magnesium != null) micros.magnesium = item.magnesium;
+  if (item.potassium != null) micros.potassium = item.potassium;
+  if (item.sodium != null) micros.sodium = item.sodium;
+  if (item.zinc != null) micros.zinc = item.zinc;
+  if (item.saturated_fat != null) micros.saturatedFat = item.saturated_fat;
+  if (item.trans_fat != null) micros.transFat = item.trans_fat;
+  if (item.cholesterol != null) micros.cholesterol = item.cholesterol;
+  if (item.omega3 != null) micros.omega3 = item.omega3;
+  if (item.omega6 != null) micros.omega6 = item.omega6;
+  
+  return Object.keys(micros).length > 0 ? micros : undefined;
+}
+
+/**
+ * Convert app FoodItem to DB insert format.
+ */
+function appItemToDbInsert(item: FoodItem, mealLogId: string): Record<string, unknown> {
+  const dbItem: Record<string, unknown> = {
+    meal_log_id: mealLogId,
+    name: item.name,
+    serving_size: item.servingSize,
+    calories: item.macros.calories,
+    protein: item.macros.protein,
+    carbs: item.macros.carbs,
+    fat: item.macros.fat,
+  };
+  
+  // Add micronutrients if present
+  if (item.micros) {
+    if (item.micros.fiber !== undefined) dbItem.fiber = item.micros.fiber;
+    if (item.micros.sugar !== undefined) dbItem.sugar = item.micros.sugar;
+    if (item.micros.vitaminA !== undefined) dbItem.vitamin_a = item.micros.vitaminA;
+    if (item.micros.vitaminC !== undefined) dbItem.vitamin_c = item.micros.vitaminC;
+    if (item.micros.vitaminD !== undefined) dbItem.vitamin_d = item.micros.vitaminD;
+    if (item.micros.vitaminE !== undefined) dbItem.vitamin_e = item.micros.vitaminE;
+    if (item.micros.vitaminK !== undefined) dbItem.vitamin_k = item.micros.vitaminK;
+    if (item.micros.vitaminB6 !== undefined) dbItem.vitamin_b6 = item.micros.vitaminB6;
+    if (item.micros.vitaminB12 !== undefined) dbItem.vitamin_b12 = item.micros.vitaminB12;
+    if (item.micros.folate !== undefined) dbItem.folate = item.micros.folate;
+    if (item.micros.calcium !== undefined) dbItem.calcium = item.micros.calcium;
+    if (item.micros.iron !== undefined) dbItem.iron = item.micros.iron;
+    if (item.micros.magnesium !== undefined) dbItem.magnesium = item.micros.magnesium;
+    if (item.micros.potassium !== undefined) dbItem.potassium = item.micros.potassium;
+    if (item.micros.sodium !== undefined) dbItem.sodium = item.micros.sodium;
+    if (item.micros.zinc !== undefined) dbItem.zinc = item.micros.zinc;
+    if (item.micros.saturatedFat !== undefined) dbItem.saturated_fat = item.micros.saturatedFat;
+    if (item.micros.transFat !== undefined) dbItem.trans_fat = item.micros.transFat;
+    if (item.micros.cholesterol !== undefined) dbItem.cholesterol = item.micros.cholesterol;
+    if (item.micros.omega3 !== undefined) dbItem.omega3 = item.micros.omega3;
+    if (item.micros.omega6 !== undefined) dbItem.omega6 = item.micros.omega6;
+  }
+  
+  return dbItem;
 }
 
 interface DbProfile {
@@ -272,6 +367,7 @@ export async function getMealLogs(userId: string): Promise<MealLog[]> {
           carbs: item.carbs,
           fat: item.fat,
         },
+        micros: dbMicrosToAppMicros(item),
       }));
     
     return {
@@ -333,17 +429,11 @@ export async function createMealLog(userId: string, mealLog: MealLog): Promise<M
     return null;
   }
   
-  // Insert food items
+  // Insert food items with micronutrients
   if (mealLog.items.length > 0) {
-    const foodItemsToInsert = mealLog.items.map(item => ({
-      meal_log_id: mealLog.id,
-      name: item.name,
-      serving_size: item.servingSize,
-      calories: item.macros.calories,
-      protein: item.macros.protein,
-      carbs: item.macros.carbs,
-      fat: item.macros.fat,
-    }));
+    const foodItemsToInsert = mealLog.items.map(item => 
+      appItemToDbInsert(item, mealLog.id)
+    );
     
     const { error: itemsError } = await supabase
       .from('food_items')
@@ -392,15 +482,9 @@ export async function updateMealLog(userId: string, mealLog: MealLog): Promise<b
     .eq('meal_log_id', mealLog.id);
   
   if (mealLog.items.length > 0) {
-    const foodItemsToInsert = mealLog.items.map(item => ({
-      meal_log_id: mealLog.id,
-      name: item.name,
-      serving_size: item.servingSize,
-      calories: item.macros.calories,
-      protein: item.macros.protein,
-      carbs: item.macros.carbs,
-      fat: item.macros.fat,
-    }));
+    const foodItemsToInsert = mealLog.items.map(item => 
+      appItemToDbInsert(item, mealLog.id)
+    );
     
     await supabase
       .from('food_items')
@@ -529,7 +613,9 @@ export async function hasCloudData(userId: string): Promise<boolean> {
  * Check if Supabase is configured.
  */
 export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseAnonKey);
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  return !!(url && key && url.includes('supabase.co'));
 }
 
 export default supabase;

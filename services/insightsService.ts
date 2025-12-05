@@ -81,6 +81,10 @@ export function generateInsights(logs: MealLog[], settings: UserSettings): Insig
   const favoriteInsight = analyzeFavoriteFoods(last30Days);
   if (favoriteInsight) insights.push(favoriteInsight);
 
+  // 11. Eating window analysis
+  const eatingWindowInsight = analyzeEatingWindow(last7Days);
+  if (eatingWindowInsight) insights.push(eatingWindowInsight);
+
   // Sort by priority
   return insights.sort((a, b) => b.priority - a.priority).slice(0, 5);
 }
@@ -489,5 +493,64 @@ function analyzeFavoriteFoods(logs: MealLog[]): Insight | null {
       priority: 4,
     };
   }
+  return null;
+}
+
+function analyzeEatingWindow(logs: MealLog[]): Insight | null {
+  if (logs.length < 5) return null;
+
+  // Group by day and calculate eating windows
+  const dailyWindows: Map<string, { first: number; last: number }> = new Map();
+  
+  logs.forEach(log => {
+    const date = new Date(log.timestamp).toDateString();
+    const hour = new Date(log.timestamp).getHours();
+    
+    if (!dailyWindows.has(date)) {
+      dailyWindows.set(date, { first: hour, last: hour });
+    } else {
+      const day = dailyWindows.get(date)!;
+      day.first = Math.min(day.first, hour);
+      day.last = Math.max(day.last, hour);
+    }
+  });
+
+  // Calculate average window
+  const windows = Array.from(dailyWindows.values())
+    .filter(d => d.last > d.first) // Only days with multiple meals
+    .map(d => d.last - d.first);
+  
+  if (windows.length < 3) return null;
+  
+  const avgWindow = windows.reduce((a, b) => a + b, 0) / windows.length;
+  
+  // Intermittent fasting detection (window <= 10 hours)
+  if (avgWindow <= 10) {
+    return {
+      id: 'eating-window',
+      type: 'achievement',
+      icon: '⏰',
+      title: 'Time-Restricted Eating',
+      description: `Your average eating window is ${Math.round(avgWindow)} hours. This supports metabolic health!`,
+      metric: `${Math.round(avgWindow)}h`,
+      color: 'green',
+      priority: 6,
+    };
+  }
+  
+  // Extended eating window warning (window > 14 hours)
+  if (avgWindow > 14) {
+    return {
+      id: 'eating-window',
+      type: 'suggestion',
+      icon: '🕐',
+      title: 'Extended Eating Window',
+      description: `You eat over ${Math.round(avgWindow)} hours daily. Consider a smaller window for better digestion.`,
+      metric: `${Math.round(avgWindow)}h`,
+      color: 'orange',
+      priority: 5,
+    };
+  }
+  
   return null;
 }

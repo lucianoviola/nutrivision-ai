@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import AnimatedNumber from '../components/AnimatedNumber.tsx';
 import DeficiencyAlerts from '../components/DeficiencyAlerts.tsx';
+import MicronutrientCard from '../components/MicronutrientCard.tsx';
 import { StatCardSkeleton, ChartSkeleton } from '../components/Skeleton.tsx';
 
 interface StatsProps {
@@ -442,14 +443,84 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
     
     const totalMeals = dailyData.reduce((sum, d) => sum + d.meals, 0);
     
+    // Rolling averages
+    const last7DaysData = dailyData.slice(-7).filter(d => d.meals > 0);
+    const rolling7DayAvg = last7DaysData.length > 0 
+      ? Math.round(last7DaysData.reduce((s, d) => s + d.calories, 0) / last7DaysData.length) 
+      : 0;
+    
+    // Consistency score: % of days within 10% of calorie goal
+    const consistencyScore = daysWithLogs.length > 0 
+      ? Math.round((daysOnTarget / daysWithLogs.length) * 100)
+      : 0;
+    
+    // Variance calculation for consistency
+    const variance = daysWithLogs.length > 1 
+      ? Math.sqrt(daysWithLogs.reduce((sum, d) => sum + Math.pow(d.calories - avgCalories, 2), 0) / daysWithLogs.length)
+      : 0;
+    const coefficientOfVariation = avgCalories > 0 ? Math.round((variance / avgCalories) * 100) : 0;
+    
     return {
       avgCalories: Math.round(avgCalories),
       goalAchievement,
       streak,
       totalMeals,
       daysLogged: daysWithLogs.length,
+      rolling7DayAvg,
+      consistencyScore,
+      calorieVariance: coefficientOfVariation,
     };
   }, [dailyData, settings]);
+  
+  // Eating window analysis
+  const eatingWindowStats = useMemo(() => {
+    const now = new Date();
+    const last7Days = logs.filter(l => {
+      const diff = now.getTime() - l.timestamp;
+      return diff < 7 * 24 * 60 * 60 * 1000;
+    });
+    
+    if (last7Days.length < 3) return null;
+    
+    // Group by day and find eating windows
+    const dayWindows: number[] = [];
+    const dailyLogs: Map<string, number[]> = new Map();
+    
+    last7Days.forEach(log => {
+      const date = new Date(log.timestamp).toDateString();
+      const hour = new Date(log.timestamp).getHours();
+      
+      if (!dailyLogs.has(date)) dailyLogs.set(date, []);
+      dailyLogs.get(date)!.push(hour);
+    });
+    
+    dailyLogs.forEach(hours => {
+      if (hours.length >= 2) {
+        const window = Math.max(...hours) - Math.min(...hours);
+        dayWindows.push(window);
+      }
+    });
+    
+    if (dayWindows.length === 0) return null;
+    
+    const avgWindow = Math.round(dayWindows.reduce((a, b) => a + b, 0) / dayWindows.length);
+    
+    // Average first and last meal times
+    const firstMeals: number[] = [];
+    const lastMeals: number[] = [];
+    
+    dailyLogs.forEach(hours => {
+      if (hours.length >= 1) {
+        firstMeals.push(Math.min(...hours));
+        lastMeals.push(Math.max(...hours));
+      }
+    });
+    
+    const avgFirstMeal = Math.round(firstMeals.reduce((a, b) => a + b, 0) / firstMeals.length);
+    const avgLastMeal = Math.round(lastMeals.reduce((a, b) => a + b, 0) / lastMeals.length);
+    
+    return { avgWindow, avgFirstMeal, avgLastMeal };
+  }, [logs]);
   
   const maxCalories = Math.max(
     ...dailyData.map(d => d.calories),
@@ -599,6 +670,125 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
               delay={300}
             />
           </div>
+
+          {/* Advanced Analytics Section */}
+          {summaryStats.daysLogged >= 3 && (
+            <div>
+              <div className="flex items-center mb-3 px-1">
+                <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider flex items-center space-x-2">
+                  <span>📊</span>
+                  <span>Advanced Analytics</span>
+                </h3>
+              </div>
+              
+              <div 
+                className="rounded-2xl p-4 space-y-4"
+                style={{
+                  background: 'rgba(26, 22, 51, 0.6)',
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  backdropFilter: 'blur(20px)',
+                }}
+              >
+                {/* Rolling Average */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: 'rgba(59, 130, 246, 0.2)' }}
+                    >
+                      <span className="text-lg">📈</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">7-Day Rolling Avg</p>
+                      <p className="text-xs text-white/40">Smoothed trend</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-black text-blue-400">
+                      <AnimatedNumber value={summaryStats.rolling7DayAvg} duration={800} />
+                    </p>
+                    <p className="text-[10px] text-white/40">kcal/day</p>
+                  </div>
+                </div>
+
+                {/* Consistency Score */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: summaryStats.consistencyScore >= 70 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)' }}
+                    >
+                      <span className="text-lg">🎯</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">Consistency Score</p>
+                      <p className="text-xs text-white/40">Days within ±10% of goal</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-xl font-black ${summaryStats.consistencyScore >= 70 ? 'text-green-400' : summaryStats.consistencyScore >= 40 ? 'text-yellow-400' : 'text-orange-400'}`}>
+                      <AnimatedNumber value={summaryStats.consistencyScore} duration={800} />%
+                    </p>
+                    <p className="text-[10px] text-white/40">
+                      {summaryStats.consistencyScore >= 70 ? 'Excellent!' : summaryStats.consistencyScore >= 40 ? 'Good' : 'Needs work'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Calorie Variance */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: summaryStats.calorieVariance <= 15 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)' }}
+                    >
+                      <span className="text-lg">⚖️</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">Daily Variance</p>
+                      <p className="text-xs text-white/40">Lower = more consistent</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-xl font-black ${summaryStats.calorieVariance <= 15 ? 'text-green-400' : summaryStats.calorieVariance <= 25 ? 'text-yellow-400' : 'text-orange-400'}`}>
+                      ±<AnimatedNumber value={summaryStats.calorieVariance} duration={800} />%
+                    </p>
+                    <p className="text-[10px] text-white/40">
+                      {summaryStats.calorieVariance <= 15 ? 'Very stable' : summaryStats.calorieVariance <= 25 ? 'Moderate' : 'High variation'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Eating Window */}
+                {eatingWindowStats && (
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style={{ background: 'rgba(168, 85, 247, 0.2)' }}
+                      >
+                        <span className="text-lg">🕐</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">Eating Window</p>
+                        <p className="text-xs text-white/40">
+                          ~{eatingWindowStats.avgFirstMeal}:00 - {eatingWindowStats.avgLastMeal}:00
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-black text-purple-400">
+                        <AnimatedNumber value={eatingWindowStats.avgWindow} duration={800} />h
+                      </p>
+                      <p className="text-[10px] text-white/40">
+                        {eatingWindowStats.avgWindow <= 10 ? 'Time-restricted' : eatingWindowStats.avgWindow <= 14 ? 'Moderate' : 'Extended'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Calendar View */}
           {viewMode === 'calendar' && (
@@ -789,6 +979,19 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                   icon="🥑"
                 />
               </div>
+            </div>
+          )}
+
+          {/* Micronutrient Tracking */}
+          {viewMode === 'chart' && (
+            <div>
+              <div className="flex items-center mb-3 px-1">
+                <h3 className="text-sm font-bold text-white/40 uppercase tracking-wider flex items-center space-x-2">
+                  <span>🧬</span>
+                  <span>Micronutrients</span>
+                </h3>
+              </div>
+              <MicronutrientCard logs={logs} daysToAnalyze={period === 'week' ? 7 : 30} />
             </div>
           )}
 

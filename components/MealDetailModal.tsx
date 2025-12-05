@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MealLog, FoodItem, Macros, AIProvider } from '../types.ts';
+import { MealLog, FoodItem, Macros, AIProvider, Micronutrients, RECOMMENDED_DAILY_VALUES } from '../types.ts';
 import * as aiService from '../services/aiService.ts';
 import NumericInput from './NumericInput.tsx';
 
@@ -15,6 +15,7 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
   const [isVisible, setIsVisible] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showMicros, setShowMicros] = useState(false);
   const [editableItems, setEditableItems] = useState<FoodItem[]>([]);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [mealNote, setMealNote] = useState('');
@@ -122,6 +123,26 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
       carbs: acc.carbs + item.macros.carbs,
       fat: acc.fat + item.macros.fat
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  };
+
+  // Calculate total micronutrients for the meal
+  const calculateTotalMicros = (): Micronutrients => {
+    const items = isEditing ? editableItems : (meal?.items || []);
+    const totals: Micronutrients = {};
+    
+    items.forEach(item => {
+      if (item.micros) {
+        Object.keys(item.micros).forEach(key => {
+          const k = key as keyof Micronutrients;
+          const value = item.micros?.[k];
+          if (value !== undefined) {
+            totals[k] = (totals[k] || 0) + value;
+          }
+        });
+      }
+    });
+    
+    return totals;
   };
 
   const updateItem = (index: number, updates: Partial<FoodItem>) => {
@@ -471,6 +492,149 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
               </div>
             </div>
           </div>
+
+          {/* Micronutrients Section */}
+          {(() => {
+            const micros = calculateTotalMicros();
+            const hasMicros = Object.keys(micros).length > 0;
+            
+            if (!hasMicros) return null;
+            
+            const microGroups = [
+              {
+                title: 'Fiber & Sugar',
+                icon: '🌾',
+                items: [
+                  { key: 'fiber', label: 'Fiber', unit: 'g', color: '#10B981' },
+                  { key: 'sugar', label: 'Sugar', unit: 'g', color: '#F472B6', isLimit: true },
+                ],
+              },
+              {
+                title: 'Vitamins',
+                icon: '💊',
+                items: [
+                  { key: 'vitaminA', label: 'Vitamin A', unit: 'mcg', color: '#F59E0B' },
+                  { key: 'vitaminC', label: 'Vitamin C', unit: 'mg', color: '#FBBF24' },
+                  { key: 'vitaminD', label: 'Vitamin D', unit: 'mcg', color: '#FCD34D' },
+                  { key: 'vitaminE', label: 'Vitamin E', unit: 'mg', color: '#A3E635' },
+                  { key: 'vitaminK', label: 'Vitamin K', unit: 'mcg', color: '#4ADE80' },
+                  { key: 'vitaminB6', label: 'Vitamin B6', unit: 'mg', color: '#34D399' },
+                  { key: 'vitaminB12', label: 'Vitamin B12', unit: 'mcg', color: '#2DD4BF' },
+                  { key: 'folate', label: 'Folate', unit: 'mcg', color: '#22D3EE' },
+                ],
+              },
+              {
+                title: 'Minerals',
+                icon: '⚗️',
+                items: [
+                  { key: 'calcium', label: 'Calcium', unit: 'mg', color: '#E2E8F0' },
+                  { key: 'iron', label: 'Iron', unit: 'mg', color: '#EF4444' },
+                  { key: 'magnesium', label: 'Magnesium', unit: 'mg', color: '#8B5CF6' },
+                  { key: 'potassium', label: 'Potassium', unit: 'mg', color: '#F97316' },
+                  { key: 'sodium', label: 'Sodium', unit: 'mg', color: '#94A3B8', isLimit: true },
+                  { key: 'zinc', label: 'Zinc', unit: 'mg', color: '#64748B' },
+                ],
+              },
+              {
+                title: 'Fats Breakdown',
+                icon: '🫒',
+                items: [
+                  { key: 'saturatedFat', label: 'Saturated', unit: 'g', color: '#F87171', isLimit: true },
+                  { key: 'transFat', label: 'Trans Fat', unit: 'g', color: '#EF4444', isLimit: true },
+                  { key: 'cholesterol', label: 'Cholesterol', unit: 'mg', color: '#FB923C', isLimit: true },
+                  { key: 'omega3', label: 'Omega-3', unit: 'g', color: '#22D3EE' },
+                  { key: 'omega6', label: 'Omega-6', unit: 'g', color: '#38BDF8' },
+                ],
+              },
+            ];
+            
+            return (
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowMicros(!showMicros)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all active:scale-[0.99]"
+                  style={{
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                  }}
+                >
+                  <span className="flex items-center text-sm font-bold text-white/80">
+                    <span className="mr-2">🔬</span>
+                    Micronutrients
+                    <span className="ml-2 text-xs text-white/40 font-normal">
+                      ({Object.keys(micros).length} nutrients)
+                    </span>
+                  </span>
+                  <svg 
+                    width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    className={`transition-transform ${showMicros ? 'rotate-180' : ''}`}
+                  >
+                    <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
+                
+                {showMicros && (
+                  <div className="mt-3 space-y-4 animate-fade-in">
+                    {microGroups.map(group => {
+                      const groupItems = group.items.filter(item => micros[item.key as keyof Micronutrients] !== undefined);
+                      if (groupItems.length === 0) return null;
+                      
+                      return (
+                        <div key={group.title}>
+                          <p className="text-xs text-white/40 font-medium mb-2 flex items-center">
+                            <span className="mr-1.5">{group.icon}</span>
+                            {group.title}
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {groupItems.map(item => {
+                              const value = micros[item.key as keyof Micronutrients] || 0;
+                              const dv = RECOMMENDED_DAILY_VALUES[item.key as keyof Micronutrients];
+                              const percent = dv ? Math.round((value / dv) * 100) : 0;
+                              const isOver = item.isLimit && percent > 100;
+                              
+                              return (
+                                <div
+                                  key={item.key}
+                                  className="p-3 rounded-lg"
+                                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                                >
+                                  <div className="flex justify-between items-center mb-1.5">
+                                    <span className="text-xs text-white/60">{item.label}</span>
+                                    <span 
+                                      className="text-xs font-bold"
+                                      style={{ color: isOver ? '#EF4444' : item.color }}
+                                    >
+                                      {percent}%
+                                    </span>
+                                  </div>
+                                  <div className="flex items-baseline space-x-1">
+                                    <span className="text-sm font-bold text-white">
+                                      {value < 1 ? value.toFixed(1) : Math.round(value)}
+                                    </span>
+                                    <span className="text-xs text-white/40">{item.unit}</span>
+                                  </div>
+                                  {/* Progress bar */}
+                                  <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                                    <div 
+                                      className="h-full rounded-full transition-all"
+                                      style={{ 
+                                        width: `${Math.min(percent, 100)}%`,
+                                        background: isOver ? '#EF4444' : item.color,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Food items */}
           <div className="mb-4">

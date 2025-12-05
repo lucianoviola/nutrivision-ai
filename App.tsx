@@ -7,7 +7,6 @@ import Settings from './views/Settings.tsx';
 import LogHistory from './views/LogHistory.tsx';
 import Stats from './views/Stats.tsx';
 import AnalyzingOverlay from './components/AnalyzingOverlay.tsx';
-import AuthGate from './components/AuthGate.tsx';
 import SupabaseAuth from './components/SupabaseAuth.tsx';
 import { ToastProvider, useToast } from './components/Toast.tsx';
 import OfflineIndicator from './components/OfflineIndicator.tsx';
@@ -43,6 +42,7 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [pendingAnalysis, setPendingAnalysis] = useState<PendingAnalysis | null>(null);
+  const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [viewTransition, setViewTransition] = useState<'entering' | 'entered' | 'exiting'>('entered');
   const [savedMealToLoad, setSavedMealToLoad] = useState<savedMealsService.SavedMeal | null>(null);
   const [deletedMeal, setDeletedMeal] = useState<MealLog | null>(null);
@@ -413,7 +413,13 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
       case AppView.SETTINGS:
         return <Settings settings={settings} logs={logs} onUpdateSettings={setSettings} />;
       default:
-        return <Dashboard logs={logs} settings={settings} onDeleteLog={handleDeleteLog} />;
+        return <Dashboard 
+          logs={logs} 
+          settings={settings} 
+          onDeleteLog={handleDeleteLog}
+          pendingAnalysis={pendingAnalysis}
+          onExpandAnalysis={() => setAnalysisExpanded(true)}
+        />;
     }
   };
 
@@ -450,12 +456,14 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
         />
       )}
 
-      {/* Background analysis overlay */}
+      {/* Background analysis overlay - only shows expanded modal now */}
       <AnalyzingOverlay
         pendingAnalysis={pendingAnalysis}
         aiProvider={settings.aiProvider}
         onComplete={handleAnalysisComplete}
         onDismiss={handleDismissAnalysis}
+        isExpanded={analysisExpanded}
+        onSetExpanded={setAnalysisExpanded}
       />
 
       {/* Tab bar is hidden if camera is active */}
@@ -475,8 +483,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Check if Supabase is configured
     if (!supabaseService.isSupabaseConfigured()) {
-      console.log('Supabase not configured, using local auth');
-      // No Supabase - use old password auth
+      console.log('Supabase not configured, running in local-only mode');
       setAuthLoading(false);
       return;
     }
@@ -485,7 +492,7 @@ const App: React.FC = () => {
     
     // Add timeout to prevent infinite loading (3 seconds)
     const timeout = setTimeout(() => {
-      console.warn('Auth check timed out - falling back to local auth');
+      console.warn('Auth check timed out');
       setAuthLoading(false);
       setAuthError('Connection timed out');
     }, 3000);
@@ -531,10 +538,9 @@ const App: React.FC = () => {
     );
   }
   
-  // Show error if auth failed (fallback to local auth)
+  // Show error if auth failed
   if (authError) {
-    console.warn('Auth error, falling back to local mode:', authError);
-    // Fall through to show app with old auth
+    console.warn('Auth error:', authError);
   }
   
   // If Supabase is configured but no user (and no error), show auth
@@ -542,20 +548,13 @@ const App: React.FC = () => {
     return <SupabaseAuth onSuccess={() => {}} />;
   }
   
-  // Otherwise show app (with old AuthGate if no Supabase)
-  const content = (
+  // Render the app
+  return (
     <ToastProvider>
       <OfflineIndicator />
       <AppContent user={user} />
     </ToastProvider>
   );
-  
-  // Use old AuthGate only if Supabase is not configured
-  if (!supabaseService.isSupabaseConfigured()) {
-    return <AuthGate>{content}</AuthGate>;
-  }
-  
-  return content;
 };
 
 export default App;

@@ -14,6 +14,8 @@ interface AnalyzingOverlayProps {
   aiProvider: AIProvider;
   onComplete: (log: MealLog) => void;
   onDismiss: () => void;
+  isExpanded?: boolean;
+  onSetExpanded?: (expanded: boolean) => void;
 }
 
 type AnalysisStatus = 'analyzing' | 'complete' | 'error';
@@ -23,13 +25,19 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
   aiProvider,
   onComplete,
   onDismiss,
+  isExpanded: externalExpanded,
+  onSetExpanded,
 }) => {
   const [status, setStatus] = useState<AnalysisStatus>('analyzing');
   const [result, setResult] = useState<FoodItem[] | null>(null);
   const [editableItems, setEditableItems] = useState<FoodItem[]>([]);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  
+  // Use external expanded state if provided, otherwise use internal
+  const isExpanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
+  const setIsExpanded = onSetExpanded || setInternalExpanded;
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
   const [mealNote, setMealNote] = useState('');
   const [correctionText, setCorrectionText] = useState('');
@@ -343,119 +351,10 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
 
   const totals = calculateTotals();
 
-  // Minimized floating indicator
+  // Don't render minimized state - Dashboard shows inline ProcessingCard instead
+  // Only render the expanded modal
   if (!isExpanded) {
-    return (
-      <div className="fixed bottom-28 left-4 right-4 z-50 animate-fade-in">
-        <div 
-          className="flex items-center space-x-3 px-4 py-3 rounded-2xl shadow-2xl relative"
-          style={{
-            background: status === 'analyzing' 
-              ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(236, 72, 153, 0.95))'
-              : status === 'error'
-              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95))'
-              : 'linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(6, 182, 212, 0.95))',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            boxShadow: status === 'analyzing'
-              ? '0 10px 40px rgba(139, 92, 246, 0.5)'
-              : status === 'error'
-              ? '0 10px 40px rgba(239, 68, 68, 0.4)'
-              : '0 10px 40px rgba(16, 185, 129, 0.4)',
-          }}
-        >
-          {/* Close button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDismiss();
-            }}
-            className="absolute top-1 right-1 w-11 h-11 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-all active:scale-95 z-10"
-            title="Dismiss"
-          >
-            <i className="fa-solid fa-times text-white text-sm"></i>
-          </button>
-          
-          <button
-            onClick={() => setIsExpanded(true)}
-            className="flex items-center space-x-3 flex-1 min-w-0"
-          >
-            {status === 'analyzing' && (
-              <>
-                {pendingAnalysis?.imageData ? (
-                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/30">
-                    <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">🍽️</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    <span className="text-sm font-bold text-white">Analyzing your meal...</span>
-                  </div>
-                  <p className="text-xs text-white/70 mt-0.5">AI is identifying foods</p>
-                </div>
-                <div className="text-white/50 flex-shrink-0">
-                  <i className="fa-solid fa-chevron-up"></i>
-                </div>
-              </>
-            )}
-          
-            {status === 'complete' && (
-              <>
-                {pendingAnalysis?.imageData ? (
-                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/40">
-                    <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">✅</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white flex items-center">
-                    <i className="fa-solid fa-check-circle mr-1.5"></i>
-                    Ready to save!
-                  </p>
-                  <p className="text-xs text-white/80">{Math.round(totals.calories)} kcal • Tap to review</p>
-                </div>
-                <div className="text-white/70 flex-shrink-0">
-                  <i className="fa-solid fa-chevron-up"></i>
-                </div>
-              </>
-            )}
-          
-          {status === 'error' && (
-            <>
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-exclamation-triangle text-white text-xl"></i>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">Analysis failed</p>
-                <p className="text-xs text-white/80 truncate">
-                  {error?.includes('API') || error?.includes('key') 
-                    ? '⚠️ Check API key in Settings' 
-                    : error?.includes('No food') 
-                    ? '📷 No food detected - try again'
-                    : error?.includes('timeout') || error?.includes('Timeout')
-                    ? '⏱️ Request timed out'
-                    : error?.includes('network') || error?.includes('fetch')
-                    ? '📶 Check your connection'
-                    : 'Tap to see details'}
-                </p>
-              </div>
-              <div className="text-white/70">
-                <i className="fa-solid fa-chevron-up"></i>
-              </div>
-            </>
-          )}
-          </button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Expanded result card

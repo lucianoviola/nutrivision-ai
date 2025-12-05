@@ -1,5 +1,40 @@
 import OpenAI from 'openai';
-import { FoodItem } from '../types.ts';
+import { FoodItem, Micronutrients } from '../types.ts';
+
+/**
+ * Parse micronutrients from AI response, with safe defaults.
+ */
+const parseMicronutrients = (micros: any): Micronutrients | undefined => {
+  if (!micros || typeof micros !== 'object') return undefined;
+  
+  const result: Micronutrients = {};
+  
+  // Only include values that are present and valid numbers
+  if (typeof micros.fiber === 'number') result.fiber = micros.fiber;
+  if (typeof micros.sugar === 'number') result.sugar = micros.sugar;
+  if (typeof micros.vitaminA === 'number') result.vitaminA = micros.vitaminA;
+  if (typeof micros.vitaminC === 'number') result.vitaminC = micros.vitaminC;
+  if (typeof micros.vitaminD === 'number') result.vitaminD = micros.vitaminD;
+  if (typeof micros.vitaminE === 'number') result.vitaminE = micros.vitaminE;
+  if (typeof micros.vitaminK === 'number') result.vitaminK = micros.vitaminK;
+  if (typeof micros.vitaminB6 === 'number') result.vitaminB6 = micros.vitaminB6;
+  if (typeof micros.vitaminB12 === 'number') result.vitaminB12 = micros.vitaminB12;
+  if (typeof micros.folate === 'number') result.folate = micros.folate;
+  if (typeof micros.calcium === 'number') result.calcium = micros.calcium;
+  if (typeof micros.iron === 'number') result.iron = micros.iron;
+  if (typeof micros.magnesium === 'number') result.magnesium = micros.magnesium;
+  if (typeof micros.potassium === 'number') result.potassium = micros.potassium;
+  if (typeof micros.sodium === 'number') result.sodium = micros.sodium;
+  if (typeof micros.zinc === 'number') result.zinc = micros.zinc;
+  if (typeof micros.saturatedFat === 'number') result.saturatedFat = micros.saturatedFat;
+  if (typeof micros.transFat === 'number') result.transFat = micros.transFat;
+  if (typeof micros.cholesterol === 'number') result.cholesterol = micros.cholesterol;
+  if (typeof micros.omega3 === 'number') result.omega3 = micros.omega3;
+  if (typeof micros.omega6 === 'number') result.omega6 = micros.omega6;
+  
+  // Return undefined if no micronutrients were found
+  return Object.keys(result).length > 0 ? result : undefined;
+};
 
 // Helper to get OpenAI API key from multiple sources
 const getOpenAiApiKey = () => {
@@ -225,7 +260,48 @@ export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]>
           content: [
             {
               type: 'text',
-              text: 'Analyze this image. If it contains food, identify each item, estimate the portion size, and calculate the nutritional values. If it is a barcode, read the barcode and identify the product associated with it and its nutritional values. Return a JSON object with the structure: { "items": [{"name": string, "servingSize": string, "macros": {"calories": number, "protein": number, "carbs": number, "fat": number}}] }',
+              text: `Analyze this image. If it contains food, identify each item, estimate the portion size, and calculate comprehensive nutritional values including micronutrients.
+
+Return a JSON object with this structure:
+{
+  "items": [{
+    "name": string,
+    "servingSize": string,
+    "macros": {
+      "calories": number,
+      "protein": number (g),
+      "carbs": number (g),
+      "fat": number (g)
+    },
+    "micros": {
+      "fiber": number (g),
+      "sugar": number (g),
+      "vitaminA": number (mcg RAE),
+      "vitaminC": number (mg),
+      "vitaminD": number (mcg),
+      "vitaminE": number (mg),
+      "vitaminK": number (mcg),
+      "vitaminB6": number (mg),
+      "vitaminB12": number (mcg),
+      "folate": number (mcg),
+      "calcium": number (mg),
+      "iron": number (mg),
+      "magnesium": number (mg),
+      "potassium": number (mg),
+      "sodium": number (mg),
+      "zinc": number (mg),
+      "saturatedFat": number (g),
+      "cholesterol": number (mg),
+      "omega3": number (g),
+      "omega6": number (g)
+    }
+  }]
+}
+
+Notes:
+- Estimate micronutrients based on typical values for each food
+- Include only micronutrients you're confident about (omit uncertain ones)
+- For barcodes, read and identify the product with its nutritional values`,
             },
             {
               type: 'image_url',
@@ -254,7 +330,19 @@ export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]>
 
     const data = JSON.parse(content);
     console.log(`✅ Successfully extracted ${data.items?.length || 0} food item(s)`);
-    return data.items || [];
+    
+    // Parse items with micronutrients
+    return (data.items || []).map((item: any) => ({
+      name: item.name || 'Unknown',
+      servingSize: item.servingSize || 'Unknown',
+      macros: {
+        calories: item.macros?.calories || 0,
+        protein: item.macros?.protein || 0,
+        carbs: item.macros?.carbs || 0,
+        fat: item.macros?.fat || 0,
+      },
+      micros: parseMicronutrients(item.micros),
+    }));
   } catch (error) {
     console.error('OpenAI Analysis Error:', error);
     throw error;
@@ -374,11 +462,26 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
       messages: [
         {
           role: 'user',
-          content: `Search for food items matching "${query}". Provide 5 distinct common variations, brands, or serving sizes (e.g. cooked vs raw, different portions). Return a JSON object with the structure: { "items": [{"name": string, "servingSize": string, "macros": {"calories": number, "protein": number, "carbs": number, "fat": number}}] }`,
+          content: `Search for food items matching "${query}". Provide 5 distinct common variations, brands, or serving sizes (e.g. cooked vs raw, different portions).
+
+Return a JSON object with this structure:
+{
+  "items": [{
+    "name": string,
+    "servingSize": string,
+    "macros": {"calories": number, "protein": number, "carbs": number, "fat": number},
+    "micros": {
+      "fiber": number (g), "sugar": number (g),
+      "vitaminC": number (mg), "iron": number (mg), "calcium": number (mg),
+      "potassium": number (mg), "sodium": number (mg), "saturatedFat": number (g)
+    }
+  }]
+}
+
+Include key micronutrients where available. Omit uncertain values.`,
         },
       ],
       response_format: { type: 'json_object' },
-      // Note: gpt-5-mini doesn't support custom temperature
     });
 
     const duration = Date.now() - startTime;
@@ -396,7 +499,18 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
 
     const data = JSON.parse(content);
     console.log(`✅ Found ${data.items?.length || 0} food items`);
-    return data.items || [];
+    
+    return (data.items || []).map((item: any) => ({
+      name: item.name || 'Unknown',
+      servingSize: item.servingSize || 'Unknown',
+      macros: {
+        calories: item.macros?.calories || 0,
+        protein: item.macros?.protein || 0,
+        carbs: item.macros?.carbs || 0,
+        fat: item.macros?.fat || 0,
+      },
+      micros: parseMicronutrients(item.micros),
+    }));
   } catch (error: any) {
     const duration = Date.now() - startTime;
     console.error(`❌ OpenAI Search Error after ${(duration / 1000).toFixed(2)}s:`, error);
@@ -410,7 +524,7 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
 };
 
 export const getNutritionalInfoFromBarcode = async (barcode: string): Promise<FoodItem | null> => {
-  // 1. Try OpenFoodFacts (Public Database)
+  // 1. Try OpenFoodFacts (Public Database) - has comprehensive micronutrients!
   try {
     console.log('Checking OpenFoodFacts for:', barcode);
     const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
@@ -422,10 +536,39 @@ export const getNutritionalInfoFromBarcode = async (barcode: string): Promise<Fo
       
       const servingSize = p.serving_size || '100g';
       
+      // Macros - prefer serving values, fallback to 100g
       const cals = n['energy-kcal_serving'] || n['energy-kcal_100g'] || n['energy-kcal'] || 0;
       const prot = n['proteins_serving'] || n['proteins_100g'] || n['proteins'] || 0;
       const carbs = n['carbohydrates_serving'] || n['carbohydrates_100g'] || n['carbohydrates'] || 0;
       const fat = n['fat_serving'] || n['fat_100g'] || n['fat'] || 0;
+
+      // Micronutrients from OpenFoodFacts
+      const micros: Micronutrients = {};
+      
+      const getMicro = (key: string): number | undefined => {
+        const val = n[`${key}_serving`] || n[`${key}_100g`] || n[key];
+        return val !== undefined ? Number(val) : undefined;
+      };
+      
+      if (getMicro('fiber') !== undefined) micros.fiber = getMicro('fiber');
+      if (getMicro('sugars') !== undefined) micros.sugar = getMicro('sugars');
+      if (getMicro('vitamin-a') !== undefined) micros.vitaminA = getMicro('vitamin-a');
+      if (getMicro('vitamin-c') !== undefined) micros.vitaminC = getMicro('vitamin-c');
+      if (getMicro('vitamin-d') !== undefined) micros.vitaminD = getMicro('vitamin-d');
+      if (getMicro('vitamin-e') !== undefined) micros.vitaminE = getMicro('vitamin-e');
+      if (getMicro('vitamin-k') !== undefined) micros.vitaminK = getMicro('vitamin-k');
+      if (getMicro('vitamin-b6') !== undefined) micros.vitaminB6 = getMicro('vitamin-b6');
+      if (getMicro('vitamin-b12') !== undefined) micros.vitaminB12 = getMicro('vitamin-b12');
+      if (getMicro('folates') !== undefined) micros.folate = getMicro('folates');
+      if (getMicro('calcium') !== undefined) micros.calcium = getMicro('calcium');
+      if (getMicro('iron') !== undefined) micros.iron = getMicro('iron');
+      if (getMicro('magnesium') !== undefined) micros.magnesium = getMicro('magnesium');
+      if (getMicro('potassium') !== undefined) micros.potassium = getMicro('potassium');
+      if (getMicro('sodium') !== undefined) micros.sodium = getMicro('sodium');
+      if (getMicro('zinc') !== undefined) micros.zinc = getMicro('zinc');
+      if (getMicro('saturated-fat') !== undefined) micros.saturatedFat = getMicro('saturated-fat');
+      if (getMicro('trans-fat') !== undefined) micros.transFat = getMicro('trans-fat');
+      if (getMicro('cholesterol') !== undefined) micros.cholesterol = getMicro('cholesterol');
 
       return {
         name: p.product_name || `Product ${barcode}`,
@@ -436,6 +579,7 @@ export const getNutritionalInfoFromBarcode = async (barcode: string): Promise<Fo
           carbs: Number(carbs),
           fat: Number(fat),
         },
+        micros: Object.keys(micros).length > 0 ? micros : undefined,
       };
     }
   } catch (e) {
@@ -447,15 +591,18 @@ export const getNutritionalInfoFromBarcode = async (barcode: string): Promise<Fo
     const openai = getOpenAiInstance();
     console.log('Falling back to OpenAI for barcode:', barcode);
     const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini-2025-08-07', // Using GPT-5 Mini
+      model: 'gpt-5-mini-2025-08-07',
       messages: [
         {
           role: 'user',
-          content: `Identify the food product associated with the barcode number "${barcode}". If you can identify it with high confidence, return its name, standard serving size, and estimated nutritional macros. If you do not recognize the barcode, return an empty list of items. Return a JSON object with the structure: { "items": [{"name": string, "servingSize": string, "macros": {"calories": number, "protein": number, "carbs": number, "fat": number}}] }`,
+          content: `Identify the food product associated with barcode "${barcode}". If recognized, return its nutritional info including micronutrients.
+
+Return JSON: { "items": [{"name": string, "servingSize": string, "macros": {...}, "micros": {"fiber": g, "sugar": g, "sodium": mg, ...}}] }
+
+Return empty items array if unrecognized.`,
         },
       ],
       response_format: { type: 'json_object' },
-      // Note: gpt-5-mini doesn't support custom temperature
     });
 
     const content = response.choices[0]?.message?.content;
@@ -466,7 +613,18 @@ export const getNutritionalInfoFromBarcode = async (barcode: string): Promise<Fo
     const data = JSON.parse(content);
     
     if (data.items && data.items.length > 0) {
-      return data.items[0];
+      const item = data.items[0];
+      return {
+        name: item.name || 'Unknown',
+        servingSize: item.servingSize || 'Unknown',
+        macros: {
+          calories: item.macros?.calories || 0,
+          protein: item.macros?.protein || 0,
+          carbs: item.macros?.carbs || 0,
+          fat: item.macros?.fat || 0,
+        },
+        micros: parseMicronutrients(item.micros),
+      };
     }
   } catch (error) {
     console.error('OpenAI Barcode Fallback Error:', error);
