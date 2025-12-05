@@ -4,6 +4,7 @@ import * as aiService from '../services/aiService.ts';
 import * as savedMealsService from '../services/savedMealsService.ts';
 import * as favoritesService from '../services/favoritesService.ts';
 import { hapticTap, hapticSuccess } from '../utils/haptics.ts';
+import { generateUUID } from '../utils/uuid.ts';
 import NumericInput from '../components/NumericInput.tsx';
 
 declare global {
@@ -518,7 +519,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
       stopCamera();
       
       const newLog: MealLog = {
-          id: Date.now().toString(),
+          id: generateUUID(),
           timestamp: Date.now(),
           imageUrl: image || undefined,
           items: result,

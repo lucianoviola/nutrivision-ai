@@ -378,43 +378,55 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           
           <button
             onClick={() => setIsExpanded(true)}
-            className="flex items-center space-x-3 flex-1"
+            className="flex items-center space-x-3 flex-1 min-w-0"
           >
-          {status === 'analyzing' && (
-            <>
-              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/30">
-                <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  <span className="text-sm font-bold text-white">Analyzing your meal...</span>
+            {status === 'analyzing' && (
+              <>
+                {pendingAnalysis?.imageData ? (
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/30">
+                    <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl">🍽️</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    <span className="text-sm font-bold text-white">Analyzing your meal...</span>
+                  </div>
+                  <p className="text-xs text-white/70 mt-0.5">AI is identifying foods</p>
                 </div>
-                <p className="text-xs text-white/70 mt-0.5">AI is identifying foods</p>
-              </div>
-              <div className="text-white/50">
-                <i className="fa-solid fa-chevron-up"></i>
-              </div>
-            </>
-          )}
+                <div className="text-white/50 flex-shrink-0">
+                  <i className="fa-solid fa-chevron-up"></i>
+                </div>
+              </>
+            )}
           
-          {status === 'complete' && (
-            <>
-              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/40">
-                <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-white flex items-center">
-                  <i className="fa-solid fa-check-circle mr-1.5"></i>
-                  Ready to save!
-                </p>
-                <p className="text-xs text-white/80">{Math.round(totals.calories)} kcal • Tap to review</p>
-              </div>
-              <div className="text-white/70">
-                <i className="fa-solid fa-chevron-up"></i>
-              </div>
-            </>
-          )}
+            {status === 'complete' && (
+              <>
+                {pendingAnalysis?.imageData ? (
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/40">
+                    <img src={pendingAnalysis.imageData} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl">✅</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white flex items-center">
+                    <i className="fa-solid fa-check-circle mr-1.5"></i>
+                    Ready to save!
+                  </p>
+                  <p className="text-xs text-white/80">{Math.round(totals.calories)} kcal • Tap to review</p>
+                </div>
+                <div className="text-white/70 flex-shrink-0">
+                  <i className="fa-solid fa-chevron-up"></i>
+                </div>
+              </>
+            )}
           
           {status === 'error' && (
             <>

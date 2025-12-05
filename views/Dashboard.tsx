@@ -2,6 +2,13 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { MealLog, UserSettings } from '../types.ts';
 import MealDetailModal from '../components/MealDetailModal.tsx';
 import { DashboardSkeleton, MealCardSkeleton } from '../components/Skeleton.tsx';
+import { generateUUID } from '../utils/uuid.ts';
+
+interface PendingAnalysis {
+  id: string;
+  imageData: string;
+  timestamp: number;
+}
 
 interface DashboardProps {
   logs: MealLog[];
@@ -9,6 +16,8 @@ interface DashboardProps {
   onAddMeal?: () => void;
   onDeleteLog?: (id: string) => void;
   onUpdateLog?: (meal: MealLog) => void;
+  pendingAnalysis?: PendingAnalysis | null;
+  onExpandAnalysis?: () => void;
 }
 
 // Opal-style calorie ring with purple/pink gradients
@@ -212,19 +221,21 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
   );
 };
 
-// Opal-style macro pill with colored dot
-const MacroPill: React.FC<{ 
+// Cal AI-inspired macro card with mini ring
+const MacroCard: React.FC<{ 
   label: string; 
   current: number; 
   goal: number; 
   color: string;
+  icon: 'protein' | 'carbs' | 'fat';
   delay: number;
-}> = ({ label, current, goal, color, delay }) => {
+}> = ({ label, current, goal, color, icon, delay }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [animatedProgress, setAnimatedProgress] = useState(0);
+  const remaining = goal - current;
+  const isOver = remaining < 0;
+  const displayAmount = Math.abs(Math.round(remaining));
   const progress = Math.min((current / goal) * 100, 100);
-  const isNearGoal = progress >= 75 && progress < 100;
-  const isOverGoal = progress >= 100;
   
   useEffect(() => {
     const timer1 = setTimeout(() => setIsVisible(true), delay);
@@ -235,71 +246,92 @@ const MacroPill: React.FC<{
     };
   }, [delay, progress]);
   
-  // Warning/success colors
-  const getProgressColor = () => {
-    if (isOverGoal) return '#EF4444'; // Red for over
-    if (isNearGoal) return '#F59E0B'; // Amber for near goal
-    return color;
+  // Ring calculations
+  const ringSize = 44;
+  const strokeWidth = 4;
+  const radius = (ringSize - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (animatedProgress / 100) * circumference;
+  
+  // Icon components with matching colors
+  const MacroIcon = () => {
+    if (icon === 'protein') {
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill={color} />
+        </svg>
+      );
+    }
+    if (icon === 'carbs') {
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2c-1.5 0-3 .5-4 2-1.5 2-1 4 0 6 .5 1 1 2 1 3v9h6v-9c0-1 .5-2 1-3 1-2 1.5-4 0-6-1-1.5-2.5-2-4-2z" fill={color} />
+        </svg>
+      );
+    }
+    // Fat - water drop
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0L12 2.69z" fill={color} />
+      </svg>
+    );
   };
   
   return (
     <button
-      className={`flex flex-col items-center px-2 py-3 rounded-2xl transition-all duration-500 relative active:scale-95 ${
+      className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-500 active:scale-95 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: 'rgba(26, 22, 51, 0.4)',
-        border: isOverGoal 
-          ? '1px solid rgba(239, 68, 68, 0.3)' 
-          : isNearGoal 
-          ? '1px solid rgba(245, 158, 11, 0.2)' 
-          : '1px solid rgba(139, 92, 246, 0.08)',
+        background: 'rgba(26, 22, 51, 0.6)',
+        border: `1px solid ${color}20`,
         backdropFilter: 'blur(12px)',
-        boxShadow: isOverGoal 
-          ? '0 0 15px rgba(239, 68, 68, 0.15)' 
-          : isNearGoal 
-          ? '0 0 15px rgba(245, 158, 11, 0.1)' 
-          : 'none',
       }}
     >
-      {/* Label at top */}
-      <span className={`text-[9px] font-semibold uppercase tracking-wider mb-1 ${
-        isOverGoal ? 'text-red-400' : isNearGoal ? 'text-amber-400' : 'text-white/40'
-      }`}>
-        {label}
-      </span>
-      
-      <div className="flex items-center space-x-1.5">
-        {/* Colored dot with glow */}
-        <div 
-          className={`w-2 h-2 rounded-full flex-shrink-0 ${isNearGoal || isOverGoal ? 'animate-pulse' : ''}`}
-          style={{
-            background: getProgressColor(),
-            boxShadow: `0 0 8px ${getProgressColor()}80`,
-          }}
-        />
-        
-        <div className="flex items-baseline space-x-0.5">
-          <span className={`text-lg font-black ${isOverGoal ? 'text-red-400' : 'text-white'}`}>
-            {Math.round(current)}
-          </span>
-          <span className="text-[10px] text-white/40 font-medium">/{goal}g</span>
-        </div>
+      {/* Amount and status text */}
+      <div className="text-center mb-2">
+        <span className="text-xl font-black text-white">{displayAmount}g</span>
+        <p className="text-[10px] text-white/50 font-medium">
+          {label} <span style={{ color: isOver ? '#EF4444' : color }}>{isOver ? 'over' : 'left'}</span>
+        </p>
       </div>
       
-      {/* Progress bar underneath */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 h-1 rounded-full overflow-hidden"
-        style={{ background: 'rgba(139, 92, 246, 0.08)' }}
-      >
+      {/* Mini ring with icon */}
+      <div className="relative" style={{ width: ringSize, height: ringSize }}>
+        <svg width={ringSize} height={ringSize} className="transform -rotate-90">
+          {/* Background ring */}
+          <circle
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth={strokeWidth}
+          />
+          {/* Progress ring */}
+          <circle
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            r={radius}
+            fill="none"
+            stroke={isOver ? '#EF4444' : color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className="transition-all duration-1000 ease-out"
+            style={{
+              filter: `drop-shadow(0 0 4px ${isOver ? '#EF4444' : color}80)`,
+            }}
+          />
+        </svg>
+        {/* Icon in center */}
         <div 
-          className="h-full rounded-full transition-all duration-1000 ease-out"
-          style={{ 
-            width: `${animatedProgress}%`,
-            background: `linear-gradient(90deg, ${getProgressColor()}CC, ${getProgressColor()})`,
-            boxShadow: `0 0 10px ${getProgressColor()}80`,
-          }}
-        />
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ filter: `drop-shadow(0 0 6px ${color}60)` }}
+        >
+          <MacroIcon />
+        </div>
       </div>
     </button>
   );
@@ -432,20 +464,20 @@ const MealCard: React.FC<{
           
           <div className="flex space-x-2 mt-2.5">
             <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
-              background: 'rgba(16, 185, 129, 0.15)', 
-              color: '#34D399' 
+              background: 'rgba(248, 113, 113, 0.15)', 
+              color: '#F87171' 
             }}>
               P {Math.round(log.totalMacros.protein)}g
             </span>
             <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
-              background: 'rgba(59, 130, 246, 0.15)', 
-              color: '#3B82F6' 
+              background: 'rgba(251, 191, 36, 0.15)', 
+              color: '#FBBF24' 
             }}>
               C {Math.round(log.totalMacros.carbs)}g
             </span>
             <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
-              background: 'rgba(251, 146, 60, 0.15)', 
-              color: '#FB923C' 
+              background: 'rgba(96, 165, 250, 0.15)', 
+              color: '#60A5FA' 
             }}>
               F {Math.round(log.totalMacros.fat)}g
             </span>
@@ -691,13 +723,64 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
 };
 
 
-const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog, onUpdateLog }) => {
+// Inline processing card - shows where the meal will appear
+const ProcessingCard: React.FC<{ 
+  analysis: PendingAnalysis; 
+  onClick?: () => void;
+}> = ({ analysis, onClick }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98] animate-pulse"
+      style={{
+        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
+        border: '1px solid rgba(139, 92, 246, 0.3)',
+        boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+      }}
+    >
+      <div className="flex items-center space-x-4">
+        {/* Image thumbnail */}
+        <div className="relative">
+          <div className="w-16 h-16 rounded-xl overflow-hidden ring-2 ring-purple-500/50">
+            <img 
+              src={analysis.imageData} 
+              alt="" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {/* Spinning indicator overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-xl">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+        
+        {/* Status text */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2 mb-1">
+            <span className="text-sm font-bold text-white">Analyzing your meal...</span>
+          </div>
+          <p className="text-xs text-white/60">AI is identifying foods • Tap to view details</p>
+        </div>
+        
+        {/* Chevron */}
+        <div className="text-white/40">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </button>
+  );
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDeleteLog, onUpdateLog, pendingAnalysis, onExpandAnalysis }) => {
   const [headerVisible, setHeaderVisible] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<MealLog | null>(null);
   const [isPulling, setIsPulling] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [selectedDay, setSelectedDay] = useState<'today' | 'yesterday'>('today');
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef(0);
   
@@ -717,14 +800,28 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
     });
   }, [logs]);
 
+  const yesterday = useMemo(() => {
+    const now = new Date();
+    const yesterdayDate = new Date(now);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    return logs.filter(log => {
+      const logDate = new Date(log.timestamp);
+      return logDate.getDate() === yesterdayDate.getDate() && 
+             logDate.getMonth() === yesterdayDate.getMonth() && 
+             logDate.getFullYear() === yesterdayDate.getFullYear();
+    });
+  }, [logs]);
+
+  const displayedLogs = selectedDay === 'today' ? today : yesterday;
+
   const totals = useMemo(() => {
-    return today.reduce((acc, log) => ({
+    return displayedLogs.reduce((acc, log) => ({
       calories: acc.calories + log.totalMacros.calories,
       protein: acc.protein + log.totalMacros.protein,
       carbs: acc.carbs + log.totalMacros.carbs,
       fat: acc.fat + log.totalMacros.fat,
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
-  }, [today]);
+  }, [displayedLogs]);
 
   // Weekly stats
   const weeklyStats = useMemo(() => {
@@ -945,16 +1042,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         style={{ transform: `translateY(${pullDistance}px)` }}
       >
       {/* Header */}
-        <div className={`pt-14 sm:pt-16 md:pt-20 pb-4 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {greeting}
-              </h1>
-              <p className="text-sm text-white/50 font-medium mt-0.5">{getFormattedDate()}</p>
+        <div className={`pt-12 sm:pt-14 md:pt-16 pb-2 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+          {/* App Logo */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">🍽️</span>
+              <span className="text-lg font-bold text-white tracking-tight">NutriVision AI</span>
             </div>
             
-            {/* Compact streak badge */}
+            {/* Streak badge */}
             {currentStreak > 0 && (
               <div 
                 className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full"
@@ -968,38 +1064,71 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
               >
                 <span className={`text-base ${currentStreak >= 7 ? 'animate-pulse' : ''}`}>🔥</span>
                 <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
-           </div>
+              </div>
             )}
-           </div>
+          </div>
+          
+          {/* Today/Yesterday Toggle */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setSelectedDay('today')}
+              className={`text-sm font-semibold transition-all duration-200 ${
+                selectedDay === 'today' 
+                  ? 'text-white' 
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Today
+              {selectedDay === 'today' && (
+                <div className="h-0.5 bg-white rounded-full mt-1" />
+              )}
+            </button>
+            <button
+              onClick={() => setSelectedDay('yesterday')}
+              className={`text-sm font-semibold transition-all duration-200 ${
+                selectedDay === 'yesterday' 
+                  ? 'text-white' 
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Yesterday
+              {selectedDay === 'yesterday' && (
+                <div className="h-0.5 bg-white rounded-full mt-1" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Calorie Ring */}
         <div className="flex justify-center py-4">
           <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
         </div>
-        
+
         {/* Macro Pills - always 3 in a row */}
         <div className="px-4 mt-4">
           <div className="grid grid-cols-3 gap-2">
-            <MacroPill 
+            <MacroCard 
               label="Protein" 
               current={totals.protein} 
               goal={settings.dailyProteinGoal}
-              color="#10B981"
+              color="#F87171"
+              icon="protein"
               delay={200}
             />
-            <MacroPill 
+            <MacroCard 
               label="Carbs" 
               current={totals.carbs} 
               goal={settings.dailyCarbGoal}
-              color="#3B82F6"
+              color="#FBBF24"
+              icon="carbs"
               delay={250}
             />
-            <MacroPill 
+            <MacroCard 
               label="Fat" 
               current={totals.fat} 
               goal={settings.dailyFatGoal}
-              color="#F472B6"
+              color="#60A5FA"
+              icon="fat"
               delay={300}
             />
         </div>
@@ -1037,8 +1166,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
           </div>
         )}
 
-        {/* Meal Templates - Yesterday's meals */}
-        {yesterdayMeals.length > 0 && today.length === 0 && (
+        {/* Meal Templates - Yesterday's meals (only show on Today view) */}
+        {selectedDay === 'today' && yesterdayMeals.length > 0 && displayedLogs.length === 0 && (
           <div className="px-6 mt-6">
             <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-3">Quick Log from Yesterday</p>
             <div className="flex space-x-2 overflow-x-auto pb-2 -mx-6 px-6">
@@ -1063,12 +1192,14 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
           </div>
         )}
 
-        {/* Today's Meals */}
+        {/* Meals Section */}
         <div className="px-6 mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white">Today's Meals</h3>
+            <h3 className="text-lg font-bold text-white">
+              {selectedDay === 'today' ? "Today's Meals" : "Yesterday's Meals"}
+            </h3>
             {/* Only show badge when there are meals */}
-            {today.length > 0 && (
+            {displayedLogs.length > 0 && (
               <span 
                 className="text-xs font-medium px-3 py-1 rounded-full"
                 style={{
@@ -1076,16 +1207,32 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                   color: 'rgba(255,255,255,0.6)',
                 }}
               >
-                {today.length} {today.length === 1 ? 'meal' : 'meals'}
+                {displayedLogs.length} {displayedLogs.length === 1 ? 'meal' : 'meals'}
               </span>
             )}
           </div>
 
-          {today.length === 0 ? (
-            <EmptyState onAddMeal={onAddMeal || (() => {})} />
-          ) : (
+          {/* Processing card - shows inline when analyzing */}
+          {selectedDay === 'today' && pendingAnalysis && (
+            <div className="mb-3">
+              <ProcessingCard 
+                analysis={pendingAnalysis} 
+                onClick={onExpandAnalysis}
+              />
+            </div>
+          )}
+
+          {displayedLogs.length === 0 && !pendingAnalysis ? (
+            selectedDay === 'today' ? (
+              <EmptyState onAddMeal={onAddMeal || (() => {})} />
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-white/40 text-sm">No meals logged yesterday</p>
+              </div>
+            )
+          ) : displayedLogs.length > 0 ? (
             <div className="space-y-3">
-              {today.map((log, index) => (
+              {displayedLogs.map((log, index) => (
                 <MealCard 
                   key={log.id} 
                   log={log} 
@@ -1097,7 +1244,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                     if (onUpdateLog) {
                       const duplicate: MealLog = {
                         ...meal,
-                        id: Date.now().toString(),
+                        id: generateUUID(),
                         timestamp: Date.now(),
                       };
                       // This will add a new log (we need to call the parent's add function)
@@ -1108,11 +1255,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                 />
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Progress Banner */}
-        {today.length > 0 && progressPercent > 0 && (
+        {displayedLogs.length > 0 && progressPercent > 0 && (
           <div className="px-6 mt-6 mb-6">
             <div 
               className="relative overflow-hidden rounded-2xl p-5"
@@ -1134,15 +1281,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
 
                 <div className="flex space-x-4">
                   <div className="text-center">
-                    <p className="text-lg font-bold" style={{ color: '#10B981' }}>{Math.round(totals.protein)}g</p>
+                    <p className="text-lg font-bold" style={{ color: '#F87171' }}>{Math.round(totals.protein)}g</p>
                     <p className="text-xs text-white/40 uppercase">P</p>
                        </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold" style={{ color: '#3B82F6' }}>{Math.round(totals.carbs)}g</p>
+                    <p className="text-lg font-bold" style={{ color: '#FBBF24' }}>{Math.round(totals.carbs)}g</p>
                     <p className="text-xs text-white/40 uppercase">C</p>
                    </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold" style={{ color: '#FB923C' }}>{Math.round(totals.fat)}g</p>
+                    <p className="text-lg font-bold" style={{ color: '#60A5FA' }}>{Math.round(totals.fat)}g</p>
                     <p className="text-xs text-white/40 uppercase">F</p>
                    </div>
                </div>

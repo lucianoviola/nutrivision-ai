@@ -38,7 +38,7 @@ export function addFavorite(food: FoodItem): FavoriteFood {
   
   const favorite: FavoriteFood = {
     ...food,
-    id: Date.now().toString(),
+    id: crypto.randomUUID?.() || Date.now().toString(),
     addedAt: Date.now(),
     useCount: 0,
   };

@@ -16,6 +16,7 @@ import { healthService } from './services/healthService.ts';
 import * as savedMealsService from './services/savedMealsService.ts';
 import { hapticSuccess, hapticError, hapticTap, hapticImpact } from './utils/haptics.ts';
 import { compressImage, needsCompression } from './utils/imageCompression.ts';
+import { generateUUID } from './utils/uuid.ts';
 import * as supabaseService from './services/supabaseService.ts';
 import { User } from '@supabase/supabase-js';
 
@@ -153,7 +154,7 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
     }
     
     const analysis: PendingAnalysis = {
-      id: Date.now().toString(),
+      id: generateUUID(),
       imageData: processedImage,
       timestamp: Date.now(),
     };
@@ -345,7 +346,7 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
     // Create a new meal with new ID and current timestamp
     const duplicatedMeal: MealLog = {
       ...meal,
-      id: Date.now().toString(),
+      id: generateUUID(),
       timestamp: Date.now(),
     };
     
@@ -396,7 +397,15 @@ const AppContent: React.FC<{ user: User | null }> = ({ user }) => {
   const renderView = () => {
     switch (currentView) {
       case AppView.DASHBOARD:
-        return <Dashboard logs={logs} settings={settings} onAddMeal={() => setCurrentView(AppView.CAMERA)} onDeleteLog={handleDeleteLog} onUpdateLog={handleUpdateLog} />;
+        return <Dashboard 
+          logs={logs} 
+          settings={settings} 
+          onAddMeal={() => setCurrentView(AppView.CAMERA)} 
+          onDeleteLog={handleDeleteLog} 
+          onUpdateLog={handleUpdateLog}
+          pendingAnalysis={pendingAnalysis}
+          onExpandAnalysis={() => setAnalysisExpanded(true)}
+        />;
       case AppView.HISTORY:
         return <LogHistory logs={logs} onDelete={handleDeleteLog} onUpdateLog={handleUpdateLog} onDuplicateLog={handleDuplicateLog} settings={settings} />;
       case AppView.STATS:

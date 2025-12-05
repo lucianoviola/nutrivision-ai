@@ -246,6 +246,8 @@ export async function getMealLogs(userId: string): Promise<MealLog[]> {
     return [];
   }
   
+  console.log(`📋 Fetched ${mealLogs.length} meal logs from Supabase`);
+  
   // Fetch food items for all meal logs
   const mealIds = mealLogs.map(log => log.id);
   const { data: foodItems, error: itemsError } = await supabase
@@ -322,6 +324,12 @@ export async function createMealLog(userId: string, mealLog: MealLog): Promise<M
   
   if (logError || !insertedLog) {
     console.error('Error creating meal log:', logError);
+    console.error('Attempted to insert:', {
+      id: mealLog.id,
+      user_id: userId,
+      meal_type: mealLog.type,
+      timestamp: mealLog.timestamp,
+    });
     return null;
   }
   
@@ -346,6 +354,7 @@ export async function createMealLog(userId: string, mealLog: MealLog): Promise<M
     }
   }
   
+  console.log('✅ Meal log created successfully:', mealLog.id);
   return {
     ...mealLog,
     imageUrl,

@@ -41,7 +41,7 @@ export const saveMeal = (meal: Omit<SavedMeal, 'id' | 'createdAt' | 'useCount' |
   const savedMeals = getSavedMeals();
   const newMeal: SavedMeal = {
     ...meal,
-    id: Date.now().toString(),
+    id: crypto.randomUUID?.() || Date.now().toString(),
     createdAt: Date.now(),
     useCount: 0,
   };
