@@ -399,8 +399,8 @@ const MealCard: React.FC<{
               P {Math.round(log.totalMacros.protein)}g
             </span>
             <span className="text-xs px-2 py-0.5 rounded-md font-bold" style={{ 
-              background: 'rgba(139, 92, 246, 0.15)', 
-              color: '#A855F7' 
+              background: 'rgba(59, 130, 246, 0.15)', 
+              color: '#3B82F6' 
             }}>
               C {Math.round(log.totalMacros.carbs)}g
             </span>
@@ -954,7 +954,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
               label="Carbs" 
               current={totals.carbs} 
               goal={settings.dailyCarbGoal}
-              color="#A855F7"
+              color="#3B82F6"
               delay={250}
             />
             <MacroPill 

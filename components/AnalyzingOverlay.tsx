@@ -708,94 +708,66 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
-                          <div className="flex space-x-2">
-                            <NumericInput
-                              value={parseServingSize(item.servingSize).quantity}
-                              onChange={(qty) => {
-                                const unit = parseServingSize(item.servingSize).unit;
-                                updateServingSize(index, qty, unit);
-                              }}
-                              allowDecimals={true}
-                              className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
-                              placeholder="100"
-                            />
-                            <select
-                              value={parseServingSize(item.servingSize).unit}
-                              onChange={(e) => {
-                                const qty = parseServingSize(item.servingSize).quantity;
-                                updateServingSize(index, qty, e.target.value);
-                              }}
-                              className="px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
-                            >
-                              <option value="g">g</option>
-                              <option value="kg">kg</option>
-                              <option value="oz">oz</option>
-                              <option value="lb">lb</option>
-                              <option value="cup">cup</option>
-                              <option value="cups">cups</option>
-                              <option value="tbsp">tbsp</option>
-                              <option value="tsp">tsp</option>
-                              <option value="ml">ml</option>
-                              <option value="l">l</option>
-                              <option value="piece">piece</option>
-                              <option value="pieces">pieces</option>
-                              <option value="slice">slice</option>
-                              <option value="slices">slices</option>
-                              <option value="serving">serving</option>
-                              <option value="servings">servings</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Calories</label>
-                          <div className="relative">
-                            <NumericInput
-                              value={item.macros.calories}
-                              onChange={(val) => updateItemMacro(index, 'calories', val)}
-                              allowDecimals={false}
-                              className="w-full px-3 py-2 pr-12 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
-                              placeholder="0"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">
-                              kcal
-                            </span>
-                          </div>
+                      {/* Serving Size - the ONLY editable field */}
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
+                        <div className="flex space-x-2">
+                          <NumericInput
+                            value={parseServingSize(item.servingSize).quantity}
+                            onChange={(qty) => {
+                              const unit = parseServingSize(item.servingSize).unit;
+                              updateServingSize(index, qty, unit);
+                            }}
+                            allowDecimals={true}
+                            className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                            placeholder="1"
+                          />
+                          <select
+                            value={parseServingSize(item.servingSize).unit}
+                            onChange={(e) => {
+                              const qty = parseServingSize(item.servingSize).quantity;
+                              updateServingSize(index, qty, e.target.value);
+                            }}
+                            className="px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                          >
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="oz">oz</option>
+                            <option value="lb">lb</option>
+                            <option value="cup">cup</option>
+                            <option value="cups">cups</option>
+                            <option value="tbsp">tbsp</option>
+                            <option value="tsp">tsp</option>
+                            <option value="ml">ml</option>
+                            <option value="l">l</option>
+                            <option value="piece">piece</option>
+                            <option value="pieces">pieces</option>
+                            <option value="slice">slice</option>
+                            <option value="slices">slices</option>
+                            <option value="serving">serving</option>
+                            <option value="servings">servings</option>
+                            <option value="pack">pack</option>
+                          </select>
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Protein (g)</label>
-                          <NumericInput
-                            value={item.macros.protein}
-                            onChange={(val) => updateItemMacro(index, 'protein', val)}
-                            allowDecimals={true}
-                            className="w-full px-3 py-2 rounded-lg text-green-400 text-sm bg-white/5 border border-green-500/30 focus:border-green-500 focus:outline-none"
-                            placeholder="0"
-                          />
+                      {/* Macros - READ ONLY display */}
+                      <div className="grid grid-cols-4 gap-2 pt-2 mt-2 border-t border-white/10">
+                        <div className="text-center">
+                          <p className="text-xs text-gray-500 uppercase">Cals</p>
+                          <p className="text-sm text-white font-bold">{Math.round(item.macros.calories)}</p>
                         </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Carbs (g)</label>
-                          <NumericInput
-                            value={item.macros.carbs}
-                            onChange={(val) => updateItemMacro(index, 'carbs', val)}
-                            allowDecimals={true}
-                            className="w-full px-3 py-2 rounded-lg text-blue-400 text-sm bg-white/5 border border-blue-500/30 focus:border-blue-500 focus:outline-none"
-                            placeholder="0"
-                          />
+                        <div className="text-center">
+                          <p className="text-xs text-green-500 uppercase">Prot</p>
+                          <p className="text-sm text-green-400 font-bold">{Math.round(item.macros.protein)}g</p>
                         </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Fat (g)</label>
-                          <NumericInput
-                            value={item.macros.fat}
-                            onChange={(val) => updateItemMacro(index, 'fat', val)}
-                            allowDecimals={true}
-                            className="w-full px-3 py-2 rounded-lg text-orange-400 text-sm bg-white/5 border border-orange-500/30 focus:border-orange-500 focus:outline-none"
-                            placeholder="0"
-                          />
+                        <div className="text-center">
+                          <p className="text-xs text-blue-500 uppercase">Carbs</p>
+                          <p className="text-sm text-blue-400 font-bold">{Math.round(item.macros.carbs)}g</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-orange-500 uppercase">Fat</p>
+                          <p className="text-sm text-orange-400 font-bold">{Math.round(item.macros.fat)}g</p>
                         </div>
                       </div>
                     </div>
