@@ -551,3 +551,171 @@ button:active {
   font-size: clamp(0.75rem, 1.5vw, 0.875rem);
   line-height: 1.5;
 }
+
+/* ============================================
+   OPAL-STYLE AMBIENT EFFECTS
+   ============================================ */
+
+/* Ambient glow orb - main background effect */
+.opal-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.opal-ambient::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.05) 40%, transparent 70%);
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: blur(60px);
+  animation: ambient-float 8s ease-in-out infinite;
+}
+
+.opal-ambient::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.08) 0%, transparent 60%);
+  bottom: 20%;
+  right: -10%;
+  filter: blur(80px);
+  animation: ambient-float 10s ease-in-out infinite reverse;
+}
+
+@keyframes ambient-float {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(-50%) translateY(20px) scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Opal breathing ring */
+@keyframes opal-breathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.3));
+  }
+  50% {
+    transform: scale(1.015);
+    filter: drop-shadow(0 0 35px rgba(139, 92, 246, 0.5));
+  }
+}
+
+.opal-ring {
+  animation: opal-breathe 4s ease-in-out infinite;
+}
+
+/* Opal floating card - no borders, pure shadow */
+.opal-card {
+  background: rgba(20, 17, 40, 0.6);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: none !important;
+  border-radius: 24px;
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(139, 92, 246, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.opal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Opal zen transitions */
+.opal-transition {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.opal-transition-slow {
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Opal focus state */
+.opal-focus {
+  animation: opal-focus-pulse 2s ease-in-out infinite;
+}
+
+@keyframes opal-focus-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.1);
+  }
+}
+
+/* Opal number display - huge and bold */
+.opal-number {
+  font-size: 4.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-shadow: 0 4px 40px rgba(139, 92, 246, 0.4);
+}
+
+.opal-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
+/* Opal monochrome mode - single accent */
+.opal-mono .accent-protein,
+.opal-mono .accent-carbs,
+.opal-mono .accent-fat {
+  color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+}
+
+/* Opal page transitions */
+@keyframes opal-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.opal-page-enter {
+  animation: opal-page-enter 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Staggered children animation */
+.opal-stagger > * {
+  opacity: 0;
+  animation: opal-page-enter 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.opal-stagger > *:nth-child(1) { animation-delay: 0.1s; }
+.opal-stagger > *:nth-child(2) { animation-delay: 0.15s; }
+.opal-stagger > *:nth-child(3) { animation-delay: 0.2s; }
+.opal-stagger > *:nth-child(4) { animation-delay: 0.25s; }
+.opal-stagger > *:nth-child(5) { animation-delay: 0.3s; }
+.opal-stagger > *:nth-child(6) { animation-delay: 0.35s; }
+.opal-stagger > *:nth-child(7) { animation-delay: 0.4s; }
+.opal-stagger > *:nth-child(8) { animation-delay: 0.45s; }

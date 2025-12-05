@@ -613,9 +613,8 @@ export async function hasCloudData(userId: string): Promise<boolean> {
  * Check if Supabase is configured.
  */
 export function isSupabaseConfigured(): boolean {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  return !!(url && key && url.includes('supabase.co'));
+  // Temporarily disabled for testing
+  return false;
 }
 
 export default supabase;

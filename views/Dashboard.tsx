@@ -77,58 +77,115 @@ const Confetti: React.FC<{ trigger: boolean; onComplete?: () => void }> = ({ tri
   );
 };
 
-// Weekly mini chart component
+// Weekly mini chart component - Premium version
 const WeeklyMiniChart: React.FC<{ 
   dailyData: Array<{ day: string; calories: number; isToday: boolean }>;
   goal: number;
 }> = ({ dailyData, goal }) => {
   const [animatedHeights, setAnimatedHeights] = useState<number[]>(dailyData.map(() => 0));
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   
   useEffect(() => {
     const timer = setTimeout(() => {
-      setAnimatedHeights(dailyData.map(d => Math.min((d.calories / goal) * 100, 100)));
+      setAnimatedHeights(dailyData.map(d => Math.min((d.calories / goal) * 100, 120)));
     }, 300);
     return () => clearTimeout(timer);
   }, [dailyData, goal]);
   
-  const maxCalories = Math.max(...dailyData.map(d => d.calories), goal);
+  const chartHeight = 80; // Taller chart
   
   return (
-    <div className="flex items-end justify-between h-16 gap-1.5">
-      {dailyData.map((day, index) => {
-        const heightPercent = animatedHeights[index] || 0;
-        const isOverGoal = day.calories > goal;
-        const isEmpty = day.calories === 0;
-        
-        return (
-          <div key={day.day} className="flex flex-col items-center flex-1">
-            {/* Bar */}
+    <div className="relative">
+      {/* Goal line */}
+      <div 
+        className="absolute left-0 right-0 border-t border-dashed border-white/20"
+        style={{ bottom: `${chartHeight * 0.83 + 20}px` }}
+      />
+      
+      <div className="flex items-end justify-between gap-2" style={{ height: `${chartHeight + 24}px` }}>
+        {dailyData.map((day, index) => {
+          const heightPercent = animatedHeights[index] || 0;
+          const isOverGoal = day.calories > goal;
+          const isEmpty = day.calories === 0;
+          const isHovered = hoveredIndex === index;
+          const barHeight = isEmpty ? 6 : Math.max((heightPercent / 100) * chartHeight, 12);
+          
+          return (
             <div 
-              className="w-full rounded-t-sm relative overflow-hidden transition-all duration-700 ease-out"
-              style={{ 
-                height: `${Math.max(heightPercent * 0.6, isEmpty ? 4 : 8)}px`,
-                background: isEmpty 
-                  ? 'rgba(139, 92, 246, 0.1)' 
-                  : isOverGoal 
-                    ? 'linear-gradient(180deg, #F43F5E, #EF4444)'
-                    : day.isToday 
-                      ? 'linear-gradient(180deg, #8B5CF6, #EC4899)'
-                      : 'linear-gradient(180deg, rgba(139, 92, 246, 0.6), rgba(168, 85, 247, 0.4))',
-                boxShadow: !isEmpty && day.isToday ? '0 0 12px rgba(139, 92, 246, 0.5)' : 'none',
-              }}
+              key={`${day.day}-${index}`} 
+              className="flex flex-col items-center flex-1 cursor-pointer"
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
             >
-              {/* Goal line indicator */}
-              {!isEmpty && heightPercent >= 95 && heightPercent <= 105 && (
+              {/* Calorie label on hover */}
+              {isHovered && !isEmpty && (
                 <div 
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-400"
-                  style={{ boxShadow: '0 0 6px rgba(16, 185, 129, 0.8)' }}
-                />
+                  className="absolute -top-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-white animate-fade-in"
+                  style={{
+                    background: 'rgba(139, 92, 246, 0.9)',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  {Math.round(day.calories)}
+                </div>
               )}
-            </div>
-            {/* Day label */}
-            <span className={`text-[9px] mt-1.5 font-medium ${
-              day.isToday ? 'text-white' : 'text-white/40'
-            }`}>
+              
+              {/* Bar container */}
+              <div className="flex-1 flex items-end w-full">
+                <div 
+                  className={`w-full rounded-lg relative overflow-hidden transition-all duration-700 ease-out ${
+                    isHovered ? 'scale-105' : ''
+                  }`}
+                  style={{ 
+                    height: `${barHeight}px`,
+                    background: isEmpty 
+                      ? 'linear-gradient(180deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05))' 
+                      : isOverGoal 
+                        ? 'linear-gradient(180deg, #F43F5E 0%, #EF4444 50%, #DC2626 100%)'
+                        : day.isToday 
+                          ? 'linear-gradient(180deg, #A855F7 0%, #8B5CF6 30%, #EC4899 100%)'
+                          : 'linear-gradient(180deg, rgba(139, 92, 246, 0.7) 0%, rgba(168, 85, 247, 0.5) 50%, rgba(139, 92, 246, 0.3) 100%)',
+                    boxShadow: isEmpty 
+                      ? 'inset 0 0 0 1px rgba(139, 92, 246, 0.2)'
+                      : day.isToday 
+                        ? '0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)' 
+                        : isOverGoal
+                          ? '0 0 15px rgba(239, 68, 68, 0.5)'
+                          : '0 4px 12px rgba(139, 92, 246, 0.2)',
+                    transform: isHovered && !isEmpty ? 'scaleY(1.05)' : 'scaleY(1)',
+                    transformOrigin: 'bottom',
+                  }}
+                >
+                  {/* Inner shine effect */}
+                  {!isEmpty && (
+                    <div 
+                      className="absolute inset-0 rounded-lg"
+                      style={{
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+                      }}
+                    />
+                  )}
+                  
+                  {/* Goal achieved glow ring */}
+                  {!isEmpty && heightPercent >= 95 && heightPercent <= 105 && (
+                    <div 
+                      className="absolute inset-0 rounded-lg animate-pulse"
+                      style={{ 
+                        boxShadow: 'inset 0 0 0 2px rgba(16, 185, 129, 0.8), 0 0 10px rgba(16, 185, 129, 0.5)',
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+              
+              {/* Day label */}
+              <span className={`text-[10px] mt-2 font-semibold transition-all duration-300 ${
+                day.isToday 
+                  ? 'text-white' 
+                  : isEmpty 
+                    ? 'text-white/30' 
+                    : 'text-white/50'
+              } ${isHovered ? 'text-white scale-110' : ''}`}>
               {day.day}
             </span>
           </div>
@@ -253,7 +310,16 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
   }));
   
   return (
-    <div className="relative flex items-center justify-center">
+    <div className="relative flex items-center justify-center opal-ring">
+      {/* Ambient glow background */}
+      <div 
+        className="absolute w-[220px] h-[220px] rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 50%, transparent 70%)',
+          filter: 'blur(20px)',
+        }}
+      />
+      
       {/* Outer breathing glow for empty state */}
       {isEmpty && (
         <div 
@@ -520,25 +586,46 @@ const MacroCard: React.FC<{
   
   return (
     <button
-      className={`flex items-center space-x-3 p-3 rounded-2xl transition-all duration-500 active:scale-95 w-full ${
+      className={`flex items-center space-x-3 p-3 rounded-2xl transition-all duration-500 active:scale-95 w-full group ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: 'rgba(26, 22, 51, 0.6)',
-        border: `1px solid ${color}15`,
+        background: `linear-gradient(135deg, rgba(26, 22, 51, 0.8), rgba(26, 22, 51, 0.6))`,
+        border: `1px solid ${color}25`,
         backdropFilter: 'blur(12px)',
+        boxShadow: `0 4px 20px ${color}10, inset 0 1px 0 rgba(255,255,255,0.05)`,
       }}
     >
-      {/* Mini ring with icon */}
+      {/* Mini ring with icon - Enhanced */}
       <div className="relative flex-shrink-0" style={{ width: ringSize, height: ringSize }}>
-        <svg width={ringSize} height={ringSize} className="transform -rotate-90">
+        {/* Glow background */}
+        <div 
+          className="absolute inset-0 rounded-full transition-all duration-500 group-hover:scale-110"
+          style={{ 
+            background: `radial-gradient(circle, ${color}20 0%, transparent 70%)`,
+          }}
+        />
+        <svg width={ringSize} height={ringSize} className="transform -rotate-90 relative z-10">
+          <defs>
+            <linearGradient id={`macroGrad-${icon}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={color} />
+              <stop offset="100%" stopColor={isOver ? '#EF4444' : color} stopOpacity="0.6" />
+            </linearGradient>
+            <filter id={`macroGlow-${icon}`} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
           {/* Background ring */}
           <circle
             cx={ringSize / 2}
             cy={ringSize / 2}
             r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.1)"
+            stroke="rgba(255,255,255,0.08)"
             strokeWidth={strokeWidth}
           />
           {/* Progress ring */}
@@ -547,21 +634,19 @@ const MacroCard: React.FC<{
             cy={ringSize / 2}
             r={radius}
             fill="none"
-            stroke={isOver ? '#EF4444' : color}
+            stroke={`url(#macroGrad-${icon})`}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             className="transition-all duration-1000 ease-out"
-            style={{
-              filter: `drop-shadow(0 0 4px ${isOver ? '#EF4444' : color}80)`,
-            }}
+            filter={`url(#macroGlow-${icon})`}
           />
         </svg>
         {/* Icon in center */}
         <div 
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ filter: `drop-shadow(0 0 6px ${color}60)` }}
+          className="absolute inset-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+          style={{ filter: `drop-shadow(0 0 8px ${color}80)` }}
         >
           <MacroIcon />
         </div>
@@ -569,13 +654,16 @@ const MacroCard: React.FC<{
       
       {/* Text content */}
       <div className="flex-1 text-left min-w-0">
-        <div className="flex items-baseline space-x-1">
-          <span className="text-lg font-black text-white">{animatedAmount}g</span>
-          <span className="text-xs font-medium" style={{ color: isOver ? '#EF4444' : color }}>
+        <div className="flex items-baseline space-x-1.5">
+          <span className="text-xl font-black text-white tracking-tight">{animatedAmount}g</span>
+          <span 
+            className="text-xs font-bold uppercase tracking-wider" 
+            style={{ color: isOver ? '#EF4444' : color }}
+          >
             {isOver ? 'over' : 'left'}
           </span>
         </div>
-        <p className="text-[11px] text-white/40 font-medium">{label}</p>
+        <p className="text-[11px] text-white/50 font-semibold uppercase tracking-wide">{label}</p>
       </div>
     </button>
   );
@@ -1479,35 +1567,46 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
             )}
                           </div>
           
-          {/* Today/Yesterday Toggle */}
-          <div className="flex items-center space-x-4">
+          {/* Today/Yesterday Toggle - Premium Pill */}
+          <div 
+            className="relative flex items-center p-1 rounded-xl"
+            style={{
+              background: 'rgba(139, 92, 246, 0.1)',
+              border: '1px solid rgba(139, 92, 246, 0.2)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            {/* Sliding indicator */}
+            <div 
+              className="absolute h-[calc(100%-8px)] rounded-lg transition-all duration-300 ease-out"
+              style={{
+                width: 'calc(50% - 4px)',
+                left: selectedDay === 'today' ? '4px' : 'calc(50%)',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(236, 72, 153, 0.6))',
+                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.4)',
+              }}
+            />
             <button
               onClick={() => setSelectedDay('today')}
-              className={`text-sm font-semibold transition-all duration-200 ${
+              className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
                 selectedDay === 'today' 
                   ? 'text-white' 
-                  : 'text-white/40 hover:text-white/60'
+                  : 'text-white/50 hover:text-white/70'
               }`}
             >
               Today
-              {selectedDay === 'today' && (
-                <div className="h-0.5 bg-white rounded-full mt-1" />
-              )}
             </button>
             <button
               onClick={() => setSelectedDay('yesterday')}
-              className={`text-sm font-semibold transition-all duration-200 ${
+              className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
                 selectedDay === 'yesterday' 
                   ? 'text-white' 
-                  : 'text-white/40 hover:text-white/60'
+                  : 'text-white/50 hover:text-white/70'
               }`}
             >
               Yesterday
-              {selectedDay === 'yesterday' && (
-                <div className="h-0.5 bg-white rounded-full mt-1" />
-              )}
             </button>
-           </div>
+          </div>
         </div>
 
         {/* Calorie Ring */}

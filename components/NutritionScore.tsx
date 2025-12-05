@@ -156,12 +156,48 @@ const NutritionScore: React.FC<NutritionScoreProps> = ({ logs, settings }) => {
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
-      case 'A': return { bg: 'rgba(34, 197, 94, 0.2)', text: '#22C55E', glow: '0 0 20px rgba(34, 197, 94, 0.4)' };
-      case 'B': return { bg: 'rgba(59, 130, 246, 0.2)', text: '#3B82F6', glow: '0 0 20px rgba(59, 130, 246, 0.4)' };
-      case 'C': return { bg: 'rgba(251, 191, 36, 0.2)', text: '#FBBF24', glow: '0 0 20px rgba(251, 191, 36, 0.4)' };
-      case 'D': return { bg: 'rgba(249, 115, 22, 0.2)', text: '#F97316', glow: '0 0 20px rgba(249, 115, 22, 0.4)' };
-      case 'F': return { bg: 'rgba(239, 68, 68, 0.2)', text: '#EF4444', glow: '0 0 20px rgba(239, 68, 68, 0.4)' };
-      default: return { bg: 'rgba(148, 163, 184, 0.2)', text: '#94A3B8', glow: 'none' };
+      case 'A': return { 
+        bg: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.2))', 
+        text: 'linear-gradient(135deg, #22C55E, #10B981)',
+        textFallback: '#22C55E',
+        glow: '0 0 30px rgba(34, 197, 94, 0.5), inset 0 0 20px rgba(34, 197, 94, 0.1)',
+        border: 'rgba(34, 197, 94, 0.4)'
+      };
+      case 'B': return { 
+        bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.2))', 
+        text: 'linear-gradient(135deg, #3B82F6, #6366F1)',
+        textFallback: '#3B82F6',
+        glow: '0 0 30px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+        border: 'rgba(59, 130, 246, 0.4)'
+      };
+      case 'C': return { 
+        bg: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3), rgba(245, 158, 11, 0.2))', 
+        text: 'linear-gradient(135deg, #FBBF24, #F59E0B)',
+        textFallback: '#FBBF24',
+        glow: '0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(251, 191, 36, 0.1)',
+        border: 'rgba(251, 191, 36, 0.4)'
+      };
+      case 'D': return { 
+        bg: 'linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(234, 88, 12, 0.2))', 
+        text: 'linear-gradient(135deg, #F97316, #EA580C)',
+        textFallback: '#F97316',
+        glow: '0 0 30px rgba(249, 115, 22, 0.5), inset 0 0 20px rgba(249, 115, 22, 0.1)',
+        border: 'rgba(249, 115, 22, 0.4)'
+      };
+      case 'F': return { 
+        bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15))', 
+        text: 'linear-gradient(135deg, #F87171, #EF4444)',
+        textFallback: '#F87171',
+        glow: '0 0 25px rgba(239, 68, 68, 0.4), inset 0 0 15px rgba(239, 68, 68, 0.1)',
+        border: 'rgba(239, 68, 68, 0.3)'
+      };
+      default: return { 
+        bg: 'linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(100, 116, 139, 0.1))', 
+        text: 'linear-gradient(135deg, #94A3B8, #64748B)',
+        textFallback: '#94A3B8',
+        glow: 'none',
+        border: 'rgba(148, 163, 184, 0.2)'
+      };
     }
   };
 
@@ -180,89 +216,130 @@ const NutritionScore: React.FC<NutritionScoreProps> = ({ logs, settings }) => {
     <div className="mb-4">
       <button
         onClick={() => setShowDetails(!showDetails)}
-        className="w-full rounded-2xl p-4 transition-all active:scale-[0.99]"
+        className="w-full rounded-2xl p-4 transition-all active:scale-[0.99] group"
         style={{
-          background: 'rgba(26, 22, 51, 0.6)',
+          background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.8), rgba(26, 22, 51, 0.6))',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(139, 92, 246, 0.15)',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
         }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Grade Circle */}
+            {/* Grade Circle - Premium */}
             <div 
-              className="w-16 h-16 rounded-2xl flex items-center justify-center"
+              className="relative w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105"
               style={{ 
                 background: colors.bg,
                 boxShadow: colors.glow,
+                border: `1px solid ${colors.border}`,
               }}
             >
+              {/* Inner shine */}
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)',
+                }}
+              />
+              {/* Grade letter with gradient */}
               <span 
-                className="text-3xl font-black"
-                style={{ color: colors.text }}
+                className="text-3xl font-black relative z-10"
+                style={{ 
+                  background: colors.text,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: 'none',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                }}
               >
                 {grade}
               </span>
             </div>
             
             <div className="text-left">
-              <p className="text-xs text-white/40 font-medium uppercase tracking-wider">Today's Score</p>
-              <p className="text-white font-medium mt-0.5">{encouragement}</p>
+              <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Today's Score</p>
+              <p className="text-white font-semibold mt-1 text-sm leading-snug">{encouragement}</p>
               {numericScore > 0 && (
-                <p className="text-xs text-white/30 mt-0.5">{Math.round(numericScore)}/100 points</p>
+                <p className="text-xs text-white/40 mt-1 font-medium">{Math.round(numericScore)}/100 points</p>
               )}
             </div>
           </div>
           
           <svg 
             width="20" height="20" viewBox="0 0 24 24" fill="none"
-            className={`transition-transform flex-shrink-0 ${showDetails ? 'rotate-180' : ''}`}
+            className={`transition-transform duration-300 flex-shrink-0 ${showDetails ? 'rotate-180' : ''}`}
           >
-            <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </div>
       </button>
       
-      {/* Score Breakdown */}
+      {/* Score Breakdown - Premium */}
       {showDetails && breakdown && (
         <div 
-          className="mt-2 p-4 rounded-2xl animate-fade-in"
+          className="mt-3 p-4 rounded-2xl animate-fade-in"
           style={{
-            background: 'rgba(26, 22, 51, 0.4)',
-            border: '1px solid rgba(139, 92, 246, 0.1)',
+            background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.6), rgba(26, 22, 51, 0.4))',
+            border: '1px solid rgba(139, 92, 246, 0.15)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
           }}
         >
-          <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-3">Score Breakdown</p>
+          <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mb-4">Score Breakdown</p>
           <div className="grid grid-cols-2 gap-3">
-            {scoreItems.map(item => (
-              <div 
-                key={item.label}
-                className="flex items-center space-x-2 p-2 rounded-lg"
-                style={{ background: 'rgba(255,255,255,0.03)' }}
-              >
-                <span className="text-base">{item.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-white/60">{item.label}</span>
-                    <span className="text-xs font-bold text-white">{Math.round(item.score)}</span>
-                  </div>
-                  <div className="mt-1 h-1 rounded-full bg-white/10 overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${Math.min(item.score, 100)}%`,
-                        background: item.score >= 80 ? '#22C55E' : item.score >= 60 ? '#FBBF24' : '#EF4444',
-                      }}
-                    />
+            {scoreItems.map((item, index) => {
+              const scoreColor = item.score >= 80 
+                ? 'linear-gradient(90deg, #22C55E, #10B981)' 
+                : item.score >= 60 
+                  ? 'linear-gradient(90deg, #FBBF24, #F59E0B)' 
+                  : 'linear-gradient(90deg, #F87171, #EF4444)';
+              const glowColor = item.score >= 80 
+                ? 'rgba(34, 197, 94, 0.3)' 
+                : item.score >= 60 
+                  ? 'rgba(251, 191, 36, 0.3)' 
+                  : 'rgba(239, 68, 68, 0.3)';
+              
+              return (
+                <div 
+                  key={item.label}
+                  className="flex items-center space-x-3 p-2.5 rounded-xl transition-all hover:scale-[1.02]"
+                  style={{ 
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    animationDelay: `${index * 50}ms`,
+                  }}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[11px] text-white/60 font-medium">{item.label}</span>
+                      <span className="text-sm font-black text-white">{Math.round(item.score)}</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-700 ease-out"
+                        style={{ 
+                          width: `${Math.min(item.score, 100)}%`,
+                          background: scoreColor,
+                          boxShadow: `0 0 8px ${glowColor}`,
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
-          <p className="text-xs text-white/30 text-center mt-3">
-            💡 Tip: Aim for balanced macros and plenty of vitamins to boost your score!
-          </p>
+          <div 
+            className="mt-4 p-3 rounded-xl text-center"
+            style={{ background: 'rgba(139, 92, 246, 0.1)' }}
+          >
+            <p className="text-xs text-white/50">
+              💡 <span className="text-white/70 font-medium">Tip:</span> Aim for balanced macros and plenty of vitamins to boost your score!
+            </p>
+          </div>
         </div>
       )}
     </div>
