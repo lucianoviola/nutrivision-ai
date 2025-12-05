@@ -568,7 +568,9 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
         
           {/* Storage info */}
           <div className="text-center text-xs text-white/30 py-4">
-            💾 Data stored locally on this device
+            {supabaseService.isSupabaseConfigured() 
+              ? '☁️ Data synced to your cloud account' 
+              : '💾 Data stored locally on this device'}
           </div>
         </div>
       </div>

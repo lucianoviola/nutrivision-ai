@@ -370,10 +370,10 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               e.stopPropagation();
               onDismiss();
             }}
-            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-all active:scale-95 z-10"
+            className="absolute top-1 right-1 w-11 h-11 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-all active:scale-95 z-10"
             title="Dismiss"
           >
-            <i className="fa-solid fa-times text-white text-xs"></i>
+            <i className="fa-solid fa-times text-white text-sm"></i>
           </button>
           
           <button
@@ -465,18 +465,18 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
             {status === 'analyzing' && (
               <button 
                 onClick={() => setIsExpanded(false)}
-                className="text-gray-400 hover:text-white transition-colors active:scale-95 p-1"
+                className="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95"
                 title="Minimize"
               >
-                <i className="fa-solid fa-minus text-lg"></i>
+                <i className="fa-solid fa-minus text-base"></i>
               </button>
             )}
             <button 
               onClick={() => onDismiss()}
-              className="text-gray-400 hover:text-white transition-colors active:scale-95 p-1"
+              className="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95"
               title="Close"
             >
-              <i className="fa-solid fa-times text-xl"></i>
+              <i className="fa-solid fa-times text-lg"></i>
             </button>
           </div>
           <h3 className="font-bold text-white flex-1 text-center">Review Meal</h3>

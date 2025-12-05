@@ -14,6 +14,8 @@ interface DashboardProps {
 // Opal-style calorie ring with purple/pink gradients
 const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal }) => {
   const [animatedProgress, setAnimatedProgress] = useState(0);
+  const [pillAnimating, setPillAnimating] = useState(false);
+  const [prevRemaining, setPrevRemaining] = useState<number | null>(null);
   const progress = Math.min(eaten / goal, 1);
   const remaining = Math.max(0, goal - eaten);
   const isEmpty = progress === 0;
@@ -22,6 +24,16 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
     const timer = setTimeout(() => setAnimatedProgress(progress), 100);
     return () => clearTimeout(timer);
   }, [progress]);
+  
+  // Animate pill when remaining value changes
+  useEffect(() => {
+    if (prevRemaining !== null && prevRemaining !== remaining) {
+      setPillAnimating(true);
+      const timer = setTimeout(() => setPillAnimating(false), 600);
+      return () => clearTimeout(timer);
+    }
+    setPrevRemaining(remaining);
+  }, [remaining, prevRemaining]);
   
   const circumference = 2 * Math.PI * 70;
   const strokeDashoffset = circumference - (animatedProgress * circumference);
@@ -179,13 +191,18 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
         {/* Only show remaining badge when there's progress */}
         {!isEmpty && (
           <div 
-            className="mt-3 px-4 py-1.5 rounded-full"
+            className={`mt-3 px-4 py-1.5 rounded-full transition-all duration-300 ${
+              pillAnimating ? 'scale-110' : 'scale-100'
+            }`}
             style={{
-              background: 'rgba(139, 92, 246, 0.2)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
+              background: remaining > 0 ? 'rgba(139, 92, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+              border: remaining > 0 ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
+              boxShadow: pillAnimating ? '0 0 20px rgba(139, 92, 246, 0.4)' : 'none',
             }}
           >
-            <span className="text-sm font-semibold text-white/80">
+            <span className={`text-sm font-semibold transition-all duration-300 ${
+              remaining > 0 ? 'text-white/80' : 'text-green-400'
+            }`}>
               {remaining > 0 ? `${Math.round(remaining)} left` : '🎉 Goal reached!'}
             </span>
           </div>
@@ -206,6 +223,8 @@ const MacroPill: React.FC<{
   const [isVisible, setIsVisible] = useState(false);
   const [animatedProgress, setAnimatedProgress] = useState(0);
   const progress = Math.min((current / goal) * 100, 100);
+  const isNearGoal = progress >= 75 && progress < 100;
+  const isOverGoal = progress >= 100;
   
   useEffect(() => {
     const timer1 = setTimeout(() => setIsVisible(true), delay);
@@ -216,6 +235,13 @@ const MacroPill: React.FC<{
     };
   }, [delay, progress]);
   
+  // Warning/success colors
+  const getProgressColor = () => {
+    if (isOverGoal) return '#EF4444'; // Red for over
+    if (isNearGoal) return '#F59E0B'; // Amber for near goal
+    return color;
+  };
+  
   return (
     <button
       className={`flex flex-col items-center px-2 py-3 rounded-2xl transition-all duration-500 relative active:scale-95 ${
@@ -223,27 +249,40 @@ const MacroPill: React.FC<{
       }`}
       style={{
         background: 'rgba(26, 22, 51, 0.4)',
-        border: '1px solid rgba(139, 92, 246, 0.08)',
+        border: isOverGoal 
+          ? '1px solid rgba(239, 68, 68, 0.3)' 
+          : isNearGoal 
+          ? '1px solid rgba(245, 158, 11, 0.2)' 
+          : '1px solid rgba(139, 92, 246, 0.08)',
         backdropFilter: 'blur(12px)',
+        boxShadow: isOverGoal 
+          ? '0 0 15px rgba(239, 68, 68, 0.15)' 
+          : isNearGoal 
+          ? '0 0 15px rgba(245, 158, 11, 0.1)' 
+          : 'none',
       }}
     >
       {/* Label at top */}
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40 mb-1">
+      <span className={`text-[9px] font-semibold uppercase tracking-wider mb-1 ${
+        isOverGoal ? 'text-red-400' : isNearGoal ? 'text-amber-400' : 'text-white/40'
+      }`}>
         {label}
       </span>
       
       <div className="flex items-center space-x-1.5">
         {/* Colored dot with glow */}
         <div 
-          className="w-2 h-2 rounded-full flex-shrink-0"
+          className={`w-2 h-2 rounded-full flex-shrink-0 ${isNearGoal || isOverGoal ? 'animate-pulse' : ''}`}
           style={{
-            background: color,
-            boxShadow: `0 0 8px ${color}80`,
+            background: getProgressColor(),
+            boxShadow: `0 0 8px ${getProgressColor()}80`,
           }}
         />
         
         <div className="flex items-baseline space-x-0.5">
-          <span className="text-lg font-black text-white">{Math.round(current)}</span>
+          <span className={`text-lg font-black ${isOverGoal ? 'text-red-400' : 'text-white'}`}>
+            {Math.round(current)}
+          </span>
           <span className="text-[10px] text-white/40 font-medium">/{goal}g</span>
         </div>
       </div>
@@ -257,8 +296,8 @@ const MacroPill: React.FC<{
           className="h-full rounded-full transition-all duration-1000 ease-out"
           style={{ 
             width: `${animatedProgress}%`,
-            background: `linear-gradient(90deg, ${color}CC, ${color})`,
-            boxShadow: `0 0 10px ${color}80`,
+            background: `linear-gradient(90deg, ${getProgressColor()}CC, ${getProgressColor()})`,
+            boxShadow: `0 0 10px ${getProgressColor()}80`,
           }}
         />
       </div>
@@ -1100,7 +1139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                     <p className="text-xs text-white/40 uppercase">P</p>
                        </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold" style={{ color: '#A855F7' }}>{Math.round(totals.carbs)}g</p>
+                    <p className="text-lg font-bold" style={{ color: '#3B82F6' }}>{Math.round(totals.carbs)}g</p>
                     <p className="text-xs text-white/40 uppercase">C</p>
                    </div>
                   <div className="text-center">
