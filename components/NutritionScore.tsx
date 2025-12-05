@@ -216,12 +216,13 @@ const NutritionScore: React.FC<NutritionScoreProps> = ({ logs, settings }) => {
     <div className="mb-4">
       <button
         onClick={() => setShowDetails(!showDetails)}
-        className="w-full rounded-2xl p-4 transition-all active:scale-[0.99] group"
+        className="w-full rounded-2xl p-4 active:scale-[0.99] group opal-card"
         style={{
-          background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.8), rgba(26, 22, 51, 0.6))',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(139, 92, 246, 0.2)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
+          background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.7), rgba(20, 17, 40, 0.5))',
+          backdropFilter: 'blur(40px)',
+          border: 'none',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
+          transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         <div className="flex items-center justify-between">

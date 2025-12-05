@@ -191,6 +191,7 @@ const WeeklyMiniChart: React.FC<{
           </div>
         );
       })}
+      </div>
     </div>
   );
 };
@@ -586,14 +587,14 @@ const MacroCard: React.FC<{
   
   return (
     <button
-      className={`flex items-center space-x-3 p-3 rounded-2xl transition-all duration-500 active:scale-95 w-full group ${
+      className={`flex items-center space-x-3 p-3 rounded-2xl opal-transition active:scale-95 w-full group opal-card ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: `linear-gradient(135deg, rgba(26, 22, 51, 0.8), rgba(26, 22, 51, 0.6))`,
-        border: `1px solid ${color}25`,
-        backdropFilter: 'blur(12px)',
-        boxShadow: `0 4px 20px ${color}10, inset 0 1px 0 rgba(255,255,255,0.05)`,
+        background: `linear-gradient(135deg, rgba(20, 17, 40, 0.7), rgba(20, 17, 40, 0.5))`,
+        backdropFilter: 'blur(40px)',
+        boxShadow: `0 8px 32px rgba(0,0,0,0.3), 0 0 60px ${color}08`,
+        border: 'none',
       }}
     >
       {/* Mini ring with icon - Enhanced */}
@@ -834,19 +835,20 @@ const MealCard: React.FC<{
           </button>
         </div>
         
-        {/* Main card */}
+        {/* Main card - Opal floating style */}
         <div 
           ref={cardRef}
-          className={`relative p-4 cursor-pointer transition-all ${
+          className={`relative p-4 cursor-pointer opal-transition ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-          } ${isPressed && !isSwiping ? 'scale-[0.98]' : ''} ${showActions ? 'ring-2 ring-purple-500/50' : ''} ${justAdded ? 'animate-bounce-in' : ''}`}
+          } ${isPressed && !isSwiping ? 'scale-[0.98]' : ''} ${showActions ? 'ring-2 ring-purple-500/30' : ''} ${justAdded ? 'animate-bounce-in' : ''}`}
           style={{
-            background: 'rgba(26, 22, 51, 0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(139, 92, 246, 0.15)',
-            borderRadius: '1rem',
+            background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.8), rgba(20, 17, 40, 0.6))',
+            backdropFilter: 'blur(40px)',
+            border: 'none',
+            borderRadius: '1.25rem',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
             transform: `translateX(${swipeX}px)`,
-            transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
+            transition: isSwiping ? 'none' : 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           onClick={handleClick}
           onTouchStart={handleTouchStart}
@@ -1478,26 +1480,51 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         onComplete={() => setShowConfetti(false)} 
       />
       
-      {/* Opal-style animated background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0" style={{ background: '#0D0B1C' }} />
+      {/* Opal-style animated background with floating orbs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0" style={{ background: '#08060F' }} />
+        
+        {/* Main ambient orb - breathing animation */}
         <div 
-          className="absolute inset-0"
+          className="absolute"
           style={{
-            background: `
-              radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%)
-            `,
+            width: '600px',
+            height: '600px',
+            top: '-15%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 40%, transparent 70%)',
+            filter: 'blur(60px)',
+            animation: 'ambient-float 8s ease-in-out infinite',
           }}
         />
-        {/* Subtle grid pattern */}
+        
+        {/* Secondary pink orb */}
         <div 
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute"
           style={{
-            backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.5) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(139, 92, 246, 0.5) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px',
+            width: '400px',
+            height: '400px',
+            bottom: '10%',
+            right: '-10%',
+            background: 'radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 60%)',
+            filter: 'blur(80px)',
+            animation: 'ambient-float 10s ease-in-out infinite reverse',
+          }}
+        />
+        
+        {/* Third accent orb */}
+        <div 
+          className="absolute"
+          style={{
+            width: '300px',
+            height: '300px',
+            bottom: '40%',
+            left: '-5%',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 60%)',
+            filter: 'blur(60px)',
+            animation: 'ambient-float 12s ease-in-out infinite',
+            animationDelay: '2s',
           }}
         />
         </div>
@@ -1542,70 +1569,81 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
       >
       {/* Header */}
         <div className={`pt-12 sm:pt-14 md:pt-16 pb-2 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-          {/* App Logo */}
-          <div className="flex items-center justify-between mb-4">
+          {/* Top Row: Logo + Streak + Settings */}
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               <span className="text-xl">🍽️</span>
               <span className="text-lg font-bold text-white tracking-tight">NutriVision AI</span>
-              </div>
+            </div>
             
-            {/* Streak badge */}
-            {currentStreak > 0 && (
+            <div className="flex items-center space-x-3">
+              {/* Streak badge - always visible */}
               <div 
                 className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full"
                 style={{
                   background: currentStreak >= 7 
-                    ? 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.15))'
-                    : 'rgba(249, 115, 22, 0.15)',
-                  border: `1px solid ${currentStreak >= 7 ? 'rgba(249, 115, 22, 0.4)' : 'rgba(249, 115, 22, 0.3)'}`,
+                    ? 'linear-gradient(135deg, rgba(249, 115, 22, 0.25), rgba(239, 68, 68, 0.15))'
+                    : currentStreak > 0 
+                      ? 'rgba(249, 115, 22, 0.15)'
+                      : 'rgba(255, 255, 255, 0.05)',
+                  border: `1px solid ${currentStreak >= 7 ? 'rgba(249, 115, 22, 0.4)' : currentStreak > 0 ? 'rgba(249, 115, 22, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
                   boxShadow: currentStreak >= 7 ? '0 0 12px rgba(249, 115, 22, 0.2)' : 'none',
                 }}
               >
-                <span className={`text-base ${currentStreak >= 7 ? 'animate-pulse' : ''}`}>🔥</span>
-                <span className="text-sm font-bold text-orange-400">{currentStreak}</span>
-           </div>
-            )}
-                          </div>
+                <span className={`text-sm ${currentStreak >= 7 ? 'animate-pulse' : ''}`}>🔥</span>
+                <span className={`text-xs font-bold ${currentStreak > 0 ? 'text-orange-400' : 'text-white/40'}`}>
+                  {currentStreak > 0 ? currentStreak : '0'}
+                </span>
+              </div>
+            </div>
+          </div>
           
-          {/* Today/Yesterday Toggle - Premium Pill */}
-          <div 
-            className="relative flex items-center p-1 rounded-xl"
-            style={{
-              background: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            {/* Sliding indicator */}
+          {/* Second Row: Date + Toggle */}
+          <div className="flex items-center justify-between">
+            {/* Current Date */}
+            <p className="text-xs text-white/40 font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </p>
+            
+            {/* Today/Yesterday Toggle - Compact */}
             <div 
-              className="absolute h-[calc(100%-8px)] rounded-lg transition-all duration-300 ease-out"
+              className="relative flex items-center p-1 rounded-xl"
               style={{
-                width: 'calc(50% - 4px)',
-                left: selectedDay === 'today' ? '4px' : 'calc(50%)',
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(236, 72, 153, 0.6))',
-                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.4)',
+                background: 'rgba(139, 92, 246, 0.1)',
+                border: '1px solid rgba(139, 92, 246, 0.15)',
               }}
-            />
-            <button
-              onClick={() => setSelectedDay('today')}
-              className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
-                selectedDay === 'today' 
-                  ? 'text-white' 
-                  : 'text-white/50 hover:text-white/70'
-              }`}
             >
-              Today
-            </button>
-            <button
-              onClick={() => setSelectedDay('yesterday')}
-              className={`relative z-10 px-4 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
-                selectedDay === 'yesterday' 
-                  ? 'text-white' 
-                  : 'text-white/50 hover:text-white/70'
-              }`}
-            >
-              Yesterday
-            </button>
+              {/* Sliding indicator */}
+              <div 
+                className="absolute h-[calc(100%-8px)] rounded-lg transition-all duration-300 ease-out"
+                style={{
+                  width: selectedDay === 'today' ? '52px' : '72px',
+                  left: selectedDay === 'today' ? '4px' : '56px',
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(236, 72, 153, 0.6))',
+                  boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
+                }}
+              />
+              <button
+                onClick={() => setSelectedDay('today')}
+                className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
+                  selectedDay === 'today' 
+                    ? 'text-white' 
+                    : 'text-white/40 hover:text-white/60'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setSelectedDay('yesterday')}
+                className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
+                  selectedDay === 'yesterday' 
+                    ? 'text-white' 
+                    : 'text-white/40 hover:text-white/60'
+                }`}
+              >
+                Yesterday
+              </button>
+            </div>
           </div>
         </div>
 
