@@ -42,17 +42,15 @@ export async function compressImage(
       // Convert to JPEG for better compression
       const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
       
-      // Return just the base64 part (without data URL prefix)
-      const base64 = compressedDataUrl.split(',')[1];
-      
       console.log('📦 Image compressed:', {
         originalSize: `${(base64Image.length * 0.75 / 1024).toFixed(1)} KB`,
-        compressedSize: `${(base64.length * 0.75 / 1024).toFixed(1)} KB`,
-        reduction: `${(100 - (base64.length / base64Image.length) * 100).toFixed(1)}%`,
+        compressedSize: `${(compressedDataUrl.length * 0.75 / 1024).toFixed(1)} KB`,
+        reduction: `${(100 - (compressedDataUrl.length / base64Image.length) * 100).toFixed(1)}%`,
         dimensions: `${width}x${height}`,
       });
       
-      resolve(base64);
+      // Return full data URL for consistency
+      resolve(compressedDataUrl);
     };
     
     img.onerror = () => {

@@ -498,54 +498,63 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                   }}
                 >
                   {isEditing && editingItemIndex === index ? (
-                    // Edit mode
+                    // Edit mode - only serving size editable, search for new items
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between mb-2">
+                      {/* Food name - searchable for new items (name is empty) */}
+                      <div className="flex items-center justify-between">
                         <div className="flex-1 relative">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => handleSearchFood(e.target.value, index)}
-                            onFocus={() => item.name.length >= 2 && setShowSearchResults(true)}
-                            className="w-full px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
-                            placeholder="Search food..."
-                            autoFocus={item.name === ''}
-                          />
-                          {isSearching && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                          )}
-                          
-                          {/* Search Results Dropdown */}
-                          {showSearchResults && searchResults.length > 0 && editingItemIndex === index && (
-                            <div 
-                              className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto"
-                              style={{ 
-                                background: 'rgba(26, 22, 51, 0.98)', 
-                                border: '1px solid rgba(139, 92, 246, 0.3)',
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
-                              }}
-                            >
-                              {searchResults.map((food, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => handleSelectFood(food, index)}
-                                  className="w-full px-3 py-2 text-left hover:bg-purple-500/20 transition-colors border-b border-white/5 last:border-0"
+                          {item.name === '' ? (
+                            // New item - show search input
+                            <>
+                              <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => handleSearchFood(e.target.value, index)}
+                                className="w-full px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
+                                placeholder="Search food..."
+                                autoFocus
+                              />
+                              {isSearching && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                  <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                              )}
+                              
+                              {/* Search Results Dropdown */}
+                              {showSearchResults && searchResults.length > 0 && (
+                                <div 
+                                  className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto"
+                                  style={{ 
+                                    background: 'rgba(26, 22, 51, 0.98)', 
+                                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                                  }}
                                 >
-                                  <p className="text-sm text-white font-medium truncate">{food.name}</p>
-                                  <p className="text-xs text-white/50">
-                                    {food.macros.calories} cal · {food.servingSize}
-                                  </p>
-                                </button>
-                              ))}
-                            </div>
+                                  {searchResults.map((food, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => handleSelectFood(food, index)}
+                                      className="w-full px-3 py-2 text-left hover:bg-purple-500/20 transition-colors border-b border-white/5 last:border-0"
+                                    >
+                                      <p className="text-sm text-white font-medium truncate">{food.name}</p>
+                                      <p className="text-xs text-white/50">
+                                        {food.macros.calories} cal · {food.servingSize}
+                                      </p>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            // Existing item - show name as text (not editable)
+                            <p className="text-white font-bold">{item.name}</p>
                           )}
                         </div>
                         <button
                           onClick={() => {
                             setEditingItemIndex(null);
                             setShowSearchResults(false);
+                            setSearchQuery('');
                           }}
                           className="ml-2 px-3 py-2 rounded-lg text-white hover:bg-white/10 transition-all active:scale-95"
                         >
@@ -559,96 +568,73 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
-                          <div className="flex space-x-2">
-                            <NumericInput
-                              value={parseServingSize(item.servingSize).quantity}
-                              onChange={(qty) => {
-                                const unit = parseServingSize(item.servingSize).unit;
-                                updateServingSize(index, qty, unit);
-                              }}
-                              allowDecimals={true}
-                              className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
-                              placeholder="100"
-                            />
-                            <select
-                              value={parseServingSize(item.servingSize).unit}
-                              onChange={(e) => {
-                                const qty = parseServingSize(item.servingSize).quantity;
-                                updateServingSize(index, qty, e.target.value);
-                              }}
-                              className="px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
-                            >
-                              <option value="g">g</option>
-                              <option value="kg">kg</option>
-                              <option value="oz">oz</option>
-                              <option value="lb">lb</option>
-                              <option value="cup">cup</option>
-                              <option value="cups">cups</option>
-                              <option value="tbsp">tbsp</option>
-                              <option value="tsp">tsp</option>
-                              <option value="ml">ml</option>
-                              <option value="l">l</option>
-                              <option value="piece">piece</option>
-                              <option value="pieces">pieces</option>
-                              <option value="slice">slice</option>
-                              <option value="slices">slices</option>
-                              <option value="serving">serving</option>
-                              <option value="servings">servings</option>
-                            </select>
+                      {/* Only show serving size controls if item has a name */}
+                      {item.name !== '' && (
+                        <>
+                          {/* Serving Size - the only editable field */}
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Serving Size</label>
+                            <div className="flex space-x-2">
+                              <NumericInput
+                                value={parseServingSize(item.servingSize).quantity}
+                                onChange={(qty) => {
+                                  const unit = parseServingSize(item.servingSize).unit;
+                                  updateServingSize(index, qty, unit);
+                                }}
+                                allowDecimals={true}
+                                className="flex-1 px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                                placeholder="1"
+                              />
+                              <select
+                                value={parseServingSize(item.servingSize).unit}
+                                onChange={(e) => {
+                                  const qty = parseServingSize(item.servingSize).quantity;
+                                  updateServingSize(index, qty, e.target.value);
+                                }}
+                                className="px-3 py-2 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
+                              >
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="oz">oz</option>
+                                <option value="lb">lb</option>
+                                <option value="cup">cup</option>
+                                <option value="cups">cups</option>
+                                <option value="tbsp">tbsp</option>
+                                <option value="tsp">tsp</option>
+                                <option value="ml">ml</option>
+                                <option value="l">l</option>
+                                <option value="piece">piece</option>
+                                <option value="pieces">pieces</option>
+                                <option value="slice">slice</option>
+                                <option value="slices">slices</option>
+                                <option value="serving">serving</option>
+                                <option value="servings">servings</option>
+                                <option value="pack">pack</option>
+                              </select>
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Calories</label>
-                          <div className="relative">
-                            <NumericInput
-                              value={item.macros.calories}
-                              onChange={(val) => updateItemMacro(index, 'calories', val)}
-                              allowDecimals={false}
-                              className="w-full px-3 py-2 pr-12 rounded-lg text-white text-sm bg-white/5 border border-white/20 focus:border-purple-500 focus:outline-none"
-                              placeholder="0"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">
-                              kcal
-                            </span>
+                          
+                          {/* Macros display - READ ONLY */}
+                          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/10">
+                            <div className="text-center">
+                              <p className="text-xs text-gray-500 uppercase">Cals</p>
+                              <p className="text-sm text-white font-medium">{Math.round(item.macros.calories)}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-green-500 uppercase">Prot</p>
+                              <p className="text-sm text-green-400 font-medium">{Math.round(item.macros.protein)}g</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-blue-500 uppercase">Carbs</p>
+                              <p className="text-sm text-blue-400 font-medium">{Math.round(item.macros.carbs)}g</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-orange-500 uppercase">Fat</p>
+                              <p className="text-sm text-orange-400 font-medium">{Math.round(item.macros.fat)}g</p>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Protein (g)</label>
-                          <NumericInput
-                            value={item.macros.protein}
-                            onChange={(val) => updateItemMacro(index, 'protein', val)}
-                            allowDecimals={true}
-                            className="w-full px-3 py-2 rounded-lg text-green-400 text-sm bg-white/5 border border-green-500/30 focus:border-green-500 focus:outline-none"
-                            placeholder="0"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Carbs (g)</label>
-                          <NumericInput
-                            value={item.macros.carbs}
-                            onChange={(val) => updateItemMacro(index, 'carbs', val)}
-                            allowDecimals={true}
-                            className="w-full px-3 py-2 rounded-lg text-blue-400 text-sm bg-white/5 border border-blue-500/30 focus:border-blue-500 focus:outline-none"
-                            placeholder="0"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Fat (g)</label>
-                          <NumericInput
-                            value={item.macros.fat}
-                            onChange={(val) => updateItemMacro(index, 'fat', val)}
-                            allowDecimals={true}
-                            className="w-full px-3 py-2 rounded-lg text-orange-400 text-sm bg-white/5 border border-orange-500/30 focus:border-orange-500 focus:outline-none"
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
+                        </>
+                      )}
                     </div>
                   ) : (
                     // View mode

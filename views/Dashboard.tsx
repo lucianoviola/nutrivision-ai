@@ -222,8 +222,8 @@ const MacroPill: React.FC<{
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{
-        background: 'rgba(26, 22, 51, 0.7)',
-        border: '1px solid rgba(139, 92, 246, 0.2)',
+        background: 'rgba(26, 22, 51, 0.5)',
+        border: '1px solid rgba(139, 92, 246, 0.12)',
         backdropFilter: 'blur(12px)',
       }}
     >
@@ -549,24 +549,33 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
       }`}
     >
       {/* Abstract glowing orb illustration */}
-      <div className="relative w-28 h-28 mx-auto mb-6">
-        {/* Outer glow ring */}
+      <div className="relative w-32 h-32 mx-auto mb-6">
+        {/* Outer pulse ring */}
         <div 
-          className="absolute inset-0 rounded-full"
+          className="absolute inset-0 rounded-full animate-ping"
           style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%)',
-            animation: 'pulse 3s ease-in-out infinite',
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 60%)',
+            animationDuration: '2.5s',
+          }}
+        />
+        
+        {/* Middle glow ring */}
+        <div 
+          className="absolute inset-2 rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%)',
+            animation: 'pulse 2s ease-in-out infinite',
           }}
         />
         
         {/* Main orb */}
         <div 
-          className="absolute inset-4 rounded-full"
+          className="absolute inset-6 rounded-full"
           style={{
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.3))',
-            border: '1px solid rgba(139, 92, 246, 0.4)',
-            boxShadow: '0 0 40px rgba(139, 92, 246, 0.3), inset 0 0 30px rgba(236, 72, 153, 0.2)',
-            animation: 'breathe 3s ease-in-out infinite',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.4))',
+            border: '1px solid rgba(139, 92, 246, 0.5)',
+            boxShadow: '0 0 50px rgba(139, 92, 246, 0.4), inset 0 0 30px rgba(236, 72, 153, 0.3)',
+            animation: 'breathe 2.5s ease-in-out infinite',
           }}
         />
         
@@ -897,7 +906,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         style={{ transform: `translateY(${pullDistance}px)` }}
       >
       {/* Header */}
-        <div className={`pt-14 pb-4 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <div className={`pt-14 sm:pt-16 md:pt-20 pb-4 px-6 transition-all duration-700 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white flex items-center space-x-2">
@@ -1020,15 +1029,18 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         <div className="px-6 mt-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-white">Today's Meals</h3>
-            <span 
-              className="text-xs font-medium px-3 py-1 rounded-full"
-              style={{
-                background: 'rgba(139, 92, 246, 0.15)',
-                color: 'rgba(255,255,255,0.6)',
-              }}
-            >
-              {today.length} {today.length === 1 ? 'meal' : 'meals'}
-            </span>
+            {/* Only show badge when there are meals */}
+            {today.length > 0 && (
+              <span 
+                className="text-xs font-medium px-3 py-1 rounded-full"
+                style={{
+                  background: 'rgba(139, 92, 246, 0.15)',
+                  color: 'rgba(255,255,255,0.6)',
+                }}
+              >
+                {today.length} {today.length === 1 ? 'meal' : 'meals'}
+              </span>
+            )}
           </div>
 
           {today.length === 0 ? (

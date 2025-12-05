@@ -79,6 +79,12 @@ export const correctFoodAnalysis = async (
 ): Promise<FoodItem[]> => {
   console.log('🔧 Correcting food analysis with user feedback...');
   const openai = getOpenAiInstance();
+  
+  // Clean base64 if it still has prefix
+  let cleanBase64 = base64Image;
+  if (base64Image.includes(',')) {
+    cleanBase64 = base64Image.split(',')[1];
+  }
 
   const originalItemsText = originalItems.map(item => 
     `- ${item.name} (${item.servingSize}): ${item.macros.calories} kcal, P:${item.macros.protein}g C:${item.macros.carbs}g F:${item.macros.fat}g`
@@ -141,7 +147,7 @@ export const correctFoodAnalysis = async (
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
+                url: `data:image/jpeg;base64,${cleanBase64}`,
               },
             },
           ],
@@ -181,6 +187,33 @@ export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]>
   const openai = getOpenAiInstance();
   console.log('✅ OpenAI instance created');
 
+  // Validate and clean base64 image
+  console.log('📷 Image data received:', {
+    exists: !!base64Image,
+    length: base64Image?.length || 0,
+    hasPrefix: base64Image?.includes(','),
+    preview: base64Image?.substring(0, 50)
+  });
+  
+  if (!base64Image) {
+    throw new Error('No image data provided');
+  }
+  
+  // Clean base64 if it still has data URL prefix
+  let cleanBase64 = base64Image;
+  if (base64Image.includes(',')) {
+    cleanBase64 = base64Image.split(',')[1] || base64Image;
+  }
+  
+  if (cleanBase64.length < 100) {
+    throw new Error(`Image data too small (${cleanBase64.length} chars)`);
+  }
+  
+  console.log('📷 Cleaned base64:', {
+    length: cleanBase64.length,
+    preview: cleanBase64.substring(0, 30) + '...'
+  });
+
   const startTime = Date.now();
   try {
     console.log('📡 Sending request to OpenAI API (gpt-5-mini-2025-08-07)...');
@@ -197,14 +230,13 @@ export const analyzeFoodImage = async (base64Image: string): Promise<FoodItem[]>
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
+                url: `data:image/jpeg;base64,${cleanBase64}`,
               },
             },
           ],
         },
       ],
       response_format: { type: 'json_object' },
-      // Note: gpt-5-mini doesn't support custom temperature
     });
 
     const apiDuration = Date.now() - startTime;
@@ -253,6 +285,12 @@ export const analyzeRestaurantMenu = async (base64Image: string): Promise<MenuAn
   console.log('🍽️ Analyzing restaurant menu image...');
   const openai = getOpenAiInstance();
   const startTime = Date.now();
+  
+  // Clean base64 if it still has prefix
+  let cleanBase64 = base64Image;
+  if (base64Image.includes(',')) {
+    cleanBase64 = base64Image.split(',')[1];
+  }
 
   try {
     const response = await openai.chat.completions.create({
@@ -291,7 +329,7 @@ Return a JSON object with this structure:
             {
               type: 'image_url',
               image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
+                url: `data:image/jpeg;base64,${cleanBase64}`,
               },
             },
           ],

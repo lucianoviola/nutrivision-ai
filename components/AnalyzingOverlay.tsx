@@ -62,8 +62,22 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
       setError(null);
       
       try {
-        const base64 = pendingAnalysis.imageData.split(',')[1];
-        console.log('🔄 Background analysis started...');
+        // Extract base64 from data URL, handle both formats
+        let base64 = pendingAnalysis.imageData;
+        if (base64.includes(',')) {
+          base64 = base64.split(',')[1];
+        }
+        
+        console.log('🔄 Background analysis started...', {
+          hasData: !!base64,
+          dataLength: base64?.length || 0,
+          preview: base64?.substring(0, 50) + '...'
+        });
+        
+        if (!base64 || base64.length < 100) {
+          throw new Error(`Image data is invalid (length: ${base64?.length || 0})`);
+        }
+        
         const items = await aiService.analyzeFoodImage(base64, aiProvider);
         
         // Check if component was unmounted or analysis was cancelled
