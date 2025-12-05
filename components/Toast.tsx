@@ -95,17 +95,16 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
 
   const getStyles = () => {
     const baseStyles = {
-      background: 'rgba(26, 22, 51, 0.95)',
-      backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(139, 92, 246, 0.2)',
+      background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.95), rgba(26, 22, 51, 0.9))',
+      backdropFilter: 'blur(40px)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 60px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255,255,255,0.05)',
     };
     
     if (toast.type === 'celebration') {
       return {
-        ...baseStyles,
         background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(236, 72, 153, 0.9))',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4)',
+        backdropFilter: 'blur(40px)',
+        boxShadow: '0 8px 32px rgba(139, 92, 246, 0.4), 0 0 60px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
       };
     }
     

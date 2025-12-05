@@ -217,7 +217,7 @@ const MicronutrientCard: React.FC<MicronutrientCardProps> = ({
         className="rounded-2xl p-4"
         style={{
           background: 'rgba(26, 22, 51, 0.6)',
-          border: '1px solid rgba(139, 92, 246, 0.15)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
         }}
       >
         <div className="flex items-center space-x-3 mb-3">
@@ -244,7 +244,7 @@ const MicronutrientCard: React.FC<MicronutrientCardProps> = ({
       className="rounded-2xl p-4"
       style={{
         background: 'rgba(26, 22, 51, 0.6)',
-        border: '1px solid rgba(139, 92, 246, 0.15)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
         backdropFilter: 'blur(20px)',
       }}
     >

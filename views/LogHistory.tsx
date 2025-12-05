@@ -27,8 +27,8 @@ const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) =
         <div 
           className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
           style={{
-            background: 'rgba(139, 92, 246, 0.15)',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1))',
+            boxShadow: '0 8px 24px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)',
           }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -59,13 +59,12 @@ const HistoryEmptyState: React.FC<{ searchQuery: string }> = ({ searchQuery }) =
           }}
         />
         
-        {/* Main orb */}
+        {/* Main orb - borderless */}
         <div 
           className="absolute inset-4 rounded-full"
           style={{
             background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2))',
-            border: '1px solid rgba(139, 92, 246, 0.4)',
-            boxShadow: '0 0 50px rgba(139, 92, 246, 0.3), inset 0 0 30px rgba(236, 72, 153, 0.15)',
+            boxShadow: '0 0 50px rgba(139, 92, 246, 0.3), inset 0 0 30px rgba(236, 72, 153, 0.15), inset 0 0 0 1px rgba(255,255,255,0.08)',
             animation: 'breathe 3s ease-in-out infinite',
           }}
         />
@@ -281,7 +280,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
                   style={{
                     background: 'rgba(139, 92, 246, 0.15)',
-                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                   }}
                   title="View Photo Gallery"
                 >
@@ -293,7 +292,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
                   className="px-3 py-1.5 rounded-full"
                   style={{
                     background: 'rgba(139, 92, 246, 0.15)',
-                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                   }}
                 >
                   <span className="text-xs font-bold text-white/70">{filteredLogs.length} {filteredLogs.length === 1 ? 'meal' : 'meals'}</span>
@@ -313,7 +312,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
                 className="w-full px-4 py-3 rounded-xl text-base text-white placeholder-white/30 transition-all duration-300 focus:outline-none"
                 style={{
                   background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                 }}
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30">🔍</span>
@@ -422,7 +421,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
                 className="flex-1 rounded-2xl p-4"
                 style={{
                   background: 'rgba(26, 22, 51, 0.6)',
-                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
@@ -438,7 +437,7 @@ const LogHistory: React.FC<LogHistoryProps> = ({ logs, onDelete, onUpdateLog, on
                 className="flex-1 rounded-2xl p-4"
                 style={{
                   background: 'rgba(26, 22, 51, 0.6)',
-                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
@@ -617,7 +616,7 @@ const SwipeableMealCard: React.FC<{
         } ${isSwiping ? '' : 'hover:scale-[1.01]'}`}
         style={{
           background: 'rgba(26, 22, 51, 0.6)',
-          border: '1px solid rgba(139, 92, 246, 0.15)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
           backdropFilter: 'blur(10px)',
           transform: `translateX(${swipeOffset}px)`,
           touchAction: 'pan-y',

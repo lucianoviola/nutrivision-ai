@@ -29,6 +29,7 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   
   // Swipe to close state
   const [dragY, setDragY] = useState(0);
@@ -211,6 +212,11 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
     setSearchQuery('');
     setSearchResults([]);
     setShowSearchResults(false);
+    
+    // Focus the search input after React re-renders
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
   };
   
   // Search food database
@@ -465,7 +471,7 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
             className="rounded-2xl p-4 mb-4"
             style={{
               background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
             }}
           >
             <div className="flex items-center justify-between">
@@ -555,7 +561,7 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all active:scale-[0.99]"
                   style={{
                     background: 'rgba(139, 92, 246, 0.1)',
-                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                   }}
                 >
                   <span className="flex items-center text-sm font-bold text-white/80">
@@ -658,7 +664,9 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                   className="rounded-xl p-4 transition-all"
                   style={{ 
                     background: editingItemIndex === index ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)', 
-                    border: editingItemIndex === index ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(255,255,255,0.08)' 
+                    boxShadow: editingItemIndex === index 
+                      ? '0 4px 16px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)' 
+                      : 'inset 0 1px 0 rgba(255,255,255,0.03)' 
                   }}
                 >
                   {isEditing && editingItemIndex === index ? (
@@ -671,9 +679,16 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                             // New item - show search input
                             <>
                               <input
+                                ref={searchInputRef}
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => handleSearchFood(e.target.value, index)}
+                                onFocus={() => {
+                                  // Show results if we have them
+                                  if (searchResults.length > 0) {
+                                    setShowSearchResults(true);
+                                  }
+                                }}
                                 className="w-full px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
                                 placeholder="Search food..."
                                 autoFocus
@@ -689,9 +704,8 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                                 <div 
                                   className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto"
                                   style={{ 
-                                    background: 'rgba(26, 22, 51, 0.98)', 
-                                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                                    background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.98), rgba(20, 17, 40, 0.95))', 
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 40px rgba(139, 92, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)'
                                   }}
                                 >
                                   {searchResults.map((food, i) => (
@@ -863,16 +877,16 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                   placeholder="e.g., 'add butter' or 'this is rice not pasta'"
                   className="flex-1 px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                    e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1))';
+                    e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                    e.target.style.boxShadow = 'none';
+                    e.target.style.background = 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))';
+                    e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)';
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -917,16 +931,16 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
                 placeholder="Add any notes about this meal..."
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none resize-none transition-all"
                 style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1))';
+                  e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                  e.target.style.boxShadow = 'none';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)';
                 }}
                 rows={3}
               />
@@ -934,8 +948,8 @@ const MealDetailModal: React.FC<MealDetailModalProps> = ({ meal, onClose, onDele
               <div 
                 className="rounded-xl p-4"
                 style={{ 
-                  background: 'rgba(139, 92, 246, 0.1)', 
-                  border: '1px solid rgba(139, 92, 246, 0.2)' 
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05))', 
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)' 
                 }}
               >
                 <p className="text-gray-300 text-sm italic">{meal.note}</p>

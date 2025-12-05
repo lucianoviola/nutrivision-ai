@@ -101,7 +101,7 @@ const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
           className="rounded-2xl p-6 space-y-4"
           style={{
             background: 'rgba(26, 22, 51, 0.8)',
-            border: '1px solid rgba(139, 92, 246, 0.2)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
             backdropFilter: 'blur(20px)',
           }}
         >
@@ -117,7 +117,7 @@ const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
               className="w-full px-4 py-3 rounded-xl text-white placeholder-white/30 outline-none transition-all"
               style={{
                 background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
               }}
               placeholder="you@example.com"
               required
@@ -136,7 +136,7 @@ const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
               className="w-full px-4 py-3 rounded-xl text-white placeholder-white/30 outline-none transition-all"
               style={{
                 background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
               }}
               placeholder="••••••••"
               required
@@ -156,7 +156,7 @@ const SupabaseAuth: React.FC<SupabaseAuthProps> = ({ onSuccess }) => {
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-white/30 outline-none transition-all"
                 style={{
                   background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                 }}
                 placeholder="••••••••"
                 required

@@ -125,14 +125,13 @@ const TabBar: React.FC<TabBarProps> = ({ currentView, onChangeView }) => {
   
   return (
     <div className="fixed bottom-0 left-0 w-full z-50">
-      {/* Opal-style dark glass background */}
+      {/* Opal-style dark glass background - borderless */}
       <div 
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to top, rgba(13, 11, 28, 0.98), rgba(19, 16, 44, 0.95))',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          borderTop: '1px solid rgba(139, 92, 246, 0.15)',
-          boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.4)',
+          background: 'linear-gradient(to top, rgba(8, 6, 15, 0.98), rgba(13, 11, 28, 0.95))',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.5), 0 -2px 0 rgba(139, 92, 246, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.03)',
         }}
       />
       

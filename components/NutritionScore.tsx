@@ -185,11 +185,11 @@ const NutritionScore: React.FC<NutritionScoreProps> = ({ logs, settings }) => {
         border: 'rgba(249, 115, 22, 0.4)'
       };
       case 'F': return { 
-        bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15))', 
-        text: 'linear-gradient(135deg, #F87171, #EF4444)',
-        textFallback: '#F87171',
-        glow: '0 0 25px rgba(239, 68, 68, 0.4), inset 0 0 15px rgba(239, 68, 68, 0.1)',
-        border: 'rgba(239, 68, 68, 0.3)'
+        bg: 'linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(249, 115, 22, 0.15))', 
+        text: 'linear-gradient(135deg, #FDBA74, #FB923C)',
+        textFallback: '#FDBA74',
+        glow: '0 0 25px rgba(251, 146, 60, 0.3), inset 0 0 15px rgba(251, 146, 60, 0.1)',
+        border: 'rgba(251, 146, 60, 0.25)'
       };
       default: return { 
         bg: 'linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(100, 116, 139, 0.1))', 

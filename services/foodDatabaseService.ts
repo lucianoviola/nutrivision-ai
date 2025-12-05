@@ -8,6 +8,119 @@ import { FoodItem } from '../types.ts';
 const USDA_API_KEY = 'DEMO_KEY'; // Free demo key, can be replaced with user's own key
 const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1';
 
+/**
+ * Simplify verbose USDA food names to common names
+ * "Rice, white, long-grain, regular, cooked" → "White Rice (cooked)"
+ * Uses smart parsing of USDA comma-separated format
+ */
+const simplifyFoodName = (name: string): string => {
+  // USDA format: "Main food, descriptor1, descriptor2, preparation"
+  const parts = name.split(',').map(p => p.trim()).filter(p => p.length > 0);
+  
+  if (parts.length === 0) return name;
+  if (parts.length === 1) return titleCase(parts[0]);
+  
+  const mainFood = parts[0];
+  
+  // Color/type descriptors that should come BEFORE the main food
+  const prefixDescriptors = ['white', 'brown', 'black', 'red', 'green', 'yellow', 'wild', 
+                             'whole', 'skim', 'low-fat', 'nonfat', 'fat-free', 'plain', 
+                             'greek', 'regular', 'light', 'dark', 'sweet'];
+  
+  // Preparation methods to show in parentheses
+  const preparations = ['raw', 'cooked', 'boiled', 'steamed', 'baked', 'fried', 'grilled', 
+                        'roasted', 'broiled', 'sauteed', 'dried', 'canned', 'frozen'];
+  
+  // Words to skip (not useful to user)
+  const skipWords = ['nfs', 'ns', 'unenriched', 'enriched', 'fortified', 'regular', 
+                     'standard', 'commercial', 'retail', 'all varieties', 'various types'];
+  
+  let prefix = '';
+  let preparation = '';
+  const extras: string[] = [];
+  
+  for (let i = 1; i < parts.length && i < 4; i++) {
+    const part = parts[i].toLowerCase();
+    
+    // Skip noise words
+    if (skipWords.some(skip => part.includes(skip))) continue;
+    
+    // Check if it's a prefix descriptor
+    if (!prefix && prefixDescriptors.some(p => part.startsWith(p))) {
+      prefix = parts[i];
+    }
+    // Check if it's a preparation method
+    else if (!preparation && preparations.some(p => part.includes(p))) {
+      preparation = part;
+    }
+    // Keep other meaningful descriptors (limit to 1)
+    else if (extras.length < 1 && part.length > 2 && part.length < 20) {
+      extras.push(parts[i]);
+    }
+  }
+  
+  // Build simplified name
+  let simplified = '';
+  
+  if (prefix) {
+    simplified = `${prefix} ${mainFood}`;
+  } else if (extras.length > 0) {
+    simplified = `${mainFood} ${extras[0]}`;
+  } else {
+    simplified = mainFood;
+  }
+  
+  // Add preparation if present
+  if (preparation) {
+    simplified += ` (${preparation})`;
+  }
+  
+  return titleCase(simplified);
+};
+
+/**
+ * Convert string to Title Case
+ */
+const titleCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+/**
+ * Check if two foods are essentially the same (for deduplication)
+ * Smarter comparison that ignores minor variations
+ */
+const areSimilarFoods = (name1: string, name2: string): boolean => {
+  // Normalize: remove prep methods, punctuation, and common suffixes
+  const normalize = (s: string) => {
+    return s.toLowerCase()
+      .replace(/\(.*?\)/g, '') // Remove parenthetical
+      .replace(/[^a-z0-9\s]/g, ' ') // Keep only alphanumeric
+      .replace(/\b(cooked|raw|steamed|boiled|fried|grilled|baked|roasted)\b/g, '')
+      .replace(/\b(regular|standard|plain|whole|fresh)\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+  
+  const n1 = normalize(name1);
+  const n2 = normalize(name2);
+  
+  // Exact match after normalization
+  if (n1 === n2) return true;
+  
+  // Check if one contains the other (handles "White Rice" vs "White Rice Long Grain")
+  if (n1.length > 5 && n2.length > 5) {
+    if (n1.includes(n2) || n2.includes(n1)) return true;
+  }
+  
+  return false;
+};
+
 interface USDASearchResult {
   foods: Array<{
     fdcId: number;
@@ -22,6 +135,31 @@ interface USDASearchResult {
 }
 
 /**
+ * Smart query enhancement - reorder words to match USDA format
+ * USDA uses "Category, descriptor" format, so "white rice" should search as "rice white"
+ */
+const smartEnhanceQuery = (query: string): string => {
+  const words = query.toLowerCase().trim().split(/\s+/);
+  
+  // If 2+ words, try both original and reversed order
+  // USDA format is usually "Main food, descriptor" so "white rice" → "rice white"
+  if (words.length >= 2) {
+    // Common descriptors that should come AFTER the main food word
+    const descriptors = ['white', 'brown', 'black', 'red', 'green', 'whole', 'skim', 'low', 'fat', 
+                         'plain', 'greek', 'raw', 'cooked', 'baked', 'fried', 'grilled', 'steamed',
+                         'fresh', 'frozen', 'canned', 'dried', 'sliced', 'diced', 'ground'];
+    
+    // Check if first word is a descriptor
+    if (descriptors.includes(words[0])) {
+      // Swap: "white rice" → "rice white"
+      return [...words.slice(1), words[0]].join(' ');
+    }
+  }
+  
+  return query;
+};
+
+/**
  * Search USDA FoodData Central database
  * Returns verified nutrition data from official US government database
  */
@@ -29,9 +167,15 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
   console.log(`🔍 Searching USDA FoodData Central for: "${query}"`);
   const startTime = Date.now();
   
+  // Smart query enhancement - reorder words to match USDA format
+  const enhancedQuery = smartEnhanceQuery(query);
+  if (enhancedQuery !== query.toLowerCase().trim()) {
+    console.log(`📝 Enhanced query: "${query}" → "${enhancedQuery}"`);
+  }
+  
   try {
     // USDA API search endpoint
-    const url = `${USDA_BASE_URL}/foods/search?query=${encodeURIComponent(query)}&api_key=${USDA_API_KEY}&pageSize=10&dataType=Foundation,SR%20Legacy`;
+    const url = `${USDA_BASE_URL}/foods/search?query=${encodeURIComponent(enhancedQuery)}&api_key=${USDA_API_KEY}&pageSize=20&dataType=Foundation,SR%20Legacy`;
     
     const response = await fetch(url);
     
@@ -102,25 +246,60 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
           score += matchingWords * 50;
         }
         
-        // Boost common foods (shorter names often = more common)
-        if (name.length < 30) {
-          score += 20;
+        // Smart scoring based on name simplicity and relevance
+        
+        // 1. Shorter names are usually more common/basic
+        const nameWordCount = name.split(/[\s,]+/).filter(w => w.length > 0).length;
+        score += Math.max(0, 50 - nameWordCount * 8); // Fewer words = higher score
+        
+        // 2. Query words appearing earlier in name = more relevant
+        // "Rice, white" for query "rice" is better than "Flour, rice, white"
+        const firstQueryWord = queryWords[0];
+        const nameWords = name.toLowerCase().split(/[\s,]+/);
+        const firstWordIndex = nameWords.findIndex(w => w.includes(firstQueryWord));
+        if (firstWordIndex === 0) {
+          score += 60; // Query word is first = very relevant
+        } else if (firstWordIndex === 1) {
+          score += 30;
+        } else if (firstWordIndex > 2) {
+          score -= 20; // Buried deep = less relevant
         }
         
-        // Penalize very long names (often less relevant)
-        if (name.length > 60) {
-          score -= 30;
+        // 3. Penalize items that are NOT what user is looking for
+        // If user searches "rice", penalize "rice flour", "rice milk", etc
+        const queryMainFood = queryWords[queryWords.length - 1]; // Last word is usually the main food
+        const derivativeIndicators = ['flour', 'oil', 'milk', 'butter', 'powder', 'extract', 'syrup', 'juice', 'sauce'];
+        const isDerivative = derivativeIndicators.some(d => nameLower.includes(d));
+        const queryingDerivative = derivativeIndicators.some(d => queryLower.includes(d));
+        if (isDerivative && !queryingDerivative) {
+          score -= 100; // User wants rice, not rice flour
         }
         
-        // Penalize generic terms
-        const genericTerms = ['raw', 'uncooked', 'prepared', 'cooked', 'without', 'with', 'and'];
-        if (genericTerms.some(term => nameLower.includes(term))) {
-          score -= 10;
+        // 4. Penalize overly specific variants
+        const specificityIndicators = ['infant', 'baby', 'formula', 'supplement', 'restaurant', 'fast food', 
+                                       'brand', 'homemade', 'commercial', 'industrial'];
+        if (specificityIndicators.some(term => nameLower.includes(term))) {
+          score -= 50;
         }
+        
+        // 5. Prefer cooked versions for foods that are typically cooked
+        const typicallyCooked = ['rice', 'pasta', 'chicken', 'beef', 'pork', 'fish', 'egg', 'potato', 
+                                  'broccoli', 'beans', 'lentils', 'oats', 'quinoa'];
+        const isTypicallyCooked = typicallyCooked.some(food => queryLower.includes(food));
+        if (isTypicallyCooked) {
+          if (nameLower.includes('cooked') || nameLower.includes('boiled') || nameLower.includes('steamed')) {
+            score += 40;
+          } else if (nameLower.includes('raw') || nameLower.includes('uncooked')) {
+            score -= 20;
+          }
+        }
+        
+        // Simplify the verbose USDA name
+        const simplifiedName = simplifyFoodName(food.description);
         
         return {
           item: {
-            name: food.description,
+            name: simplifiedName,
             servingSize: '100g', // USDA defaults to 100g
             macros: {
               calories: Math.round(calories),
@@ -130,17 +309,34 @@ export const searchFoodDatabase = async (query: string): Promise<FoodItem[]> => 
             },
           },
           score,
+          originalName: food.description, // Keep original for dedup check
         };
       })
-      .filter((result): result is { item: FoodItem; score: number } => result !== null);
+      .filter((result): result is { item: FoodItem; score: number; originalName: string } => result !== null);
     
-    // Sort by score (highest first) and take top 8
-    const items = itemsWithScore
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
-      .map(result => result.item);
+    // Sort by score (highest first)
+    itemsWithScore.sort((a, b) => b.score - a.score);
     
-    console.log(`✅ Found ${items.length} food items from USDA`);
+    // Deduplicate similar foods (keep highest scored one)
+    const seenNames = new Set<string>();
+    const deduped = itemsWithScore.filter(result => {
+      const normalizedName = result.item.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      // Check if we've seen a similar name
+      for (const seen of seenNames) {
+        if (areSimilarFoods(result.item.name, seen)) {
+          return false; // Skip this duplicate
+        }
+      }
+      
+      seenNames.add(result.item.name);
+      return true;
+    });
+    
+    // Take top 8 unique items
+    const items = deduped.slice(0, 8).map(result => result.item);
+    
+    console.log(`✅ Found ${items.length} food items from USDA (simplified & deduped)`);
     return items;
   } catch (error: any) {
     console.error('❌ USDA search error:', error);

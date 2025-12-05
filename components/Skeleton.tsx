@@ -1,16 +1,13 @@
 import React from 'react';
 
-// Base skeleton component with shimmer animation
+// Premium skeleton component with enhanced shimmer animation
 export const Skeleton: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ 
   className = '', 
   style = {} 
 }) => (
   <div 
-    className={`animate-pulse rounded-lg ${className}`}
+    className={`skeleton-premium rounded-lg ${className}`}
     style={{
-      background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.2) 50%, rgba(139, 92, 246, 0.1) 100%)',
-      backgroundSize: '200% 100%',
-      animation: 'shimmer 1.5s infinite',
       ...style,
     }}
   />
@@ -22,7 +19,7 @@ export const MealCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) =>
     className="rounded-2xl p-4 flex items-center space-x-4"
     style={{
       background: 'rgba(26, 22, 51, 0.6)',
-      border: '1px solid rgba(139, 92, 246, 0.15)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
       animationDelay: `${index * 100}ms`,
     }}
   >
@@ -55,7 +52,7 @@ export const StatCardSkeleton: React.FC = () => (
     className="rounded-2xl p-4 flex-1"
     style={{
       background: 'rgba(26, 22, 51, 0.6)',
-      border: '1px solid rgba(139, 92, 246, 0.15)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
     }}
   >
     <Skeleton className="w-10 h-10 rounded-xl mb-3" />
@@ -70,7 +67,7 @@ export const ChartSkeleton: React.FC = () => (
     className="rounded-2xl p-4"
     style={{
       background: 'rgba(26, 22, 51, 0.6)',
-      border: '1px solid rgba(139, 92, 246, 0.15)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
     }}
   >
     {/* Chart header */}
@@ -105,7 +102,7 @@ export const CalorieRingSkeleton: React.FC = () => (
     <div 
       className="absolute inset-0 rounded-full animate-pulse"
       style={{
-        border: '12px solid rgba(139, 92, 246, 0.15)',
+        border: '12px solid rgba(20, 17, 40, 0.5)',
       }}
     />
     <div className="text-center">
@@ -124,7 +121,7 @@ export const MacroPillsSkeleton: React.FC = () => (
         className="flex flex-col items-center px-5 py-3 rounded-2xl"
         style={{
           background: 'rgba(26, 22, 51, 0.7)',
-          border: '1px solid rgba(139, 92, 246, 0.2)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
           minWidth: '100px',
         }}
       >

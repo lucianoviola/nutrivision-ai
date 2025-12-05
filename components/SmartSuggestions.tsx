@@ -63,7 +63,7 @@ const SuggestionCard: React.FC<{
       }`}
       style={{
         background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.8), rgba(26, 22, 51, 0.6))',
-        border: '1px solid rgba(139, 92, 246, 0.2)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
       onClick={onTap}
     >
@@ -123,7 +123,7 @@ const SuggestionCard: React.FC<{
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ 
                   background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

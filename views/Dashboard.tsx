@@ -138,15 +138,16 @@ const WeeklyMiniChart: React.FC<{
                   }`}
                   style={{ 
                     height: `${barHeight}px`,
+                    minHeight: isEmpty ? '8px' : undefined,
                     background: isEmpty 
-                      ? 'linear-gradient(180deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05))' 
+                      ? 'linear-gradient(180deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.1))' 
                       : isOverGoal 
                         ? 'linear-gradient(180deg, #F43F5E 0%, #EF4444 50%, #DC2626 100%)'
                         : day.isToday 
                           ? 'linear-gradient(180deg, #A855F7 0%, #8B5CF6 30%, #EC4899 100%)'
                           : 'linear-gradient(180deg, rgba(139, 92, 246, 0.7) 0%, rgba(168, 85, 247, 0.5) 50%, rgba(139, 92, 246, 0.3) 100%)',
                     boxShadow: isEmpty 
-                      ? 'inset 0 0 0 1px rgba(139, 92, 246, 0.2)'
+                      ? '0 2px 8px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255,255,255,0.05)'
                       : day.isToday 
                         ? '0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)' 
                         : isOverGoal
@@ -502,16 +503,19 @@ const CalorieRing: React.FC<{ eaten: number; goal: number }> = ({ eaten, goal })
         <span className="text-xs text-white/50 font-medium mt-1">
           of {goal.toLocaleString()} kcal
         </span>
-        {/* Remaining badge - compact design */}
+        {/* Remaining badge - borderless opal style */}
         {!isEmpty && (
           <div 
             className={`mt-2 px-3 py-1 rounded-full transition-all duration-300 ${
               pillAnimating ? 'scale-110' : 'scale-100'
             }`}
             style={{
-              background: remaining > 0 ? 'rgba(139, 92, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-              border: remaining > 0 ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
-              boxShadow: pillAnimating ? '0 0 20px rgba(139, 92, 246, 0.4)' : 'none',
+              background: remaining > 0 
+                ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(168, 85, 247, 0.15))' 
+                : 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(20, 184, 166, 0.15))',
+              boxShadow: pillAnimating 
+                ? '0 0 20px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)' 
+                : 'inset 0 1px 0 rgba(255,255,255,0.05)',
             }}
           >
             <span className={`text-xs font-semibold transition-all duration-300 whitespace-nowrap ${
@@ -876,12 +880,12 @@ const MealCard: React.FC<{
               </div>
             )}
           </div>
-          {/* Time badge */}
+          {/* Time badge - borderless */}
           <div 
             className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold"
             style={{ 
-              background: 'rgba(13, 11, 28, 0.9)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
+              background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.95), rgba(13, 11, 28, 0.9))',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
               color: 'rgba(255,255,255,0.7)',
             }}
           >
@@ -946,13 +950,12 @@ const MealCard: React.FC<{
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           
-          {/* Menu */}
+          {/* Menu - borderless opal */}
           <div 
             className="relative z-10 w-full max-w-sm rounded-2xl overflow-hidden animate-scale-up"
             style={{
-              background: 'rgba(26, 22, 51, 0.95)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.98), rgba(20, 17, 40, 0.95))',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(139, 92, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1089,13 +1092,12 @@ const EmptyState: React.FC<{ onAddMeal: () => void }> = ({ onAddMeal }) => {
           }}
         />
         
-        {/* Main orb */}
+        {/* Main orb - borderless */}
         <div 
           className="absolute inset-6 rounded-full"
           style={{
             background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.4))',
-            border: '1px solid rgba(139, 92, 246, 0.5)',
-            boxShadow: '0 0 50px rgba(139, 92, 246, 0.4), inset 0 0 30px rgba(236, 72, 153, 0.3)',
+            boxShadow: '0 0 50px rgba(139, 92, 246, 0.4), inset 0 0 30px rgba(236, 72, 153, 0.3), inset 0 0 0 1px rgba(255,255,255,0.1)',
             animation: 'breathe 2.5s ease-in-out infinite',
           }}
         />
@@ -1181,11 +1183,10 @@ const ProcessingCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98] animate-pulse"
+      className="w-full rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98] animate-pulse opal-card"
       style={{
         background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
-        border: '1px solid rgba(139, 92, 246, 0.3)',
-        boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+        boxShadow: '0 8px 32px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
     >
       <div className="flex items-center space-x-4">
@@ -1232,6 +1233,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedDay, setSelectedDay] = useState<'today' | 'yesterday'>('today');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef(0);
   const previousGoalStates = useRef<{
@@ -1245,6 +1248,19 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
   useEffect(() => {
     const timer = setTimeout(() => setIsInitialLoad(false), 600);
     return () => clearTimeout(timer);
+  }, []);
+  
+  // Track scroll for parallax orbs
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const handleScroll = () => {
+      setScrollY(container.scrollTop);
+    };
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
   }, []);
   
   const today = useMemo(() => {
@@ -1480,47 +1496,49 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         onComplete={() => setShowConfetti(false)} 
       />
       
-      {/* Opal-style animated background with floating orbs */}
+      {/* Opal-style animated background with floating orbs + parallax */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0" style={{ background: '#08060F' }} />
         
-        {/* Main ambient orb - breathing animation */}
+        {/* Main ambient orb - breathing animation + parallax */}
         <div 
-          className="absolute"
+          className="absolute parallax-orb-slow"
           style={{
             width: '600px',
             height: '600px',
             top: '-15%',
             left: '50%',
-            transform: 'translateX(-50%)',
+            transform: `translateX(-50%) translateY(${scrollY * 0.1}px)`,
             background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 40%, transparent 70%)',
             filter: 'blur(60px)',
             animation: 'ambient-float 8s ease-in-out infinite',
           }}
         />
         
-        {/* Secondary pink orb */}
+        {/* Secondary pink orb + parallax */}
         <div 
-          className="absolute"
+          className="absolute parallax-orb"
           style={{
             width: '400px',
             height: '400px',
             bottom: '10%',
             right: '-10%',
+            transform: `translateY(${-scrollY * 0.15}px)`,
             background: 'radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 60%)',
             filter: 'blur(80px)',
             animation: 'ambient-float 10s ease-in-out infinite reverse',
           }}
         />
         
-        {/* Third accent orb */}
+        {/* Third accent orb + parallax */}
         <div 
-          className="absolute"
+          className="absolute parallax-orb"
           style={{
             width: '300px',
             height: '300px',
             bottom: '40%',
             left: '-5%',
+            transform: `translateY(${-scrollY * 0.08}px)`,
             background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 60%)',
             filter: 'blur(60px)',
             animation: 'ambient-float 12s ease-in-out infinite',
@@ -1605,12 +1623,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
               {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             </p>
             
-            {/* Today/Yesterday Toggle - Compact */}
+            {/* Today/Yesterday Toggle - Borderless Opal */}
             <div 
               className="relative flex items-center p-1 rounded-xl"
               style={{
-                background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.15)',
+                background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
               }}
             >
               {/* Sliding indicator */}
@@ -1624,7 +1643,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                 }}
               />
               <button
-                onClick={() => setSelectedDay('today')}
+                onClick={() => {
+                  if (selectedDay !== 'today' && !isTransitioning) {
+                    setIsTransitioning(true);
+                    setTimeout(() => {
+                      setSelectedDay('today');
+                      setTimeout(() => setIsTransitioning(false), 300);
+                    }, 150);
+                  }
+                }}
                 className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
                   selectedDay === 'today' 
                     ? 'text-white' 
@@ -1634,7 +1661,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                 Today
               </button>
               <button
-                onClick={() => setSelectedDay('yesterday')}
+                onClick={() => {
+                  if (selectedDay !== 'yesterday' && !isTransitioning) {
+                    setIsTransitioning(true);
+                    setTimeout(() => {
+                      setSelectedDay('yesterday');
+                      setTimeout(() => setIsTransitioning(false), 300);
+                    }, 150);
+                  }
+                }}
                 className={`relative z-10 px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 ${
                   selectedDay === 'yesterday' 
                     ? 'text-white' 
@@ -1648,7 +1683,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         </div>
 
         {/* Calorie Ring */}
-        <div className="flex justify-center py-4">
+        <div 
+          className={`flex justify-center py-4 transition-all duration-300 ${
+            isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          }`}
+        >
           <CalorieRing eaten={totals.calories} goal={settings.dailyCalorieGoal} />
         </div>
 
@@ -1691,10 +1730,10 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         {weeklyStats.daysLogged > 0 && (
           <div className="px-6 mt-6">
             <div 
-              className="rounded-2xl p-4 relative overflow-hidden"
+              className="rounded-2xl p-4 relative overflow-hidden opal-card"
               style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
+                background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.7), rgba(20, 17, 40, 0.5))',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
               }}
             >
               {/* Header row */}
@@ -1764,8 +1803,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
                     onClick={() => setSelectedMeal(meal)}
                     className="flex-shrink-0 flex items-center space-x-2.5 px-4 py-2.5 rounded-xl transition-all active:scale-95"
                     style={{
-                      background: 'rgba(26, 22, 51, 0.8)',
-                      border: '1px solid rgba(139, 92, 246, 0.2)',
+                      background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.8), rgba(20, 17, 40, 0.6))',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                     }}
                   >
                     <div 
@@ -1782,7 +1821,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         )}
 
         {/* Meals Section */}
-        <div className="px-6 mt-8">
+        <div 
+          className={`px-6 mt-8 transition-all duration-300 ${
+            isTransitioning ? 'opacity-0 translate-y-2 blur-sm' : 'opacity-100 translate-y-0 blur-0'
+          }`}
+        >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-white">
               {selectedDay === 'today' ? "Today's Meals" : "Yesterday's Meals"}
@@ -1851,10 +1894,10 @@ const Dashboard: React.FC<DashboardProps> = ({ logs, settings, onAddMeal, onDele
         {displayedLogs.length > 0 && progressPercent > 0 && (
           <div className="px-6 mt-6 mb-6">
             <div 
-              className="relative overflow-hidden rounded-2xl p-5"
+              className="relative overflow-hidden rounded-2xl p-5 opal-card"
               style={{
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1))',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
+                background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.7), rgba(20, 17, 40, 0.5))',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
               }}
             >
               <div className="flex items-center justify-between">

@@ -748,7 +748,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                         className="px-4 py-4 font-bold text-sm rounded-xl transition-all active:scale-95 flex items-center justify-center"
                         style={{
                           background: 'rgba(139, 92, 246, 0.15)',
-                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                           color: 'rgba(139, 92, 246, 1)',
                         }}
                         title="Save this meal for later"
@@ -1126,7 +1126,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                     className="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center space-x-2"
                     style={{
                       background: 'rgba(139, 92, 246, 0.15)',
-                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                       color: 'rgba(139, 92, 246, 1)',
                     }}
                   >
@@ -1287,7 +1287,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                                     className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all active:scale-95"
                                     style={{
                                       background: 'rgba(139, 92, 246, 0.1)',
-                                      border: '1px solid rgba(139, 92, 246, 0.2)',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
                                     }}
                                   >
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -1464,7 +1464,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onSave, onImageCapture, o
                      className="w-24 h-24 rounded-2xl flex items-center justify-center mb-6"
                      style={{
                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.15))',
-                       border: '1px solid rgba(139, 92, 246, 0.3)',
+                       boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                      }}
                    >
                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">

@@ -67,10 +67,9 @@ const CalorieBar: React.FC<{
         <div 
           className="absolute -top-16 z-20 px-3 py-2 rounded-xl text-white text-xs font-bold whitespace-nowrap"
           style={{
-            background: 'rgba(13, 11, 28, 0.95)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.98), rgba(13, 11, 28, 0.95))',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 40px rgba(139, 92, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
           }}
         >
           <div className="text-center">
@@ -176,7 +175,7 @@ const MacroTrendLine: React.FC<{
       }`}
       style={{
         background: 'rgba(26, 22, 51, 0.6)',
-        border: '1px solid rgba(139, 92, 246, 0.15)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
         backdropFilter: 'blur(20px)',
       }}
     >
@@ -559,7 +558,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
             className="rounded-2xl p-1 flex relative"
             style={{
               background: 'rgba(26, 22, 51, 0.6)',
-              border: '1px solid rgba(139, 92, 246, 0.15)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
             }}
           >
             <div
@@ -596,7 +595,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
             className="rounded-2xl p-1 flex relative"
             style={{
               background: 'rgba(26, 22, 51, 0.6)',
-              border: '1px solid rgba(139, 92, 246, 0.15)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
             }}
           >
             <div
@@ -685,7 +684,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                 className="rounded-2xl p-4 space-y-4"
                 style={{
                   background: 'rgba(26, 22, 51, 0.6)',
-                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
@@ -804,7 +803,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                 className="rounded-2xl p-4"
                 style={{
                   background: 'rgba(26, 22, 51, 0.6)',
-                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                   backdropFilter: 'blur(20px)',
                 }}
               >
@@ -828,7 +827,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                             background: day.meals > 0 
                               ? 'rgba(139, 92, 246, 0.2)' 
                               : 'rgba(139, 92, 246, 0.05)',
-                            border: '1px solid rgba(139, 92, 246, 0.15)',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                           }}
                         >
                           <div className="text-[10px] font-bold text-white/40 mb-1 text-center">
@@ -876,7 +875,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                             background: day.meals > 0 
                               ? `rgba(139, 92, 246, ${0.15 + Math.min(day.meals / 5, 1) * 0.2})` 
                               : 'rgba(139, 92, 246, 0.05)',
-                            border: '1px solid rgba(139, 92, 246, 0.1)',
+                            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
                           }}
                           title={`${day.date.toLocaleDateString()}: ${day.meals} meal${day.meals !== 1 ? 's' : ''}, ${Math.round(day.calories)} kcal`}
                         >
@@ -914,7 +913,7 @@ const Stats: React.FC<StatsProps> = ({ logs, settings }) => {
                 className="rounded-2xl p-4"
                 style={{
                   background: 'rgba(26, 22, 51, 0.6)',
-                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                   backdropFilter: 'blur(20px)',
                 }}
               >

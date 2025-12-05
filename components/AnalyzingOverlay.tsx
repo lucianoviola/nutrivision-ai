@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FoodItem, MealLog, Macros, AIProvider } from '../types.ts';
 import * as aiService from '../services/aiService.ts';
 import NumericInput from './NumericInput.tsx';
@@ -47,7 +47,8 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
   const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   
   // Set default meal type based on time
   useEffect(() => {
@@ -202,6 +203,11 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
     setEditingItemIndex(editableItems.length); // Edit the newly added item
     setSearchResults([]);
     setShowSearchResults(false);
+    
+    // Focus the search input after React re-renders
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
   };
   
   // Search food database
@@ -364,13 +370,13 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
         className="w-full max-w-lg rounded-t-3xl shadow-2xl animate-slide-up max-h-[85vh] flex flex-col"
         style={{
           background: 'linear-gradient(180deg, #1A1633 0%, #0D0B1C 100%)',
-          border: '1px solid rgba(139, 92, 246, 0.2)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
         }}
       >
         {/* Header */}
         <div 
           className="flex items-center justify-between p-4"
-          style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.15)' }}
+          style={{ boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.03)' }}
         >
           <div className="flex items-center space-x-2">
             {status === 'analyzing' && (
@@ -456,7 +462,10 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           {/* Meal type selector */}
           <div 
             className="rounded-xl p-1.5 flex mb-4"
-            style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)' }}
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))', 
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)' 
+            }}
           >
             {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map(t => (
               <button 
@@ -554,7 +563,9 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                   className="rounded-xl p-4 transition-all"
                   style={{ 
                     background: editingItemIndex === index ? 'rgba(139, 92, 246, 0.15)' : 'rgba(26, 22, 51, 0.6)', 
-                    border: editingItemIndex === index ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid rgba(139, 92, 246, 0.15)' 
+                    boxShadow: editingItemIndex === index 
+                      ? '0 4px 20px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)' 
+                      : '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)' 
                   }}
                 >
                   {editingItemIndex === index ? (
@@ -563,10 +574,16 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex-1 relative">
                           <input
+                            ref={editingItemIndex === index ? searchInputRef : null}
                             type="text"
                             value={item.name}
                             onChange={(e) => handleSearchFood(e.target.value, index)}
-                            onFocus={() => item.name.length >= 2 && setShowSearchResults(true)}
+                            onFocus={() => {
+                              // Show results if we have them
+                              if (searchResults.length > 0) {
+                                setShowSearchResults(true);
+                              }
+                            }}
                             className="w-full px-3 py-2 rounded-lg text-white font-bold bg-transparent border border-white/20 focus:border-purple-500 focus:outline-none"
                             placeholder="Search food..."
                             autoFocus={item.name === ''}
@@ -582,9 +599,8 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                             <div 
                               className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto"
                               style={{ 
-                                background: 'rgba(26, 22, 51, 0.98)', 
-                                border: '1px solid rgba(139, 92, 246, 0.3)',
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+                                background: 'linear-gradient(135deg, rgba(26, 22, 51, 0.98), rgba(20, 17, 40, 0.95))', 
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 40px rgba(139, 92, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)'
                               }}
                             >
                               {searchResults.map((food, i) => (
@@ -729,8 +745,11 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
               {/* Add Item Button */}
               <button
                 onClick={addNewItem}
-                className="w-full py-3 rounded-xl font-bold text-white/40 hover:text-white transition-all active:scale-95 border-2 border-dashed hover:border-purple-500/50"
-                style={{ background: 'rgba(139, 92, 246, 0.05)', borderColor: 'rgba(139, 92, 246, 0.3)' }}
+                className="w-full py-3 rounded-xl font-bold text-white/40 hover:text-white transition-all active:scale-95"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.05))', 
+                  boxShadow: '0 0 0 2px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.03)'
+                }}
               >
                 <i className="fa-solid fa-plus mr-2"></i>
                 Add Food Item
@@ -750,16 +769,16 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                     placeholder="e.g., 'this is actually rice, not pasta' or 'add butter to the toast'"
                     className="flex-1 px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all"
                     style={{
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                      e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1))';
+                      e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                      e.target.style.boxShadow = 'none';
+                      e.target.style.background = 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))';
+                      e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)';
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -802,16 +821,16 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
                   placeholder="How did this meal make you feel? Any observations?"
                   className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none resize-none transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                    e.target.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.1))';
+                    e.target.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                    e.target.style.boxShadow = 'none';
+                    e.target.style.background = 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))';
+                    e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)';
                   }}
                   rows={3}
                 />
@@ -825,7 +844,7 @@ const AnalyzingOverlay: React.FC<AnalyzingOverlayProps> = ({
           <div 
             className="p-4"
             style={{ 
-              borderTop: '1px solid rgba(139, 92, 246, 0.15)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
               background: 'rgba(26, 22, 51, 0.6)',
             }}
           >

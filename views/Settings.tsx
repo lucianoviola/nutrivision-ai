@@ -50,7 +50,7 @@ const SettingRow: React.FC<{
   return (
     <div 
       className="flex items-center justify-between p-4 transition-all duration-300"
-      style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.1)' }}
+      style={{ boxShadow: 'inset 0 -1px 0 rgba(255, 255, 255, 0.03)' }}
     >
       <div className="flex items-center space-x-3">
         <span className="text-xl">{icon}</span>
@@ -67,9 +67,12 @@ const SettingRow: React.FC<{
           onBlur={handleBlur}
           className="text-right outline-none font-bold w-20 text-white rounded-xl px-3 py-2 transition-all duration-300"
           style={{ 
-            background: isFocused ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
-            border: isFocused ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid rgba(139, 92, 246, 0.2)',
-            boxShadow: isFocused ? '0 0 20px rgba(139, 92, 246, 0.2)' : 'none',
+            background: isFocused 
+              ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(168, 85, 247, 0.15))' 
+              : 'linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4))',
+            boxShadow: isFocused 
+              ? '0 0 20px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)' 
+              : '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03)',
           }}
         />
         {suffix && <span className="text-white/40 text-sm">{suffix}</span>}
@@ -237,7 +240,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               className="rounded-2xl overflow-hidden"
               style={{
                 background: 'rgba(26, 22, 51, 0.6)',
-                border: '1px solid rgba(139, 92, 246, 0.15)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                 backdropFilter: 'blur(20px)',
               }}
             >
@@ -286,7 +289,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                       background: isMatch 
                         ? 'rgba(16, 185, 129, 0.1)' 
                         : 'rgba(251, 191, 36, 0.1)',
-                      borderTop: '1px solid rgba(139, 92, 246, 0.1)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
                     }}
                   >
                     <div className="flex items-center space-x-2">
@@ -336,7 +339,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               className="rounded-2xl overflow-hidden"
               style={{
                 background: 'rgba(26, 22, 51, 0.6)',
-                border: '1px solid rgba(139, 92, 246, 0.15)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                 backdropFilter: 'blur(20px)',
               }}
             >
@@ -412,7 +415,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                         className="w-full rounded-xl px-4 py-3 text-base outline-none text-white placeholder-white/30 transition-all duration-300"
                         style={{
                           background: 'rgba(139, 92, 246, 0.1)',
-                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
                         }}
                       />
                       <a 
@@ -437,7 +440,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
                         className="w-full rounded-xl px-4 py-3 text-base outline-none text-white placeholder-white/30 transition-all duration-300"
                         style={{
                           background: 'rgba(139, 92, 246, 0.1)',
-                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05)',
                         }}
                       />
                       <a 
@@ -481,14 +484,14 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               className="rounded-2xl overflow-hidden"
               style={{
                 background: 'rgba(26, 22, 51, 0.6)',
-                border: '1px solid rgba(139, 92, 246, 0.15)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                 backdropFilter: 'blur(20px)',
               }}
             >
               <button 
                 onClick={handleAppleHealth} 
                 className="w-full p-4 flex items-center justify-between transition-all active:scale-[0.98]"
-                style={{ borderBottom: '1px solid rgba(139, 92, 246, 0.1)' }}
+                style={{ boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.03)' }}
               >
                 <div className="flex items-center space-x-3">
                   <span className={`text-xl ${isNativeApp ? '' : 'opacity-50'}`}>❤️</span>
@@ -541,7 +544,7 @@ const Settings: React.FC<SettingsProps> = ({ settings, logs, onUpdateSettings })
               className="rounded-2xl p-5"
               style={{
                 background: 'rgba(26, 22, 51, 0.6)',
-                border: '1px solid rgba(139, 92, 246, 0.15)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
                 backdropFilter: 'blur(20px)',
               }}
             >

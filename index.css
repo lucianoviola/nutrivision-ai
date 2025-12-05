@@ -42,8 +42,9 @@
   --border-subtle: rgba(139, 92, 246, 0.15);
   --border-medium: rgba(139, 92, 246, 0.25);
   
-  /* Typography */
-  --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Typography - Premium */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* ============================================
@@ -719,3 +720,271 @@ button:active {
 .opal-stagger > *:nth-child(6) { animation-delay: 0.35s; }
 .opal-stagger > *:nth-child(7) { animation-delay: 0.4s; }
 .opal-stagger > *:nth-child(8) { animation-delay: 0.45s; }
+
+/* ============================================
+   PREMIUM SHIMMER SKELETON
+   ============================================ */
+.skeleton-premium {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(20, 17, 40, 0.6), rgba(20, 17, 40, 0.4));
+  border-radius: 12px;
+}
+
+.skeleton-premium::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.08) 20%,
+    rgba(236, 72, 153, 0.12) 50%,
+    rgba(139, 92, 246, 0.08) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: premium-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes premium-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   PAGE TRANSITIONS
+   ============================================ */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+  filter: blur(8px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  filter: blur(0);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+  filter: blur(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  filter: blur(8px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Day switch transition */
+@keyframes day-switch-out {
+  0% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  100% { opacity: 0; transform: translateY(-10px); filter: blur(4px); }
+}
+
+@keyframes day-switch-in {
+  0% { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.animate-day-out {
+  animation: day-switch-out 0.25s ease-out forwards;
+}
+
+.animate-day-in {
+  animation: day-switch-in 0.35s ease-out forwards;
+}
+
+/* ============================================
+   PARALLAX ORB EFFECTS
+   ============================================ */
+.parallax-orb {
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.parallax-orb-slow {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   ENHANCED OPAL CARD - 10/10
+   ============================================ */
+.opal-card-premium {
+  background: linear-gradient(
+    135deg, 
+    rgba(20, 17, 40, 0.7) 0%, 
+    rgba(20, 17, 40, 0.5) 50%,
+    rgba(25, 20, 50, 0.6) 100%
+  );
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border: none !important;
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(139, 92, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.opal-card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.05) 0%,
+    transparent 50%,
+    rgba(236, 72, 153, 0.03) 100%
+  );
+  pointer-events: none;
+}
+
+.opal-card-premium:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 60px rgba(139, 92, 246, 0.1);
+}
+
+/* ============================================
+   PREMIUM NUMBER TYPOGRAPHY
+   ============================================ */
+.premium-number {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-feature-settings: 'tnum' on, 'lnum' on;
+}
+
+.premium-number-lg {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  line-height: 1;
+}
+
+.premium-number-md {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  line-height: 1.1;
+}
+
+/* ============================================
+   SOFT SHADOWS
+   ============================================ */
+.shadow-soft {
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-soft-lg {
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    0 16px 32px rgba(0, 0, 0, 0.15),
+    0 32px 64px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-glow-purple {
+  box-shadow: 
+    0 4px 20px rgba(139, 92, 246, 0.25),
+    0 8px 40px rgba(139, 92, 246, 0.15);
+}
+
+.shadow-glow-pink {
+  box-shadow: 
+    0 4px 20px rgba(236, 72, 153, 0.25),
+    0 8px 40px rgba(236, 72, 153, 0.15);
+}
+
+/* ============================================
+   MICRO-INTERACTION UTILITIES
+   ============================================ */
+.tap-highlight {
+  -webkit-tap-highlight-color: rgba(139, 92, 246, 0.1);
+}
+
+.smooth-press {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smooth-press:active {
+  transform: scale(0.97);
+}
+
+/* ============================================
+   ANIMATED GRADIENT BORDER
+   ============================================ */
+.gradient-border-animated {
+  position: relative;
+}
+
+.gradient-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    var(--gradient-angle, 135deg),
+    #8B5CF6,
+    #EC4899,
+    #3B82F6,
+    #8B5CF6
+  );
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: gradient-rotate 4s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes gradient-rotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ============================================
+   LOADING DOTS
+   ============================================ */
+.loading-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.6);
+  animation: loading-dot 1.4s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes loading-dot {
+  0%, 80%, 100% { 
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
